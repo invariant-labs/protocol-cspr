@@ -1,0 +1,10 @@
+.idea
+.vscode
+.DS_Store
+target
+Cargo.lock
+.backend*
+.builder*
+node_modules
+wasm
+gas_report.txt
