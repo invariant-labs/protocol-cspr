@@ -1,0 +1,12 @@
+{
+  "name": "Invariant",
+  "entrypoints": [
+    {
+      "name": "init",
+      "is_mutable": true,
+      "args": [],
+      "return_ty": "Unit"
+    }
+  ],
+  "events": []
+}
