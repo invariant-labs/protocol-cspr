@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 decimal = { path = "src/decimal" }
+traceable_result = { path = "src/traceable_result" }
