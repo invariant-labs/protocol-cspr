@@ -1,5 +1,5 @@
 use crate::{
-    math::types::{liquidity::Liquidity, token_amount::TokenAmount},
+    types::{liquidity::Liquidity, token_amount::TokenAmount},
     uints::{U128T, U256T, U384T},
 };
 use decimal::*;
@@ -112,7 +112,7 @@ pub fn calculate_fee_growth_inside(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::math::{consts::MAX_TICK, types::sqrt_price::SqrtPrice};
+    use crate::{consts::MAX_TICK, types::sqrt_price::SqrtPrice};
 
     #[test]
     fn test_unchecked_add() {
@@ -384,7 +384,7 @@ mod tests {
             let (_format, cause, stack) = fee_growth.to_fee(liquidity).unwrap_err().get();
             assert_eq!(
                 cause,
-                "conversion to invariant::math::types::token_amount::TokenAmount type failed"
+                "conversion to invariant_math::types::token_amount::TokenAmount type failed"
             );
             assert_eq!(stack.len(), 1);
         }

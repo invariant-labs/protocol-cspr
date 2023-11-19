@@ -1,9 +1,8 @@
-use crate::math::types::liquidity::Liquidity;
+use crate::types::liquidity::Liquidity;
 use crate::uints::{U128T, U256T};
 use decimal::*;
 use traceable_result::*;
 
-// TODO: Update underlying type to U128T, 49 decimal
 #[decimal(28, U256T)]
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
 pub struct SecondsPerLiquidity {
