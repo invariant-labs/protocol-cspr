@@ -19,7 +19,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
     proc_macro::TokenStream::from(quote!(
         impl<T: Decimal> BigOps<T> for #struct_name
         where
-        T: Decimal + std::fmt::Debug + decimal::Conversion,
+        T: Decimal + alloc::fmt::Debug + Conversion,
         T::U: AsRef<[u64]>,
         {
             fn big_mul(self, rhs: T) -> Self {
