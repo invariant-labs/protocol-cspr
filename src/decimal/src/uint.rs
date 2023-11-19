@@ -5,16 +5,24 @@
 #![allow(clippy::ptr_offset_with_cast)]
 #![allow(clippy::manual_range_contains)]
 
+use borsh::{BorshDeserialize, BorshSerialize};
 use uint::construct_uint;
 
 construct_uint! {
+    #[derive(BorshSerialize, BorshDeserialize)]
     pub struct U320(5);
 }
 construct_uint! {
+    #[derive(BorshSerialize, BorshDeserialize)]
     pub struct U256(4);
 }
 construct_uint! {
+    #[derive(BorshSerialize, BorshDeserialize)]
     pub struct U192(3);
+}
+construct_uint! {
+    #[derive(BorshSerialize, BorshDeserialize)]
+    pub struct U128(2);
 }
 
 #[allow(dead_code)]
