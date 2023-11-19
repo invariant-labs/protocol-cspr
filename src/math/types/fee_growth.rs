@@ -384,7 +384,7 @@ mod tests {
             let (_format, cause, stack) = fee_growth.to_fee(liquidity).unwrap_err().get();
             assert_eq!(
                 cause,
-                "conversion to invariant::types::token_amount::TokenAmount type failed"
+                "conversion to invariant_math::types::token_amount::TokenAmount type failed"
             );
             assert_eq!(stack.len(), 1);
         }

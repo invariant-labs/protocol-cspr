@@ -1,14 +1,7 @@
 use decimal::Decimal;
+use invariant_math::liquidity::Liquidity;
+use invariant_math::uints::U256T;
 use odra::{types::U256, Variable};
-use types::liquidity::Liquidity;
-use uints::U256T;
-
-extern crate alloc;
-
-pub mod consts;
-pub mod math;
-pub mod types;
-pub mod uints;
 
 #[odra::module]
 pub struct Invariant {
