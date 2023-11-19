@@ -11,4 +11,3 @@ decimal_core = { path = "decimal_core" }
 integer-sqrt = "0.1.5"
 uint = { version = "0.9", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
-borsh = { version = "0.9.3", default-features = false }
