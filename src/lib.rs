@@ -1,13 +1,11 @@
 use decimal::Decimal;
+use math::types::liquidity::Liquidity;
 use odra::{types::U256, Variable};
-use types::liquidity::Liquidity;
 use uints::U256T;
 
 extern crate alloc;
 
-pub mod consts;
 pub mod math;
-pub mod types;
 pub mod uints;
 
 #[odra::module]

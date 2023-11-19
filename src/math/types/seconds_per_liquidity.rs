@@ -1,4 +1,4 @@
-use crate::types::liquidity::Liquidity;
+use crate::math::types::liquidity::Liquidity;
 use crate::uints::{U128T, U256T};
 use decimal::*;
 use traceable_result::*;

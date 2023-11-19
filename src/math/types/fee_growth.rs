@@ -1,5 +1,5 @@
 use crate::{
-    types::{liquidity::Liquidity, token_amount::TokenAmount},
+    math::types::{liquidity::Liquidity, token_amount::TokenAmount},
     uints::{U128T, U256T, U384T},
 };
 use decimal::*;
@@ -112,7 +112,7 @@ pub fn calculate_fee_growth_inside(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{consts::MAX_TICK, types::sqrt_price::SqrtPrice};
+    use crate::math::{consts::MAX_TICK, types::sqrt_price::SqrtPrice};
 
     #[test]
     fn test_unchecked_add() {

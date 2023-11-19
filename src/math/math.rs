@@ -1,8 +1,8 @@
 use decimal::*;
 use traceable_result::*;
 
-use crate::consts::*;
-use crate::types::{liquidity::*, percentage::*, sqrt_price::*, token_amount::*};
+use crate::math::consts::*;
+use crate::math::types::{liquidity::*, percentage::*, sqrt_price::*, token_amount::*};
 use crate::uints::{U256T, U384T, U448T};
 
 #[derive(PartialEq, Debug)]

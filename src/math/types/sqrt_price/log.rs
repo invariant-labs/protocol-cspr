@@ -1,8 +1,8 @@
 use decimal::*;
 use traceable_result::*;
 
-use crate::consts::*;
-use crate::types::sqrt_price::SqrtPrice;
+use crate::math::consts::*;
+use crate::math::types::sqrt_price::SqrtPrice;
 
 const LOG2_SCALE: u8 = 32;
 const LOG2_DOUBLE_SCALE: u8 = 64;
@@ -458,119 +458,119 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn test_all_positive_ticks() {
-    //     for n in 0..MAX_TICK {
-    //         {
-    //             let expected_tick = n;
-    //             let sqrt_price_decimal = SqrtPrice::from_tick(expected_tick).unwrap();
-    //             // get tick at sqrt(1.0001^(n))
-    //             {
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //             // get tick slightly below sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
-    //                 assert_eq!(tick.unwrap(), expected_tick - 1);
-    //             }
-    //             // get tick slightly above sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //         }
-    //     }
-    // }
+    #[test]
+    fn test_all_positive_ticks() {
+        for n in 0..MAX_TICK {
+            {
+                let expected_tick = n;
+                let sqrt_price_decimal = SqrtPrice::from_tick(expected_tick).unwrap();
+                // get tick at sqrt(1.0001^(n))
+                {
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+                // get tick slightly below sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
+                    assert_eq!(tick.unwrap(), expected_tick - 1);
+                }
+                // get tick slightly above sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+            }
+        }
+    }
 
-    // #[test]
-    // fn test_all_negative_ticks() {
-    //     for n in 0..MAX_TICK {
-    //         {
-    //             let expected_tick = -n;
-    //             let sqrt_price_decimal = SqrtPrice::from_tick(expected_tick).unwrap();
-    //             // get tick at sqrt(1.0001^(n))
-    //             {
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //             // get tick slightly below sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
-    //                 assert_eq!(tick.unwrap(), expected_tick - 1);
-    //             }
-    //             // get tick slightly above sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //         }
-    //     }
-    // }
+    #[test]
+    fn test_all_negative_ticks() {
+        for n in 0..MAX_TICK {
+            {
+                let expected_tick = -n;
+                let sqrt_price_decimal = SqrtPrice::from_tick(expected_tick).unwrap();
+                // get tick at sqrt(1.0001^(n))
+                {
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+                // get tick slightly below sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
+                    assert_eq!(tick.unwrap(), expected_tick - 1);
+                }
+                // get tick slightly above sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, 1);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+            }
+        }
+    }
 
-    // #[test]
-    // fn test_all_positive_tick_spacing_greater_than_1() {
-    //     let tick_spacing: i32 = 3;
-    //     for n in 0..MAX_TICK {
-    //         {
-    //             let input_tick = n;
-    //             let sqrt_price_decimal = SqrtPrice::from_tick(input_tick).unwrap();
-    //             // get tick at sqrt(1.0001^(n))
-    //             {
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
-    //                 let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //             // get tick slightly below sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
-    //                 let expected_tick = align_tick_to_spacing(input_tick - 1, tick_spacing);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //             // get tick slightly above sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
-    //                 let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //         }
-    //     }
-    // }
+    #[test]
+    fn test_all_positive_tick_spacing_greater_than_1() {
+        let tick_spacing: i32 = 3;
+        for n in 0..MAX_TICK {
+            {
+                let input_tick = n;
+                let sqrt_price_decimal = SqrtPrice::from_tick(input_tick).unwrap();
+                // get tick at sqrt(1.0001^(n))
+                {
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
+                    let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+                // get tick slightly below sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
+                    let expected_tick = align_tick_to_spacing(input_tick - 1, tick_spacing);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+                // get tick slightly above sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
+                    let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+            }
+        }
+    }
 
-    // #[test]
-    // fn test_all_negative_tick_spacing_greater_than_1() {
-    //     let tick_spacing: i32 = 4;
-    //     for n in 0..MAX_TICK {
-    //         {
-    //             let input_tick = -n;
-    //             let sqrt_price_decimal = SqrtPrice::from_tick(input_tick).unwrap();
-    //             // get tick at sqrt(1.0001^(n))
-    //             {
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
-    //                 let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //             // get tick slightly below sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
-    //                 let expected_tick = align_tick_to_spacing(input_tick - 1, tick_spacing);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //             // get tick slightly above sqrt(1.0001^n)
-    //             {
-    //                 let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
-    //                 let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
-    //                 let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
-    //                 assert_eq!(tick.unwrap(), expected_tick);
-    //             }
-    //         }
-    //     }
-    // }
+    #[test]
+    fn test_all_negative_tick_spacing_greater_than_1() {
+        let tick_spacing: i32 = 4;
+        for n in 0..MAX_TICK {
+            {
+                let input_tick = -n;
+                let sqrt_price_decimal = SqrtPrice::from_tick(input_tick).unwrap();
+                // get tick at sqrt(1.0001^(n))
+                {
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
+                    let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+                // get tick slightly below sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal - SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
+                    let expected_tick = align_tick_to_spacing(input_tick - 1, tick_spacing);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+                // get tick slightly above sqrt(1.0001^n)
+                {
+                    let sqrt_price_decimal = sqrt_price_decimal + SqrtPrice::new(U128T::from(1));
+                    let tick = get_tick_at_sqrt_price(sqrt_price_decimal, tick_spacing as u16);
+                    let expected_tick = align_tick_to_spacing(input_tick, tick_spacing);
+                    assert_eq!(tick.unwrap(), expected_tick);
+                }
+            }
+        }
+    }
 }
