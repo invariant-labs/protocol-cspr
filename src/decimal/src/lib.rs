@@ -5,7 +5,7 @@ extern crate alloc;
 mod traits;
 mod uint;
 
-pub use crate::uint::{checked_u320_to_u256, to_u256, u256_to_u320, U128, U256, U320};
+pub use crate::uint::{U128, U256};
 pub use decimal_core::decimal;
 pub use num_traits;
 pub use traits::*;
