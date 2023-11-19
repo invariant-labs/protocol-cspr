@@ -2413,7 +2413,7 @@ mod tests {
                 .get();
                 assert_eq!(
                     cause,
-                    "conversion to invariant::types::token_amount::TokenAmount type failed"
+                    "conversion to invariant::math::types::token_amount::TokenAmount type failed"
                 );
                 assert_eq!(stack.len(), 2)
             }
