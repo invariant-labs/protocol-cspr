@@ -107,14 +107,19 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
 
         impl<T> FactoriesToValue<T, #big_type> for #struct_name
         where
-            T: AsRef<[u64]>,
+        T: Default
+            + AsRef<[u64]>
+            + From<u64>
+            + core::ops::Shl<usize, Output = T>
+            + core::ops::BitOrAssign,
+        #big_type: Default
+            + AsRef<[u64]>
+            + From<u64>
+            + core::ops::Shl<usize, Output = #big_type>
+            + core::ops::BitOrAssign,
         {
             fn checked_from_scale_to_value(val: T, scale: u8) -> core::result::Result<#big_type, alloc::string::String> {
-                let mut val_bytes: alloc::vec::Vec<u64> = val.as_ref().try_into().unwrap();
-                let big_type_len: usize = #big_type::default().as_ref().len();
-
-                val_bytes.resize(big_type_len, 0);
-                let base: #big_type = #big_type(val_bytes.try_into().unwrap());
+                let base: #big_type = #struct_name::from_value(val);
 
                 Ok(if #scale > scale {
                     let multiplier: u128 = 10u128.checked_pow((#scale - scale) as u32).ok_or_else(|| "checked_from_scale_to_value: multiplier overflow")?;
