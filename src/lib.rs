@@ -1,12 +1,19 @@
 #![no_std]
+
+extern crate alloc;
+
+pub mod contracts;
+
+use crate::contracts::State;
+use alloc::string::ToString;
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
 use invariant_math::uints::U256T;
 use odra::{types::U256, Variable};
-extern crate alloc;
-use alloc::string::ToString;
+
 #[odra::module]
 pub struct Invariant {
+    state: Variable<State>,
     liquidity: Variable<U256>,
 }
 
