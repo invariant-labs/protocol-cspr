@@ -3,7 +3,10 @@ set -e
 
 cd src/decimal
 cargo test
-cd ../..
+
+cd decimal_core
+cargo test
+cd ../../..
 
 cd src/math
 cargo test
