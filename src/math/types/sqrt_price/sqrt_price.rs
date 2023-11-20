@@ -17,67 +17,50 @@ impl SqrtPrice {
         calculate_sqrt_price(i)
     }
 
-    // TODO - Configure nominator and denominator types
     pub fn big_div_values_to_token(
         nominator: U384T,
         denominator: U384T,
     ) -> TrackableResult<TokenAmount> {
-        let nominator: U448T = SqrtPrice::from_value::<U448T, U384T>(nominator);
-        let denominator: U448T = SqrtPrice::from_value::<U448T, U384T>(denominator);
-        let intermediate_u448 = nominator
+        let nominator: U448T = SqrtPrice::from_value(nominator);
+        let denominator: U448T = SqrtPrice::from_value(denominator);
+
+        let result = nominator
             .checked_mul(SqrtPrice::one().cast())
             .ok_or_else(|| err!(TrackableError::MUL))?
             .checked_div(denominator)
-            .ok_or_else(|| err!(TrackableError::DIV))?;
-
-        // TODO - add ok_or_mark_trace!
-        // Possible overflow | U320T should be enough
-        let casted_intermediate: U384T =
-            (SqrtPrice::checked_from_value::<U384T, U448T>(intermediate_u448))
-                .map_err(|_| err!("Can't parse from U448T to U384T"))?;
-
-        let result: U384T = casted_intermediate
+            .ok_or_else(|| err!(TrackableError::DIV))?
             .checked_div(SqrtPrice::one().cast())
             .ok_or_else(|| err!(TrackableError::DIV))?;
 
-        let casted_result: U256T = TokenAmount::checked_from_value::<U256T, U384T>(result)
-            .map_err(|_| err!("Can't parse from U384T to U256T"))?;
-
-        Ok(TokenAmount::new(casted_result))
+        Ok(TokenAmount::new(
+            TokenAmount::checked_from_value(result)
+                .map_err(|_| err!("Can't parse from U448T to U256T"))?,
+        ))
     }
 
-    // TODO - Configure nominator and denominator types
     pub fn big_div_values_to_token_up(
         nominator: U384T,
         denominator: U384T,
     ) -> TrackableResult<TokenAmount> {
-        let nominator: U448T = SqrtPrice::from_value::<U448T, U384T>(nominator);
-        let denominator: U448T = SqrtPrice::from_value::<U448T, U384T>(denominator);
+        let nominator: U448T = SqrtPrice::from_value(nominator);
+        let denominator: U448T = SqrtPrice::from_value(denominator);
 
-        let intermediate_u448 = nominator
+        let result = nominator
             .checked_mul(SqrtPrice::one().cast())
             .ok_or_else(|| err!(TrackableError::MUL))?
             .checked_add(denominator - 1)
             .ok_or_else(|| err!(TrackableError::ADD))?
             .checked_div(denominator)
-            .ok_or_else(|| err!(TrackableError::DIV))?;
-
-        // TODO - add ok_or_mark_trace!
-        // Possible overflow | U320T should be enough
-        let casted_intermediate: U384T =
-            (SqrtPrice::checked_from_value::<U384T, U448T>(intermediate_u448))
-                .map_err(|_| err!("Can't parse from U448T to U384T"))?;
-
-        let result: U384T = casted_intermediate
+            .ok_or_else(|| err!(TrackableError::DIV))?
             .checked_add(Self::almost_one().cast())
             .ok_or_else(|| err!(TrackableError::ADD))?
             .checked_div(SqrtPrice::one().cast())
             .ok_or_else(|| err!(TrackableError::DIV))?;
 
-        let casted_result: U256T = TokenAmount::checked_from_value::<U256T, U384T>(result)
-            .map_err(|_| err!("Can't parse from U384T to U256T"))?;
-
-        Ok(TokenAmount::new(casted_result))
+        Ok(TokenAmount::new(
+            TokenAmount::checked_from_value(result)
+                .map_err(|_| err!("Can't parse from U448T to U256T"))?,
+        ))
     }
 
     // TODO - Configure nominator and denominator types

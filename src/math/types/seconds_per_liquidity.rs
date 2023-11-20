@@ -3,7 +3,7 @@ use crate::uints::{U128T, U256T};
 use decimal::*;
 use traceable_result::*;
 
-#[decimal(28, U256T)]
+#[decimal(25, U256T)]
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
 pub struct SecondsPerLiquidity {
     pub v: U128T,
@@ -190,7 +190,7 @@ mod tests {
                 .unwrap();
             assert_eq!(
                 seconds_per_liquidity.get(),
-                U128T::from_dec_str("3153600000000000000000000000000000000").unwrap()
+                U128T::from_dec_str("3153600000000000000000000000000000").unwrap()
             );
         }
         // max value outside domain
@@ -223,7 +223,7 @@ mod tests {
             assert_eq!(
                 result,
                 SecondsPerLiquidity::new(
-                    U128T::from_dec_str("3153600000000000000000000000000000000").unwrap()
+                    U128T::from_dec_str("3153600000000000000000000000000000").unwrap()
                 )
             )
         }
@@ -258,7 +258,7 @@ mod tests {
             assert_eq!(
                 result,
                 SecondsPerLiquidity::new(
-                    U128T::from_dec_str("10000000000000000000000000000").unwrap()
+                    U128T::from_dec_str("10000000000000000000000000").unwrap()
                 )
             )
         }
