@@ -1,6 +1,5 @@
 use alloc::string::ToString;
 use quote::quote;
-use alloc::vec::Vec;
 
 use crate::utils::string_to_ident;
 use crate::DecimalCharacteristics;
@@ -60,7 +59,7 @@ pub fn generate_checked_ops(characteristics: DecimalCharacteristics) -> proc_mac
                 let max = #struct_name::max_instance();
                 let result = max.checked_add(#struct_name::new(#underlying_type::try_from(1u8).unwrap()));
 
-                assert_eq!(result, Err("checked_add: (self + rhs) additional overflow".to_string()));
+                assert_eq!(result, Err(alloc::string::String::from("checked_add: (self + rhs) additional overflow")));
             }
 
             #[test]
@@ -91,7 +90,7 @@ pub fn generate_checked_ops(characteristics: DecimalCharacteristics) -> proc_mac
                 let min = #struct_name::new(#underlying_type::try_from(0u8).unwrap());
                 let result = min.checked_sub(#struct_name::new(#underlying_type::try_from(1u8).unwrap()));
 
-                assert_eq!(result, Err("checked_sub: (self - rhs) subtraction underflow".to_string()));
+                assert_eq!(result, Err(alloc::string::String::from("checked_sub: (self - rhs) subtraction underflow")));
             }
         }
     ))
