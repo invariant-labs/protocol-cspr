@@ -1,5 +1,6 @@
 use alloc::string::ToString;
 use quote::quote;
+use alloc::vec::Vec;
 
 use crate::utils::string_to_ident;
 use crate::DecimalCharacteristics;

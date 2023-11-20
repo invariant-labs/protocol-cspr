@@ -1,5 +1,6 @@
 use alloc::string::ToString;
 use quote::quote;
+use alloc::vec::Vec;
 
 use crate::utils::string_to_ident;
 use crate::DecimalCharacteristics;
@@ -36,7 +37,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                     .unwrap_or_else(|| core::panic!("decimal: overflow in method {}::big_mul()", #name_str))
                 );
 
-                let mut result_bytes: Vec<u64> = result.as_ref().try_into().unwrap();
+                let mut result_bytes: alloc::vec::Vec<u64> = result.as_ref().try_into().unwrap();
                 let (self_result_bytes, remaining_bytes) = result_bytes.split_at_mut(self_len);
 
                 if remaining_bytes.iter().any(|&x| x != 0) {
@@ -53,10 +54,10 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
             }
 
             fn big_mul_up(self, rhs: T) -> Self {
-                let mut self_bytes: Vec<u64> = self.get().as_ref().try_into().unwrap();
-                let mut rhs_bytes: Vec<u64> = rhs.get().as_ref().try_into().unwrap();
-                let mut rhs_one_bytes: Vec<u64> = T::one().get().as_ref().try_into().unwrap();
-                let mut rhs_almost_one_bytes: Vec<u64> = T::almost_one().get().as_ref().try_into().unwrap();
+                let mut self_bytes: alloc::vec::Vec<u64> = self.get().as_ref().try_into().unwrap();
+                let mut rhs_bytes: alloc::vec::Vec<u64> = rhs.get().as_ref().try_into().unwrap();
+                let mut rhs_one_bytes: alloc::vec::Vec<u64> = T::one().get().as_ref().try_into().unwrap();
+                let mut rhs_almost_one_bytes: alloc::vec::Vec<u64> = T::almost_one().get().as_ref().try_into().unwrap();
 
                 let self_len = self_bytes.len();
                 let big_type_len: usize = #big_type::default().as_ref().len();
@@ -79,7 +80,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                     .checked_div(big_one)
                     .unwrap_or_else(|| core::panic!("decimal: overflow in method {}::big_mul_up()", #name_str));
 
-                let mut result_bytes: Vec<u64> = result.as_ref().try_into().unwrap();
+                let mut result_bytes: alloc::vec::Vec<u64> = result.as_ref().try_into().unwrap();
                 let (self_result_bytes, remaining_bytes) = result_bytes.split_at_mut(self_len);
 
                 if remaining_bytes.iter().any(|&x| x != 0) {
@@ -96,9 +97,9 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
             }
 
             fn big_div(self, rhs: T) -> Self {
-                let mut self_bytes: Vec<u64> = self.get().as_ref().try_into().unwrap();
-                let mut rhs_bytes: Vec<u64> = rhs.get().as_ref().try_into().unwrap();
-                let mut rhs_one_bytes: Vec<u64> = T::one().get().as_ref().try_into().unwrap();
+                let mut self_bytes: alloc::vec::Vec<u64> = self.get().as_ref().try_into().unwrap();
+                let mut rhs_bytes: alloc::vec::Vec<u64> = rhs.get().as_ref().try_into().unwrap();
+                let mut rhs_one_bytes: alloc::vec::Vec<u64> = T::one().get().as_ref().try_into().unwrap();
 
                 let self_len = self_bytes.len();
                 let big_type_len: usize = #big_type::default().as_ref().len();
@@ -118,7 +119,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                     .unwrap_or_else(|| core::panic!("decimal: overflow in method {}::big_div()", #name_str))
                 );
 
-                let mut result_bytes: Vec<u64> = result.as_ref().try_into().unwrap();
+                let mut result_bytes: alloc::vec::Vec<u64> = result.as_ref().try_into().unwrap();
                 let (self_result_bytes, remaining_bytes) = result_bytes.split_at_mut(self_len);
 
                 if remaining_bytes.iter().any(|&x| x != 0) {
@@ -137,11 +138,11 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
             fn checked_big_div(self, rhs: T) -> core::result::Result<Self, alloc::string::String> {
 
 
-                let mut self_bytes: Vec<u64> = self.get().as_ref().try_into()
+                let mut self_bytes: alloc::vec::Vec<u64> = self.get().as_ref().try_into()
                     .map_err(|_| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div()", #big_str, #name_str))?;
-                let mut rhs_bytes: Vec<u64> = rhs.get().as_ref().try_into()
+                let mut rhs_bytes: alloc::vec::Vec<u64> = rhs.get().as_ref().try_into()
                     .map_err(|_| alloc::format!("decimal: rhs value can't fit into `{}` type in {}::checked_big_div()", #big_str, #name_str))?;
-                let mut rhs_one_bytes: Vec<u64> = T::one().get().as_ref().try_into()
+                let mut rhs_one_bytes: alloc::vec::Vec<u64> = T::one().get().as_ref().try_into()
                     .map_err(|_| alloc::format!("decimal: rhs::one value can't fit into `{}` type in {}::checked_big_div()", #big_str, #name_str))?;
 
                 let self_len = self_bytes.len();
@@ -165,7 +166,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                     .ok_or_else(|| alloc::format!("decimal: overflow in method {}::checked_big_div()", #name_str))?
                 );
 
-                let mut result_bytes: Vec<u64> = result.as_ref().try_into().unwrap();
+                let mut result_bytes: alloc::vec::Vec<u64> = result.as_ref().try_into().unwrap();
                 let (self_result_bytes, remaining_bytes) = result_bytes.split_at_mut(self_len);
 
                 if remaining_bytes.iter().any(|&x| x != 0) {
@@ -182,9 +183,9 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
             }
 
             fn big_div_up(self, rhs: T) -> Self {
-                let mut self_bytes: Vec<u64> = self.get().as_ref().try_into().unwrap();
-                let mut rhs_bytes: Vec<u64> = rhs.get().as_ref().try_into().unwrap();
-                let mut rhs_one_bytes: Vec<u64> = T::one().get().as_ref().try_into().unwrap();
+                let mut self_bytes: alloc::vec::Vec<u64> = self.get().as_ref().try_into().unwrap();
+                let mut rhs_bytes: alloc::vec::Vec<u64> = rhs.get().as_ref().try_into().unwrap();
+                let mut rhs_one_bytes: alloc::vec::Vec<u64> = T::one().get().as_ref().try_into().unwrap();
 
                 let self_len = self_bytes.len();
                 let big_type_len: usize = #big_type::default().as_ref().len();
@@ -208,7 +209,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                     .unwrap_or_else(|| core::panic!("decimal: overflow in method {}::big_div_up()", #name_str))
                 );
 
-                let mut result_bytes: Vec<u64> = result.as_ref().try_into().unwrap();
+                let mut result_bytes: alloc::vec::Vec<u64> = result.as_ref().try_into().unwrap();
                 let (self_result_bytes, remaining_bytes) = result_bytes.split_at_mut(self_len);
 
                 if remaining_bytes.iter().any(|&x| x != 0) {

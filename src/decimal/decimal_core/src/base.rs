@@ -4,6 +4,7 @@ use quote::quote;
 use crate::utils::string_to_ident;
 use crate::DecimalCharacteristics;
 
+
 pub fn generate_base(characteristics: DecimalCharacteristics) -> proc_macro::TokenStream {
     let DecimalCharacteristics {
         struct_name,
@@ -50,7 +51,7 @@ pub fn generate_base(characteristics: DecimalCharacteristics) -> proc_macro::Tok
                 #parsed_scale
             }
 
-            fn checked_one() -> Result<Self, String> {
+            fn checked_one() -> Result<Self, alloc::string::String> {
                 let base = #underlying_type::try_from(10u8).map_err(|_| "checked_one: cannot create underlying_type from u8")?;
                 Ok(Self::new(
                     base.checked_pow(
@@ -63,7 +64,7 @@ pub fn generate_base(characteristics: DecimalCharacteristics) -> proc_macro::Tok
                 Self::checked_one().unwrap()
             }
 
-            fn checked_almost_one() -> Result<Self, String> {
+            fn checked_almost_one() -> Result<Self, alloc::string::String> {
                 let min_diff = #underlying_type::try_from(1u8).map_err(|_| "checked_almost_one: cannot create underlying_type from u8")?;
                 let one = Self::checked_one()?;
 
@@ -94,15 +95,15 @@ pub fn generate_base(characteristics: DecimalCharacteristics) -> proc_macro::Tok
                     + From<u64>
                     + core::ops::Shl<usize, Output = T>
                     + core::ops::BitOrAssign,
-                >(self) -> Result<T,String> {
-                    let mut self_bytes: Vec<u64> = self.get().as_ref().try_into().unwrap();
+                >(self) -> Result<T, alloc::string::String> {
+                    let mut self_bytes: alloc::vec::Vec<u64> = self.get().as_ref().try_into().unwrap();
                     let mut result = T::default();
                     let result_length: usize = result.as_ref().len();
 
                     if self_bytes.len() > result_length {
                         let (self_bytes, remaining_bytes) = self_bytes.split_at_mut(result_length);
                         if remaining_bytes.iter().any(|&x| x != 0) {
-                            return Err("Overflow while casting.".to_string())
+                            return Err(alloc::string::String::from("Overflow while casting."))
                         }
                     }
 
@@ -128,7 +129,7 @@ pub fn generate_base(characteristics: DecimalCharacteristics) -> proc_macro::Tok
                 Self::checked_from_value(from).unwrap()
             }
 
-            fn checked_from_value<T,R>(from:R) -> Result<T,String>
+            fn checked_from_value<T,R>(from:R) -> Result<T, alloc::string::String>
             where
             T: Default
                 + AsRef<[u64]>
@@ -141,13 +142,13 @@ pub fn generate_base(characteristics: DecimalCharacteristics) -> proc_macro::Tok
                 + core::ops::Shl<usize, Output = R>
                 + core::ops::BitOrAssign,
             {
-                let mut self_bytes: Vec<u64> = from.as_ref().try_into().unwrap();
+                let mut self_bytes: alloc::vec::Vec<u64> = from.as_ref().try_into().unwrap();
                 let mut result = T::default();
                 let result_length: usize = result.as_ref().len();
                 if self_bytes.len() > result_length {
                     let (self_bytes, remaining_bytes) = self_bytes.split_at_mut(result_length);
                     if remaining_bytes.iter().any(|&x| x != 0) {
-                        return Err("Overflow while casting from value.".to_string())
+                        return Err(alloc::string::String::from("Overflow while casting from value."))
                     }
                 }
                 for (index, &value) in self_bytes.iter().enumerate() {
