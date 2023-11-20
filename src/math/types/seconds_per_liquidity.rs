@@ -39,28 +39,15 @@ impl SecondsPerLiquidity {
         }
         let delta_time = current_timestamp - last_timestamp;
 
-        let len = SecondsPerLiquidity::default().get().as_ref().len();
-        let mut liquidity_bytes: Vec<u64> = liquidity.get().as_ref().try_into().unwrap();
-        let (liquidity_result_bytes, remaining_bytes) = liquidity_bytes.split_at_mut(len);
-
-        if remaining_bytes.iter().any(|&x| x != 0) {
-            // Overflow while casting liquidity U256T to U128T
-            return Ok(Self::new(U128T::from(0)));
-        }
-
-        let mut casted_liquidity = U128T::default();
-        for (index, &value) in liquidity_result_bytes.iter().enumerate() {
-            casted_liquidity |= U128T::from(value) << (index * 64);
-        }
-
         Ok(Self::new(
-            (U128T::from(delta_time))
-                .checked_mul(U128T::from(SecondsPerLiquidity::one().get()))
-                .ok_or_else(|| err!(TrackableError::MUL))?
-                .checked_div(casted_liquidity)
-                .ok_or_else(|| err!(TrackableError::DIV))?
-                .try_into()
-                .map_err(|_| err!(TrackableError::cast::<Self>().as_str()))?,
+            Self::checked_from_value(
+                U256T::from(delta_time)
+                    .checked_mul(Self::one().cast())
+                    .ok_or_else(|| err!(TrackableError::MUL))?
+                    .checked_div(liquidity.cast())
+                    .ok_or_else(|| err!(TrackableError::DIV))?,
+            )
+            .map_err(|_| err!(TrackableError::cast::<Self>().as_str()))?,
         ))
     }
 }
@@ -218,7 +205,7 @@ mod tests {
             )
             .unwrap_err()
             .get();
-            assert_eq!(cause, "multiplication overflow");
+            assert_eq!(cause, "conversion to invariant_math::types::seconds_per_liquidity::SecondsPerLiquidity type failed");
             assert_eq!(stack.len(), 1);
         }
 
