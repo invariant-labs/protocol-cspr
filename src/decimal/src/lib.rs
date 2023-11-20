@@ -13,9 +13,6 @@ pub use traits::*;
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::alloc::string::ToString;
-    use alloc::string::String;
-    use alloc::vec::Vec;
     pub use decimal_core::decimal;
 
     #[cfg(test)]

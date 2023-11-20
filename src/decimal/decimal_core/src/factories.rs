@@ -110,7 +110,7 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
             T: AsRef<[u64]>,
         {
             fn checked_from_scale_to_value(val: T, scale: u8) -> core::result::Result<#big_type, alloc::string::String> {
-                let mut val_bytes: Vec<u64> = val.as_ref().try_into().unwrap();
+                let mut val_bytes: alloc::vec::Vec<u64> = val.as_ref().try_into().unwrap();
                 let big_type_len: usize = #big_type::default().as_ref().len();
 
                 val_bytes.resize(big_type_len, 0);

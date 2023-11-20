@@ -1,8 +1,10 @@
+#![no_std]
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
 use invariant_math::uints::U256T;
 use odra::{types::U256, Variable};
-
+extern crate alloc;
+use alloc::string::ToString;
 #[odra::module]
 pub struct Invariant {
     liquidity: Variable<U256>,
