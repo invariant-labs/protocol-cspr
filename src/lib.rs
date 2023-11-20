@@ -1,4 +1,5 @@
 #![no_std]
+mod contracts;
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
 use invariant_math::uints::U256T;
