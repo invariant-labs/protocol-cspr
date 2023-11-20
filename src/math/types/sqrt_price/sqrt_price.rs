@@ -72,11 +72,10 @@ impl SqrtPrice {
             .unwrap()
             .checked_div(denominator)
             .unwrap();
-        let casted_result = SqrtPrice::from_value::<U128T, U384T>(result);
-        SqrtPrice::new(casted_result)
+
+        SqrtPrice::new(SqrtPrice::from_value(result))
     }
 
-    // TODO - Configure nominator and denominator types
     pub fn checked_big_div_values(
         nominator: U448T,
         denominator: U448T,
@@ -87,12 +86,12 @@ impl SqrtPrice {
             .checked_div(denominator)
             .ok_or_else(|| err!(TrackableError::DIV))?;
 
-        let casted_result = SqrtPrice::checked_from_value::<U128T, U448T>(result)
-            .map_err(|_| err!("Can't parse from U448T to U128T"))?;
-        Ok(SqrtPrice::new(casted_result))
+        Ok(SqrtPrice::new(
+            SqrtPrice::checked_from_value(result)
+                .map_err(|_| err!("Can't parse from U448T to U128T"))?,
+        ))
     }
 
-    // TODO - Configure nominator and denominator types
     pub fn checked_big_div_values_up(
         nominator: U448T,
         denominator: U448T,
@@ -109,10 +108,10 @@ impl SqrtPrice {
             .checked_div(denominator)
             .ok_or_else(|| err!(TrackableError::DIV))?;
 
-        // TODO - add ok_or_mark_trace!
-        let casted_result = SqrtPrice::checked_from_value::<U128T, U448T>(result)
-            .map_err(|_| err!("Can't parse from U448T to U128T"))?;
-        Ok(SqrtPrice::new(casted_result))
+        Ok(SqrtPrice::new(
+            SqrtPrice::checked_from_value(result)
+                .map_err(|_| err!("Can't parse from U448T to U128T"))?,
+        ))
     }
 }
 
