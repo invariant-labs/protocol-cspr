@@ -115,7 +115,7 @@ pub fn generate_by_number(characteristics: DecimalCharacteristics) -> proc_macro
                 #[test]
                 fn test_big_div_up_by_number () {
                     let a = #struct_name::new(#underlying_type::from(2u8));
-                    let mut struct_one_bytes: Vec<u64> = #struct_name::one().get().as_ref().try_into().unwrap();
+                    let mut struct_one_bytes: alloc::vec::Vec<u64> = #struct_name::one().get().as_ref().try_into().unwrap();
                     struct_one_bytes.resize(#big_type::default().as_ref().len(), 0);
                     let b: #big_type = #big_type(struct_one_bytes.try_into().unwrap());
                     assert_eq!(a.big_div_by_number(b), #struct_name::new(#underlying_type::from(2u8)));
@@ -125,7 +125,7 @@ pub fn generate_by_number(characteristics: DecimalCharacteristics) -> proc_macro
                 #[test]
                 fn test_checked_big_div_by_number() {
                     let a = #struct_name::new(#underlying_type::from(2u8));
-                    let mut struct_one_bytes: Vec<u64> = #struct_name::one().get().as_ref().try_into().unwrap();
+                    let mut struct_one_bytes: alloc::vec::Vec<u64> = #struct_name::one().get().as_ref().try_into().unwrap();
                     struct_one_bytes.resize(#big_type::default().as_ref().len(), 0);
                     let b: #big_type = #big_type(struct_one_bytes.try_into().unwrap());
                     assert_eq!(a.checked_big_div_by_number(b), Ok(#struct_name::new(#underlying_type::from(2u8))));
@@ -134,7 +134,7 @@ pub fn generate_by_number(characteristics: DecimalCharacteristics) -> proc_macro
                 #[test]
                 fn test_checked_big_div_by_number_up() {
                     let a = #struct_name::new(#underlying_type::from(2u8));
-                    let mut struct_one_bytes: Vec<u64> = #struct_name::one().get().as_ref().try_into().unwrap();
+                    let mut struct_one_bytes: alloc::vec::Vec<u64> = #struct_name::one().get().as_ref().try_into().unwrap();
                     struct_one_bytes.resize(#big_type::default().as_ref().len(), 0);
                     let b: #big_type = #big_type(struct_one_bytes.try_into().unwrap());
                     assert_eq!(a.checked_big_div_by_number_up(b), Ok(#struct_name::new(#underlying_type::from(2u8))));
@@ -144,10 +144,10 @@ pub fn generate_by_number(characteristics: DecimalCharacteristics) -> proc_macro
                 fn test_big_mul_to_value () {
                     let a = #struct_name::new(#underlying_type::from(2u8));
                     let b = #struct_name::one();
-                    let mut a_bytes: Vec<u64> = a.get().as_ref().try_into().unwrap();
+                    let mut a_bytes: alloc::vec::Vec<u64> = a.get().as_ref().try_into().unwrap();
                     a_bytes.resize(#big_type::default().as_ref().len(), 0);
                     let c: #big_type = #big_type(a_bytes.try_into().unwrap());
-                    let mut b_bytes: Vec<u64> = b.get().as_ref().try_into().unwrap();
+                    let mut b_bytes: alloc::vec::Vec<u64> = b.get().as_ref().try_into().unwrap();
                     b_bytes.resize(#big_type::default().as_ref().len(), 0);
                     let d: #big_type = #big_type(b_bytes.try_into().unwrap());
                     assert_eq!(a.big_mul_to_value(b), c);
