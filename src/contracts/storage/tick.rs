@@ -1,10 +1,11 @@
 use decimal::*;
 use invariant_math::liquidity::Liquidity;
+use invariant_math::sqrt_price::SqrtPrice;
 use odra::types::{U128, U256};
 use odra::OdraType;
 use traceable_result::*;
 
-use crate::utils::{liquidity_to_uint, uint_to_liquidity};
+use crate::utils::{liquidity_to_uint, sqrt_price_to_uint, uint_to_liquidity};
 
 #[derive(OdraType)]
 pub struct Tick {
@@ -17,6 +18,22 @@ pub struct Tick {
     pub fee_growth_outside_y: U128,
     pub seconds_per_liquidity_outside: U128,
     pub seconds_outside: u64,
+}
+
+impl Default for Tick {
+    fn default() -> Self {
+        Tick {
+            index: 0i32,
+            sign: false,
+            liquidity_change: U256::from(0),
+            liquidity_gross: U256::from(0),
+            sqrt_price: sqrt_price_to_uint(SqrtPrice::from_integer(1)),
+            fee_growth_outside_x: U128::from(0),
+            fee_growth_outside_y: U128::from(0),
+            seconds_per_liquidity_outside: U128::from(0),
+            seconds_outside: 0u64,
+        }
+    }
 }
 
 impl Tick {
@@ -144,5 +161,374 @@ impl Tick {
         }
 
         Ok(new_liquidity)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use decimal::{Decimal, Factories};
+
+    use invariant_math::{fee_growth::FeeGrowth, math::calculate_max_liquidity_per_tick, U256T};
+
+    use crate::utils::{fee_growth_to_uint, uint_to_fee_growth};
+
+    use super::*;
+
+    // #[test]
+    // fn test_cross() {
+    //     {
+    //         let mut pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(45),
+    //             fee_growth_global_y: FeeGrowth::new(35),
+    //             liquidity: Liquidity::from_integer(4),
+    //             last_timestamp: 15,
+    //             start_timestamp: 4,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::from_integer(11),
+    //             current_tick_index: 7,
+    //             ..Default::default()
+    //         };
+    //         let mut tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(30),
+    //             fee_growth_outside_y: FeeGrowth::new(25),
+    //             index: 3,
+    //             seconds_outside: 5,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(3),
+    //             liquidity_change: Liquidity::from_integer(1),
+    //             ..Default::default()
+    //         };
+    //         let result_pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(45),
+    //             fee_growth_global_y: FeeGrowth::new(35),
+    //             liquidity: Liquidity::from_integer(5),
+    //             last_timestamp: 315360015,
+    //             start_timestamp: 4,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::new(
+    //                 89840000000000000000000000000000,
+    //             ),
+    //             current_tick_index: 7,
+    //             ..Default::default()
+    //         };
+    //         let result_tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(15),
+    //             fee_growth_outside_y: FeeGrowth::new(10),
+    //             index: 3,
+    //             seconds_outside: 315360006,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(
+    //                 89839999999999999999999999999997,
+    //             ),
+    //             liquidity_change: Liquidity::from_integer(1),
+    //             ..Default::default()
+    //         };
+    //         tick.cross(&mut pool, 315360015).ok();
+    //         assert_eq!(tick, result_tick);
+    //         assert_eq!(pool, result_pool);
+    //     }
+    //     {
+    //         // let mut pool = Pool {
+    //         let mut pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(68),
+    //             fee_growth_global_y: FeeGrowth::new(59),
+    //             liquidity: Liquidity::new(0),
+    //             last_timestamp: 9,
+    //             start_timestamp: 34,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::new(32),
+    //             current_tick_index: 4,
+    //             ..Default::default()
+    //         };
+    //         let mut tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(42),
+    //             fee_growth_outside_y: FeeGrowth::new(14),
+    //             index: 9,
+    //             seconds_outside: 41,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(23),
+    //             liquidity_change: Liquidity::new(0),
+    //             ..Default::default()
+    //         };
+    //         // let result_pool = Pool {
+    //         let result_pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(68),
+    //             fee_growth_global_y: FeeGrowth::new(59),
+    //             liquidity: Liquidity::new(0),
+    //             last_timestamp: 315360000,
+    //             start_timestamp: 34,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::new(32),
+    //             current_tick_index: 4,
+    //             ..Default::default()
+    //         };
+    //         // let result_tick = Tick {
+    //         let result_tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(26),
+    //             fee_growth_outside_y: FeeGrowth::new(45),
+    //             index: 9,
+    //             seconds_outside: 315359925,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(9),
+    //             liquidity_change: Liquidity::from_integer(0),
+    //             ..Default::default()
+    //         };
+
+    //         tick.cross(&mut pool, 315360000).ok();
+    //         assert_eq!(tick, result_tick);
+    //         assert_eq!(pool, result_pool);
+    //     }
+    //     // fee_growth_outside should underflow
+    //     {
+    //         let mut pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(3402),
+    //             fee_growth_global_y: FeeGrowth::new(3401),
+    //             liquidity: Liquidity::from_integer(14),
+    //             last_timestamp: 9,
+    //             start_timestamp: 15,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::new(22),
+    //             current_tick_index: 9,
+    //             ..Default::default()
+    //         };
+    //         let mut tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(26584),
+    //             fee_growth_outside_y: FeeGrowth::new(1256588),
+    //             index: 45,
+    //             seconds_outside: 74,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(23),
+    //             liquidity_change: Liquidity::new(10),
+    //             ..Default::default()
+    //         };
+    //         let result_pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(3402),
+    //             fee_growth_global_y: FeeGrowth::new(3401),
+    //             liquidity: Liquidity::new(13999990),
+    //             last_timestamp: 31536000,
+    //             start_timestamp: 15,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::new(
+    //                 2252570785714285714285714285736,
+    //             ),
+    //             current_tick_index: 9,
+    //             ..Default::default()
+    //         };
+    //         let result_tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(340282366920938463463374607431768188274),
+    //             fee_growth_outside_y: FeeGrowth::new(340282366920938463463374607431766958269),
+    //             index: 45,
+    //             seconds_outside: 31535911,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(
+    //                 2252570785714285714285714285713,
+    //             ),
+    //             liquidity_change: Liquidity::new(10),
+    //             ..Default::default()
+    //         };
+
+    //         tick.cross(&mut pool, 31536000).ok();
+    //         assert_eq!(tick, result_tick);
+    //         assert_eq!(pool, result_pool);
+    //     }
+    //     // seconds_per_liquidity_outside should underflow
+    //     {
+    //         let mut pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(145),
+    //             fee_growth_global_y: FeeGrowth::new(364),
+    //             liquidity: Liquidity::new(14),
+    //             last_timestamp: 16,
+    //             start_timestamp: 15,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::new(354),
+    //             current_tick_index: 9,
+    //             ..Default::default()
+    //         };
+    //         let mut tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(99),
+    //             fee_growth_outside_y: FeeGrowth::new(256),
+    //             index: 45,
+    //             seconds_outside: 74,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(35),
+    //             liquidity_change: Liquidity::new(10),
+    //             ..Default::default()
+    //         };
+    //         let result_pool = Pool {
+    //             fee_growth_global_x: FeeGrowth::new(145),
+    //             fee_growth_global_y: FeeGrowth::new(364),
+    //             liquidity: Liquidity::new(4),
+    //             last_timestamp: 315360000,
+    //             start_timestamp: 15,
+    //             seconds_per_liquidity_global: SecondsPerLiquidity::new(
+    //                 22525713142857142857142857142857143211,
+    //             ),
+    //             current_tick_index: 9,
+    //             ..Default::default()
+    //         };
+    //         let result_tick = Tick {
+    //             fee_growth_outside_x: FeeGrowth::new(46),
+    //             fee_growth_outside_y: FeeGrowth::new(108),
+    //             index: 45,
+    //             seconds_outside: 315359911,
+    //             seconds_per_liquidity_outside: SecondsPerLiquidity::new(
+    //                 22525713142857142857142857142857143176,
+    //             ),
+    //             liquidity_change: Liquidity::new(10),
+    //             ..Default::default()
+    //         };
+
+    //         tick.cross(&mut pool, 315360000).ok();
+    //         assert_eq!(tick, result_tick);
+    //         assert_eq!(pool, result_pool);
+    //     }
+    // }
+
+    #[test]
+    fn test_update_liquidity_change() {
+        // update when tick sign and sign of liquidity change are the same
+        {
+            let mut tick = Tick {
+                sign: true,
+                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                ..Default::default()
+            };
+            let liquidity_delta = Liquidity::from_integer(3);
+            let add = true;
+            tick.update_liquidity_change(liquidity_delta, add);
+
+            assert_eq!(tick.sign, true);
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_change) },
+                Liquidity::from_integer(5)
+            );
+        }
+        {
+            let mut tick = Tick {
+                sign: false,
+                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                ..Default::default()
+            };
+            let liquidity_delta = Liquidity::from_integer(3);
+            let add = false;
+            tick.update_liquidity_change(liquidity_delta, add);
+
+            assert_eq!(tick.sign, false);
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_change) },
+                Liquidity::from_integer(5)
+            );
+        }
+        // update when tick sign and sign of liquidity change are different
+        {
+            let mut tick = Tick {
+                sign: true,
+                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                ..Default::default()
+            };
+            let liquidity_delta = Liquidity::from_integer(3);
+            let add = false;
+            tick.update_liquidity_change(liquidity_delta, add);
+
+            assert_eq!(tick.sign, false);
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_change) },
+                Liquidity::from_integer(1)
+            );
+        }
+        {
+            let mut tick = Tick {
+                sign: false,
+                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                ..Default::default()
+            };
+            let liquidity_delta = Liquidity::from_integer(3);
+            let add = true;
+            tick.update_liquidity_change(liquidity_delta, add);
+
+            assert_eq!(tick.sign, true);
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_change) },
+                Liquidity::from_integer(1)
+            );
+        }
+    }
+
+    #[test]
+    fn test_update() {
+        let max_liquidity = Liquidity::new(U256T::from(u128::MAX));
+        {
+            let mut tick = Tick {
+                index: 0,
+                sign: true,
+                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                liquidity_gross: liquidity_to_uint(Liquidity::from_integer(2)),
+                fee_growth_outside_x: fee_growth_to_uint(FeeGrowth::from_integer(2)),
+                fee_growth_outside_y: fee_growth_to_uint(FeeGrowth::from_integer(2)),
+                ..Default::default()
+            };
+            let liquidity_delta: Liquidity = Liquidity::from_integer(1);
+            let is_upper: bool = false;
+            let is_deposit: bool = true;
+
+            tick.update(liquidity_delta, max_liquidity, is_upper, is_deposit)
+                .unwrap();
+
+            assert_eq!(tick.sign, true);
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_change) },
+                Liquidity::from_integer(3)
+            );
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_gross) },
+                Liquidity::from_integer(3)
+            );
+            assert_eq!(
+                { uint_to_fee_growth(tick.fee_growth_outside_x) },
+                FeeGrowth::from_integer(2)
+            );
+            assert_eq!(
+                { uint_to_fee_growth(tick.fee_growth_outside_y) },
+                FeeGrowth::from_integer(2)
+            );
+        }
+        {
+            let mut tick = Tick {
+                index: 5,
+                sign: true,
+                liquidity_change: liquidity_to_uint(Liquidity::from_integer(3)),
+                liquidity_gross: liquidity_to_uint(Liquidity::from_integer(7)),
+                fee_growth_outside_x: fee_growth_to_uint(FeeGrowth::from_integer(13)),
+                fee_growth_outside_y: fee_growth_to_uint(FeeGrowth::from_integer(11)),
+                ..Default::default()
+            };
+            let liquidity_delta: Liquidity = Liquidity::from_integer(1);
+            let is_upper: bool = true;
+            let is_deposit: bool = true;
+
+            tick.update(liquidity_delta, max_liquidity, is_upper, is_deposit)
+                .unwrap();
+
+            assert_eq!(tick.sign, true);
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_change) },
+                Liquidity::from_integer(2)
+            );
+            assert_eq!(
+                { uint_to_liquidity(tick.liquidity_gross) },
+                Liquidity::from_integer(8)
+            );
+            assert_eq!(
+                { uint_to_fee_growth(tick.fee_growth_outside_x) },
+                FeeGrowth::from_integer(13)
+            );
+            assert_eq!(
+                { uint_to_fee_growth(tick.fee_growth_outside_y) },
+                FeeGrowth::from_integer(11)
+            );
+        }
+        // exceed max tick liquidity
+        {
+            let mut tick = Tick {
+                // index: 5,
+                sign: true,
+                liquidity_change: liquidity_to_uint(Liquidity::from_integer(100_000)),
+                liquidity_gross: liquidity_to_uint(Liquidity::from_integer(100_000)),
+                fee_growth_outside_x: fee_growth_to_uint(FeeGrowth::from_integer(1000)),
+                fee_growth_outside_y: fee_growth_to_uint(FeeGrowth::from_integer(1000)),
+                ..Default::default()
+            };
+
+            let max_liquidity_per_tick = calculate_max_liquidity_per_tick(1);
+            let liquidity_delta = max_liquidity_per_tick + Liquidity::new(U256T::from(1));
+            let result = tick.update(liquidity_delta, max_liquidity_per_tick, false, true);
+            assert!(result.is_err());
+        }
     }
 }
