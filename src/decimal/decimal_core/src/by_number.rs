@@ -38,9 +38,9 @@ pub fn generate_by_number(characteristics: DecimalCharacteristics) -> proc_macro
 
                     Ok(Self::new(#struct_name::checked_from_value(big_self
                         .checked_mul(big_self_one)
-                        .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number()", #big_str, #name_str))
+                        .ok_or_else(|| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number()", #big_str, #name_str))?
                         .checked_div(rhs)
-                        .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number()", #big_str, #name_str))
+                        .ok_or_else(|| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number()", #big_str, #name_str))?
                         )?
                     ))
                 }
@@ -65,12 +65,12 @@ pub fn generate_by_number(characteristics: DecimalCharacteristics) -> proc_macro
 
                     Ok(Self::new(#struct_name::checked_from_value(big_self
                         .checked_mul(big_self_one)
-                        .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number_up()", #big_str, #name_str))
+                        .ok_or_else(|| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number_up()", #big_str, #name_str))?
                         .checked_add(rhs.checked_sub(#big_type::from(1u8)).unwrap())
-                        .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number_up()", #big_str, #name_str))
+                        .ok_or_else(|| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number_up()", #big_str, #name_str))?
                         .checked_div(rhs)
-                        .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number_up()", #big_str, #name_str)))?
-                    ))
+                        .ok_or_else(|| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div_by_number_up()", #big_str, #name_str))?
+                    )?))
                 }
             }
 

@@ -68,12 +68,14 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                 let big_rhs: #big_type = rhs.cast::<#big_type>();
                 let big_one: #big_type = T::one().cast::<#big_type>();
                 
-                Ok(Self::new(#struct_name::checked_from_value(big_self
-                    .checked_mul(big_one)
-                    .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::big_div()", #big_str, #name_str))
-                    .checked_div(big_rhs)
-                    .unwrap_or_else(|| core::panic!("decimal: overflow in method {}::big_div()", #name_str)))?
-                ))
+                Ok(Self::new(
+                    #struct_name::checked_from_value(
+                        big_self
+                            .checked_mul(big_one)
+                            .ok_or_else(|| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div()", #big_str, #name_str))?
+                            .checked_div(big_rhs)
+                            .ok_or_else(|| alloc::format!("decimal: lhs value can't fit into `{}` type in {}::checked_big_div()", #big_str, #name_str))?
+                )?))
             }
 
             fn big_div_up(self, rhs: T) -> Self {
