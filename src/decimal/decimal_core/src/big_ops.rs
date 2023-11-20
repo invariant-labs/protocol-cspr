@@ -35,21 +35,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                     .checked_div(big_one)
                     .unwrap_or_else(|| core::panic!("decimal: overflow in method {}::big_mul()", #name_str))
                 );
-
-                let mut result_bytes: Vec<u64> = result.as_ref().try_into().unwrap();
-                let (self_result_bytes, remaining_bytes) = result_bytes.split_at_mut(self_len);
-
-                if remaining_bytes.iter().any(|&x| x != 0) {
-                    core::panic!("decimal: overflow casting result to `{}` type in method {}::big_mul()", #underlying_str, #name_str);
-                }
-
-                let mut result = #underlying_type::default();
-
-                for (index, &value) in self_result_bytes.iter().enumerate() {
-                    result |= #underlying_type::from(value) << (index * 64);
-                }
-
-                Self::new(result)
+                Self::new(#struct_name::from_value::<#underlying_type, #big_type>(result))
             }
 
             fn big_mul_up(self, rhs: T) -> Self {
