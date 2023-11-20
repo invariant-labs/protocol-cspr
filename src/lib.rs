@@ -1,4 +1,8 @@
 #![no_std]
+
+pub mod contracts;
+
+use contracts::Tickmap;
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
 use invariant_math::uints::U256T;
@@ -7,6 +11,7 @@ extern crate alloc;
 use alloc::string::ToString;
 #[odra::module]
 pub struct Invariant {
+    tickmap: Tickmap,
     liquidity: Variable<U256>,
 }
 
