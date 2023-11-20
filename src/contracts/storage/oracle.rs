@@ -3,7 +3,7 @@ use odra::types::U128;
 use odra::OdraType;
 use odra::prelude::vec::Vec;
 
-#[derive(OdraType)]
+#[derive(OdraType, Default)]
 pub struct Oracle {
     pub data: Vec<Record>,
     pub head: u16,
