@@ -2,7 +2,7 @@
 mod contracts;
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
-use invariant_math::uints::U256T;
+use invariant_math::uints::{U128T, U256T};
 use odra::{types::U256, Variable};
 extern crate alloc;
 use alloc::string::ToString;
