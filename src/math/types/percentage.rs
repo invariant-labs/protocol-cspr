@@ -1,9 +1,11 @@
 use decimal::*;
+use odra::{
+    types::{U128, U256},
+    OdraType,
+};
 
-use crate::uints::{U128T, U256T};
-
-#[decimal(12, U256T)]
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
+#[decimal(12, U256)]
+#[derive(OdraType, Default, Debug, Copy, PartialEq, Eq, PartialOrd)]
 pub struct Percentage {
-    pub v: U128T,
+    pub v: U128,
 }

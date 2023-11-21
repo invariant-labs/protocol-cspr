@@ -1,7 +1,12 @@
-use crate::uints::{U256T, U512T};
 use decimal::*;
-#[decimal(5, U512T)]
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
+
+use odra::{
+    types::{U256, U512},
+    OdraType,
+};
+
+#[decimal(5, U512)]
+#[derive(OdraType, Default, Debug, Copy, PartialEq, Eq, PartialOrd)]
 pub struct Liquidity {
-    pub v: U256T,
+    pub v: U256,
 }

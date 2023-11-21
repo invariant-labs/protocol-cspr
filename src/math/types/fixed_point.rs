@@ -1,8 +1,9 @@
-use crate::uints::{U128T, U192T};
+use crate::math::uints::U192T;
 use decimal::*;
+use odra::{types::U128, OdraType};
 
 #[decimal(12, U192T)]
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
+#[derive(OdraType, Default, Debug, Copy, PartialEq, Eq, PartialOrd)]
 pub struct FixedPoint {
-    pub v: U128T,
+    pub v: U128,
 }
