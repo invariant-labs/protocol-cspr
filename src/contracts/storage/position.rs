@@ -1,12 +1,13 @@
-use decimal::*;
-use traceable_result::*;
-use invariant_math::{liquidity::Liquidity, token_amount::TokenAmount, fee_growth::FeeGrowth};
-use odra::types::{U128,U256};
-use odra::OdraType;
+use super::{Pool, Tick, Tickmap};
 use crate::contracts::PoolKey;
 use crate::{U128T, U256T};
-
-
+use decimal::*;
+use invariant_math::calculate_max_liquidity_per_tick;
+use invariant_math::fee_growth::calculate_fee_growth_inside;
+use invariant_math::{fee_growth::FeeGrowth, liquidity::Liquidity, token_amount::TokenAmount};
+use odra::types::{U128, U256};
+use odra::OdraType;
+use traceable_result::*;
 #[derive(OdraType, Default)]
 pub struct Position {
     pub pool_key: PoolKey,
@@ -21,61 +22,59 @@ pub struct Position {
     pub tokens_owed_y: U256,
 }
 
-
 impl Position {
-    // TODO - Needs Pool and Tick
-    // pub fn modify(
-    //     &mut self,
-    //     pool: &mut Pool,
-    //     upper_tick: &mut Tick,
-    //     lower_tick: &mut Tick,
-    //     liquidity_delta: Liquidity,
-    //     add: bool,
-    //     current_timestamp: u64,
-    //     tick_spacing: u16,
-    // ) -> TrackableResult<(TokenAmount, TokenAmount)> {
-    //     if !pool.liquidity.is_zero() {
-    //         ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
-    //     } else {
-    //         pool.last_timestamp = current_timestamp;
-    //     }
+    pub fn modify(
+        &mut self,
+        pool: &mut Pool,
+        upper_tick: &mut Tick,
+        lower_tick: &mut Tick,
+        liquidity_delta: Liquidity,
+        add: bool,
+        current_timestamp: u64,
+        tick_spacing: u16,
+    ) -> TrackableResult<(TokenAmount, TokenAmount)> {
+        if !pool.liquidity.is_zero() {
+            // ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
+        } else {
+            pool.last_timestamp = current_timestamp;
+        }
 
-    //     // calculate dynamically limit allows easy modification
-    //     let max_liquidity_per_tick = calculate_max_liquidity_per_tick(tick_spacing);
+        // calculate dynamically limit allows easy modification
+        let max_liquidity_per_tick = calculate_max_liquidity_per_tick(tick_spacing);
 
-    //     // update initialized tick
-    //     lower_tick.update(liquidity_delta, max_liquidity_per_tick, false, add)?;
+        // update initialized tick
+        // lower_tick.update(liquidity_delta, max_liquidity_per_tick, false, add)?;
 
-    //     upper_tick.update(liquidity_delta, max_liquidity_per_tick, true, add)?;
+        // upper_tick.update(liquidity_delta, max_liquidity_per_tick, true, add)?;
 
-    //     // update fee inside position
-    //     let (fee_growth_inside_x, fee_growth_inside_y) = calculate_fee_growth_inside(
-    //         lower_tick.index,
-    //         lower_tick.fee_growth_outside_x,
-    //         lower_tick.fee_growth_outside_y,
-    //         upper_tick.index,
-    //         upper_tick.fee_growth_outside_x,
-    //         upper_tick.fee_growth_outside_y,
-    //         pool.current_tick_index,
-    //         pool.fee_growth_global_x,
-    //         pool.fee_growth_global_y,
-    //     );
+        // update fee inside position
+        let (fee_growth_inside_x, fee_growth_inside_y) = calculate_fee_growth_inside(
+            lower_tick.index,
+            FeeGrowth::new(U128T(lower_tick.fee_growth_outside_x.0)),
+            FeeGrowth::new(U128T(lower_tick.fee_growth_outside_y.0)),
+            upper_tick.index,
+            FeeGrowth::new(U128T(upper_tick.fee_growth_outside_x.0)),
+            FeeGrowth::new(U128T(upper_tick.fee_growth_outside_y.0)),
+            pool.current_tick_index,
+            FeeGrowth::new(U128T(pool.fee_growth_global_x.0)),
+            FeeGrowth::new(U128T(pool.fee_growth_global_y.0)),
+        );
 
-    //     self.update(
-    //         add,
-    //         liquidity_delta,
-    //         fee_growth_inside_x,
-    //         fee_growth_inside_y,
-    //     )?;
+        self.update(
+            add,
+            liquidity_delta,
+            fee_growth_inside_x,
+            fee_growth_inside_y,
+        )?;
 
-    //     // calculate tokens amounts and update pool liquidity
-    //     ok_or_mark_trace!(pool.update_liquidity(
-    //         liquidity_delta,
-    //         add,
-    //         upper_tick.index,
-    //         lower_tick.index
-    //     ))
-    // }
+        // calculate tokens amounts and update pool liquidity
+        // ok_or_mark_trace!(pool.update_liquidity(
+        //     liquidity_delta,
+        //     add,
+        //     upper_tick.index,
+        //     lower_tick.index
+        // ))
+    }
 
     pub fn update(
         &mut self,
@@ -288,7 +287,10 @@ mod tests {
                 .calculate_new_liquidity_safely(sign, liquidity_delta)
                 .unwrap();
 
-            assert_eq!(new_liquidity, U256::from(4 * 10u128.pow(Liquidity::scale() as u32)));
+            assert_eq!(
+                new_liquidity,
+                U256::from(4 * 10u128.pow(Liquidity::scale() as u32))
+            );
         }
         // subtracting liquidity
         {
@@ -353,9 +355,18 @@ mod tests {
                 )
                 .unwrap();
 
-            assert_eq!({ position.liquidity }, U256::from(1 * 10u128.pow(Liquidity::scale() as u32)));
-            assert_eq!({ position.fee_growth_inside_x }, U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32)));
-            assert_eq!({ position.fee_growth_inside_y }, U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32)));
+            assert_eq!(
+                { position.liquidity },
+                U256::from(1 * 10u128.pow(Liquidity::scale() as u32))
+            );
+            assert_eq!(
+                { position.fee_growth_inside_x },
+                U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32))
+            );
+            assert_eq!(
+                { position.fee_growth_inside_y },
+                U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32))
+            );
             assert_eq!({ position.tokens_owed_x }, U256::from(100));
             assert_eq!({ position.tokens_owed_y }, U256::from(100));
         }
@@ -383,9 +394,18 @@ mod tests {
                 )
                 .unwrap();
 
-            assert_eq!({ position.liquidity }, U256::from(2 * 10u128.pow(Liquidity::scale() as u32)));
-            assert_eq!({ position.fee_growth_inside_x }, U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32)));
-            assert_eq!({ position.fee_growth_inside_y }, U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32)));
+            assert_eq!(
+                { position.liquidity },
+                U256::from(2 * 10u128.pow(Liquidity::scale() as u32))
+            );
+            assert_eq!(
+                { position.fee_growth_inside_x },
+                U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32))
+            );
+            assert_eq!(
+                { position.fee_growth_inside_y },
+                U128::from(5 * 10u128.pow(FeeGrowth::scale() as u32))
+            );
             assert_eq!({ position.tokens_owed_x }, U256::from(101));
             assert_eq!({ position.tokens_owed_y }, U256::from(101));
         }
@@ -393,10 +413,12 @@ mod tests {
         {
             let mut position = Position {
                 liquidity: U256::from(1 * 10u128.pow(Liquidity::scale() as u32)),
-                fee_growth_inside_x: U128::from(u128::MAX) - U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32)),
-                fee_growth_inside_y: U128::from(u128::MAX) - U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32)),
-                tokens_owed_x:  U256::from(100),
-                tokens_owed_y:  U256::from(100),
+                fee_growth_inside_x: U128::from(u128::MAX)
+                    - U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32)),
+                fee_growth_inside_y: U128::from(u128::MAX)
+                    - U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32)),
+                tokens_owed_x: U256::from(100),
+                tokens_owed_y: U256::from(100),
                 ..Default::default()
             };
             let sign = true;
@@ -413,12 +435,21 @@ mod tests {
                 )
                 .unwrap();
 
-            assert_eq!({ position.liquidity }, U256::from(2 * 10u128.pow(Liquidity::scale() as u32)),);
-            assert_eq!({ position.fee_growth_inside_x }, U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32)));
-            assert_eq!({ position.fee_growth_inside_y }, U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32)));
+            assert_eq!(
+                { position.liquidity },
+                U256::from(2 * 10u128.pow(Liquidity::scale() as u32)),
+            );
+            assert_eq!(
+                { position.fee_growth_inside_x },
+                U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32))
+            );
+            assert_eq!(
+                { position.fee_growth_inside_y },
+                U128::from(10 * 10u128.pow(FeeGrowth::scale() as u32))
+            );
             assert_eq!({ position.tokens_owed_x }, U256::from(120));
             assert_eq!({ position.tokens_owed_y }, U256::from(120));
-          }
+        }
     }
 
     // #[test]
@@ -473,4 +504,3 @@ mod tests {
     //     }
     // }
 }
-
