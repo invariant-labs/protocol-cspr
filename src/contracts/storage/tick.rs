@@ -1,11 +1,10 @@
 use decimal::*;
 use invariant_math::liquidity::Liquidity;
 use invariant_math::sqrt_price::SqrtPrice;
+use invariant_math::U256T;
 use odra::types::{U128, U256};
 use odra::OdraType;
 use traceable_result::*;
-
-use crate::utils::{liquidity_to_uint, sqrt_price_to_uint, uint_to_liquidity};
 
 #[derive(OdraType)]
 pub struct Tick {
@@ -27,7 +26,7 @@ impl Default for Tick {
             sign: false,
             liquidity_change: U256::from(0),
             liquidity_gross: U256::from(0),
-            sqrt_price: sqrt_price_to_uint(SqrtPrice::from_integer(1)),
+            sqrt_price: U128(SqrtPrice::from_integer(1).get().0),
             fee_growth_outside_x: U128::from(0),
             fee_growth_outside_y: U128::from(0),
             seconds_per_liquidity_outside: U128::from(0),
@@ -111,11 +110,15 @@ impl Tick {
         is_upper: bool,
         is_deposit: bool,
     ) -> TrackableResult<()> {
-        self.liquidity_gross = liquidity_to_uint(self.calculate_new_liquidity_gross_safely(
-            is_deposit,
-            liquidity_delta,
-            max_liquidity_per_tick,
-        )?);
+        self.liquidity_gross = U256(
+            self.calculate_new_liquidity_gross_safely(
+                is_deposit,
+                liquidity_delta,
+                max_liquidity_per_tick,
+            )?
+            .get()
+            .0,
+        );
 
         self.update_liquidity_change(liquidity_delta, is_deposit ^ is_upper);
         Ok(())
@@ -123,17 +126,26 @@ impl Tick {
 
     fn update_liquidity_change(&mut self, liquidity_delta: Liquidity, add: bool) {
         if self.sign ^ add {
-            if { uint_to_liquidity(self.liquidity_change) } > liquidity_delta {
-                self.liquidity_change =
-                    liquidity_to_uint(uint_to_liquidity(self.liquidity_change) - liquidity_delta);
+            if { Liquidity::new(U256T(self.liquidity_change.0)) } > liquidity_delta {
+                self.liquidity_change = U256(
+                    (Liquidity::new(U256T(self.liquidity_change.0)) - liquidity_delta)
+                        .get()
+                        .0,
+                );
             } else {
-                self.liquidity_change =
-                    liquidity_to_uint(liquidity_delta - uint_to_liquidity(self.liquidity_change));
+                self.liquidity_change = U256(
+                    (liquidity_delta - Liquidity::new(U256T(self.liquidity_change.0)))
+                        .get()
+                        .0,
+                );
                 self.sign = !self.sign;
             }
         } else {
-            self.liquidity_change =
-                liquidity_to_uint(uint_to_liquidity(self.liquidity_change) + liquidity_delta);
+            self.liquidity_change = U256(
+                (Liquidity::new(U256T(self.liquidity_change.0)) + liquidity_delta)
+                    .get()
+                    .0,
+            );
         }
     }
 
@@ -144,14 +156,14 @@ impl Tick {
         max_liquidity_per_tick: Liquidity,
     ) -> TrackableResult<Liquidity> {
         // validate in decrease liquidity case
-        if !sign && { uint_to_liquidity(self.liquidity_gross) } < liquidity_delta {
+        if !sign && { Liquidity::new(U256T(self.liquidity_gross.0)) } < liquidity_delta {
             return Err(err!("InvalidTickLiquidity"));
         }
         let new_liquidity = match sign {
-            true => uint_to_liquidity(self.liquidity_gross)
+            true => Liquidity::new(U256T(self.liquidity_gross.0))
                 .checked_add(liquidity_delta)
                 .map_err(|_| err!("tick add liquidity overflow")),
-            false => uint_to_liquidity(self.liquidity_gross)
+            false => Liquidity::new(U256T(self.liquidity_gross.0))
                 .checked_sub(liquidity_delta)
                 .map_err(|_| err!("tick sun liquidity overflow")),
         }?;
@@ -168,9 +180,9 @@ impl Tick {
 mod tests {
     use decimal::{Decimal, Factories};
 
-    use invariant_math::{fee_growth::FeeGrowth, math::calculate_max_liquidity_per_tick, U256T};
-
-    use crate::utils::{fee_growth_to_uint, uint_to_fee_growth};
+    use invariant_math::{
+        fee_growth::FeeGrowth, math::calculate_max_liquidity_per_tick, U128T, U256T,
+    };
 
     use super::*;
 
@@ -376,7 +388,7 @@ mod tests {
         {
             let mut tick = Tick {
                 sign: true,
-                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                liquidity_change: U256(Liquidity::from_integer(2).get().0),
                 ..Default::default()
             };
             let liquidity_delta = Liquidity::from_integer(3);
@@ -385,14 +397,14 @@ mod tests {
 
             assert_eq!(tick.sign, true);
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_change) },
+                { Liquidity::new(U256T(tick.liquidity_change.0)) },
                 Liquidity::from_integer(5)
             );
         }
         {
             let mut tick = Tick {
                 sign: false,
-                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                liquidity_change: U256(Liquidity::from_integer(2).get().0),
                 ..Default::default()
             };
             let liquidity_delta = Liquidity::from_integer(3);
@@ -401,7 +413,7 @@ mod tests {
 
             assert_eq!(tick.sign, false);
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_change) },
+                { Liquidity::new(U256T(tick.liquidity_change.0)) },
                 Liquidity::from_integer(5)
             );
         }
@@ -409,7 +421,7 @@ mod tests {
         {
             let mut tick = Tick {
                 sign: true,
-                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                liquidity_change: U256(Liquidity::from_integer(2).get().0),
                 ..Default::default()
             };
             let liquidity_delta = Liquidity::from_integer(3);
@@ -418,14 +430,14 @@ mod tests {
 
             assert_eq!(tick.sign, false);
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_change) },
+                { Liquidity::new(U256T(tick.liquidity_change.0)) },
                 Liquidity::from_integer(1)
             );
         }
         {
             let mut tick = Tick {
                 sign: false,
-                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
+                liquidity_change: U256(Liquidity::from_integer(2).get().0),
                 ..Default::default()
             };
             let liquidity_delta = Liquidity::from_integer(3);
@@ -434,7 +446,7 @@ mod tests {
 
             assert_eq!(tick.sign, true);
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_change) },
+                { Liquidity::new(U256T(tick.liquidity_change.0)) },
                 Liquidity::from_integer(1)
             );
         }
@@ -447,34 +459,34 @@ mod tests {
             let mut tick = Tick {
                 index: 0,
                 sign: true,
-                liquidity_change: liquidity_to_uint(Liquidity::from_integer(2)),
-                liquidity_gross: liquidity_to_uint(Liquidity::from_integer(2)),
-                fee_growth_outside_x: fee_growth_to_uint(FeeGrowth::from_integer(2)),
-                fee_growth_outside_y: fee_growth_to_uint(FeeGrowth::from_integer(2)),
+                liquidity_change: U256(Liquidity::from_integer(2).get().0),
+                liquidity_gross: U256(Liquidity::from_integer(2).get().0),
+                fee_growth_outside_x: U128(FeeGrowth::from_integer(2).get().0),
+                fee_growth_outside_y: U128(FeeGrowth::from_integer(2).get().0),
                 ..Default::default()
             };
-            let liquidity_delta: Liquidity = Liquidity::from_integer(1);
-            let is_upper: bool = false;
-            let is_deposit: bool = true;
+            let liquidity_delta = Liquidity::from_integer(1);
+            let is_upper = false;
+            let is_deposit = true;
 
             tick.update(liquidity_delta, max_liquidity, is_upper, is_deposit)
                 .unwrap();
 
             assert_eq!(tick.sign, true);
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_change) },
+                { Liquidity::new(U256T(tick.liquidity_change.0)) },
                 Liquidity::from_integer(3)
             );
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_gross) },
+                { Liquidity::new(U256T(tick.liquidity_gross.0)) },
                 Liquidity::from_integer(3)
             );
             assert_eq!(
-                { uint_to_fee_growth(tick.fee_growth_outside_x) },
+                { FeeGrowth::new(U128T(tick.fee_growth_outside_x.0)) },
                 FeeGrowth::from_integer(2)
             );
             assert_eq!(
-                { uint_to_fee_growth(tick.fee_growth_outside_y) },
+                { FeeGrowth::new(U128T(tick.fee_growth_outside_y.0)) },
                 FeeGrowth::from_integer(2)
             );
         }
@@ -482,10 +494,10 @@ mod tests {
             let mut tick = Tick {
                 index: 5,
                 sign: true,
-                liquidity_change: liquidity_to_uint(Liquidity::from_integer(3)),
-                liquidity_gross: liquidity_to_uint(Liquidity::from_integer(7)),
-                fee_growth_outside_x: fee_growth_to_uint(FeeGrowth::from_integer(13)),
-                fee_growth_outside_y: fee_growth_to_uint(FeeGrowth::from_integer(11)),
+                liquidity_change: U256(Liquidity::from_integer(3).get().0),
+                liquidity_gross: U256(Liquidity::from_integer(7).get().0),
+                fee_growth_outside_x: U128(FeeGrowth::from_integer(13).get().0),
+                fee_growth_outside_y: U128(FeeGrowth::from_integer(11).get().0),
                 ..Default::default()
             };
             let liquidity_delta: Liquidity = Liquidity::from_integer(1);
@@ -497,19 +509,19 @@ mod tests {
 
             assert_eq!(tick.sign, true);
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_change) },
+                { Liquidity::new(U256T(tick.liquidity_change.0)) },
                 Liquidity::from_integer(2)
             );
             assert_eq!(
-                { uint_to_liquidity(tick.liquidity_gross) },
+                { Liquidity::new(U256T(tick.liquidity_gross.0)) },
                 Liquidity::from_integer(8)
             );
             assert_eq!(
-                { uint_to_fee_growth(tick.fee_growth_outside_x) },
+                { FeeGrowth::new(U128T(tick.fee_growth_outside_x.0)) },
                 FeeGrowth::from_integer(13)
             );
             assert_eq!(
-                { uint_to_fee_growth(tick.fee_growth_outside_y) },
+                { FeeGrowth::new(U128T(tick.fee_growth_outside_y.0)) },
                 FeeGrowth::from_integer(11)
             );
         }
@@ -518,10 +530,10 @@ mod tests {
             let mut tick = Tick {
                 // index: 5,
                 sign: true,
-                liquidity_change: liquidity_to_uint(Liquidity::from_integer(100_000)),
-                liquidity_gross: liquidity_to_uint(Liquidity::from_integer(100_000)),
-                fee_growth_outside_x: fee_growth_to_uint(FeeGrowth::from_integer(1000)),
-                fee_growth_outside_y: fee_growth_to_uint(FeeGrowth::from_integer(1000)),
+                liquidity_change: U256(Liquidity::from_integer(100_000).get().0),
+                liquidity_gross: U256(Liquidity::from_integer(100_000).get().0),
+                fee_growth_outside_x: U128(FeeGrowth::from_integer(1000).get().0),
+                fee_growth_outside_y: U128(FeeGrowth::from_integer(1000).get().0),
                 ..Default::default()
             };
 

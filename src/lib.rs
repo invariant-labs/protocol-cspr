@@ -1,7 +1,6 @@
 #![no_std]
 
 pub mod contracts;
-pub mod utils;
 
 use contracts::Tick;
 use decimal::Decimal;
