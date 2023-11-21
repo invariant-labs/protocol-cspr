@@ -1,10 +1,9 @@
+use crate::consts::*;
+use crate::types::fixed_point::FixedPoint;
+use crate::types::token_amount::TokenAmount;
 use crate::uints::{U128T, U384T, U448T};
 use decimal::*;
 use traceable_result::*;
-
-use crate::types::fixed_point::FixedPoint;
-use crate::types::token_amount::TokenAmount;
-use crate::{consts::*, U320T};
 
 #[decimal(24, U384T)]
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
