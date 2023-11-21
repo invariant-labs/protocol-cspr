@@ -8,8 +8,13 @@ use crate::contracts::State;
 use alloc::string::ToString;
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
+use invariant_math::sqrt_price::SqrtPrice;
 use invariant_math::uints::{U128T,U256T};
 use odra::{types::{U256, U128}, Variable, contract_env};
+
+pub struct SwapResult {
+    next_sqrt_price: SqrtPrice,
+}
 
 #[odra::module]
 pub struct Invariant {

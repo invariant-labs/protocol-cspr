@@ -3,18 +3,18 @@ use decimal::*;
 use decimal::num_traits::WrappingAdd;
 use odra::types::{U128,U256, Address, casper_types::account::AccountHash};
 use odra::OdraType;
-use crate::contracts::Oracle;
-use crate::contracts::PoolKey;
-use crate::{U128T, U256T};
-use invariant_math::sqrt_price::calculate_sqrt_price;
-use invariant_math::calculate_amount_delta;
+use crate::{U128T, U256T, SwapResult};
+use super::{Tick, Oracle, PoolKey, Tickmap, FeeTier};
+use alloc::string::ToString;
+use invariant_math::sqrt_price::{calculate_sqrt_price, get_tick_at_sqrt_price};
+use invariant_math::{calculate_amount_delta, is_enough_amount_to_change_price};
+use invariant_math::seconds_per_liquidity::{SecondsPerLiquidity, calculate_seconds_per_liquidity_inside};
 use invariant_math::token_amount::TokenAmount;
 use invariant_math::percentage::Percentage;
 use invariant_math::fee_growth::FeeGrowth;
 use invariant_math::liquidity::Liquidity;
 use invariant_math::sqrt_price::SqrtPrice;
-use invariant_math::seconds_per_liquidity::{SecondsPerLiquidity, calculate_seconds_per_liquidity_inside};
-use alloc::string::ToString;
+
 #[derive(OdraType)]
 pub struct Pool {
     pub liquidity: U256,
@@ -132,16 +132,16 @@ impl Pool {
         &mut self,
         current_timestamp: u64,
     ) -> TrackableResult<()> {
-        // let seconds_per_liquidity_global =
-        //     SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
-        //         self.liquidity,
-        //         current_timestamp,
-        //         self.last_timestamp,
-        //     )?;
+        let seconds_per_liquidity_global =
+            SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
+                Liquidity::new(U256T(self.liquidity.0)),
+                current_timestamp,
+                self.last_timestamp,
+            )?;
 
-        // self.seconds_per_liquidity_global = self
-        //     .seconds_per_liquidity_global
-        //     .unchecked_add(seconds_per_liquidity_global);
+        self.seconds_per_liquidity_global = self
+            .seconds_per_liquidity_global
+            .wrapping_add(&U128(seconds_per_liquidity_global.get().0));
         self.last_timestamp = current_timestamp;
         Ok(())
     }
@@ -181,109 +181,58 @@ impl Pool {
     }
 
 
-    // TODO - tick needed
-    // pub fn cross_tick(
-    //     &mut self,
-    //     result: SwapResult,
-    //     swap_limit: SqrtPrice,
-    //     limiting_tick: Option<(i32, Option<&mut Tick>)>,
-    //     remaining_amount: &mut TokenAmount,
-    //     by_amount_in: bool,
-    //     x_to_y: bool,
-    //     current_timestamp: u64,
-    //     total_amount_in: &mut TokenAmount,
-    //     protocol_fee: Percentage,
-    //     fee_tier: FeeTier,
-    // ) {
-    //     if result.next_sqrt_price == swap_limit && limiting_tick.is_some() {
-    //         let (tick_index, tick) = limiting_tick.unwrap();
+    pub fn cross_tick(
+        &mut self,
+        result: SwapResult,
+        swap_limit: SqrtPrice,
+        limiting_tick: Option<(i32, Option<&mut Tick>)>,
+        remaining_amount: &mut TokenAmount,
+        by_amount_in: bool,
+        x_to_y: bool,
+        current_timestamp: u64,
+        total_amount_in: &mut TokenAmount,
+        protocol_fee: Percentage,
+        fee_tier: FeeTier,
+    ) {
+        if result.next_sqrt_price == swap_limit && limiting_tick.is_some() {
+            let (tick_index, tick) = limiting_tick.unwrap();
 
-    //         let is_enough_amount_to_cross = unwrap!(is_enough_amount_to_change_price(
-    //             *remaining_amount,
-    //             result.next_sqrt_price,
-    //             self.liquidity,
-    //             fee_tier.fee,
-    //             by_amount_in,
-    //             x_to_y,
-    //         ));
+            let is_enough_amount_to_cross = unwrap!(is_enough_amount_to_change_price(
+                *remaining_amount,
+                result.next_sqrt_price,
+                Liquidity::new(U256T(self.liquidity.0)),
+                Percentage::new(U128T(fee_tier.fee.0)),
+                by_amount_in,
+                x_to_y,
+            ));
 
-    //         // crossing tick
-    //         if tick.is_some() {
-    //             if !x_to_y || is_enough_amount_to_cross {
-    //                 let _ = tick.unwrap().cross(self, current_timestamp);
-    //             } else if !remaining_amount.is_zero() {
-    //                 if by_amount_in {
-    //                     self.add_fee(*remaining_amount, x_to_y, protocol_fee)
-    //                         .unwrap();
-    //                     *total_amount_in += *remaining_amount
-    //                 }
-    //                 *remaining_amount = TokenAmount(0);
-    //             }
-    //         }
+            // crossing tick
+            if tick.is_some() {
+                if !x_to_y || is_enough_amount_to_cross {
+                    // let _ = tick.unwrap().cross(self, current_timestamp);
+                } else if !remaining_amount.is_zero() {
+                    if by_amount_in {
+                        self.add_fee(*remaining_amount, x_to_y, protocol_fee)
+                            .unwrap();
+                        *total_amount_in += *remaining_amount
+                    }
+                    *remaining_amount = TokenAmount::new(U256T::from(0));
+                }
+            }
 
-    //         // set tick to limit (below if price is going down, because current tick should always be below price)
-    //         self.current_tick_index = if x_to_y && is_enough_amount_to_cross {
-    //             tick_index - fee_tier.tick_spacing as i32
-    //         } else {
-    //             tick_index
-    //         };
-    //     } else {
-    //         self.current_tick_index = unwrap!(get_tick_at_sqrt_price(
-    //             result.next_sqrt_price,
-    //             fee_tier.tick_spacing
-    //         ));
-    //     };
-    // }
-
-
-    // TODO - tickmap needed
-    // pub fn swap_step(
-    //     &mut self,
-    //     remaining_amount: &mut TokenAmount,
-    //     // tickmap: Tickmap,
-    //     sqrt_price_limit: SqrtPrice,
-    //     x_to_y: bool,
-    //     by_amount_in: bool,
-    //     total_amount_in: &mut TokenAmount,
-    //     total_amount_out: &mut TokenAmount,
-    // ) -> Option<(i32, bool)> {
-    //     // let (swap_limit, limiting_tick) = tickmap.get_closer_limit(
-    //     //     sqrt_price_limit,
-    //     //     x_to_y,
-    //     //     self.current_tick_index,
-    //     //     self.tick_spacing,
-    //     // );
-
-    //     // let result = unwrap!(compute_swap_step(
-    //     //     self.sqrt_price,
-    //     //     swap_limit,
-    //     //     self.liquidity,
-    //     //     *remaining_amount,
-    //     //     by_amount_in,
-    //     //     self.fee,
-    //     // ));
-
-    //     // // make remaining amount smaller
-    //     // if by_amount_in {
-    //     //     *remaining_amount -= result.amount_in + result.fee_amount;
-    //     // } else {
-    //     //     *remaining_amount -= result.amount_out;
-    //     // }
-
-    //     // unwrap!(self.add_fee(result.fee_amount, x_to_y));
-
-    //     // self.sqrt_price = result.next_sqrt_price;
-
-    //     // *total_amount_in += result.amount_in + result.fee_amount;
-    //     // *total_amount_out += result.amount_out;
-
-    //     // // Fail if price would go over swap limit
-    //     // if { self.sqrt_price } == sqrt_price_limit && !remaining_amount.is_zero() {
-    //     //     panic!("PriceLimitReached");
-    //     // }
-
-    //     // limiting_tick
-    // }
+            // set tick to limit (below if price is going down, because current tick should always be below price)
+            self.current_tick_index = if x_to_y && is_enough_amount_to_cross {
+                tick_index - fee_tier.tick_spacing as i32
+            } else {
+                tick_index
+            };
+        } else {
+            self.current_tick_index = unwrap!(get_tick_at_sqrt_price(
+                result.next_sqrt_price,
+                fee_tier.tick_spacing
+            ));
+        };
+    }
 }
 
 
