@@ -2,9 +2,9 @@ use crate::uints::{U128T, U384T, U448T};
 use decimal::*;
 use traceable_result::*;
 
-use crate::consts::*;
 use crate::types::fixed_point::FixedPoint;
 use crate::types::token_amount::TokenAmount;
+use crate::{consts::*, U320T};
 
 #[decimal(24, U384T)]
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
@@ -24,17 +24,22 @@ impl SqrtPrice {
         let nominator: U448T = SqrtPrice::from_value(nominator);
         let denominator: U448T = SqrtPrice::from_value(denominator);
 
-        let result = nominator
+        let intermediate = nominator
             .checked_mul(SqrtPrice::one().cast())
             .ok_or_else(|| err!(TrackableError::MUL))?
             .checked_div(denominator)
-            .ok_or_else(|| err!(TrackableError::DIV))?
+            .ok_or_else(|| err!(TrackableError::DIV))?;
+
+        let casted_intermediate: U384T = (SqrtPrice::checked_from_value(intermediate))
+            .map_err(|_| err!("Can't parse from U448T to U384T"))?;
+
+        let result = casted_intermediate
             .checked_div(SqrtPrice::one().cast())
             .ok_or_else(|| err!(TrackableError::DIV))?;
 
         Ok(TokenAmount::new(
             TokenAmount::checked_from_value(result)
-                .map_err(|_| err!("Can't parse from U448T to U256T"))?,
+                .map_err(|_| err!("Can't parse from U384T to U256T"))?,
         ))
     }
 
@@ -45,13 +50,18 @@ impl SqrtPrice {
         let nominator: U448T = SqrtPrice::from_value(nominator);
         let denominator: U448T = SqrtPrice::from_value(denominator);
 
-        let result = nominator
+        let intermediate = nominator
             .checked_mul(SqrtPrice::one().cast())
             .ok_or_else(|| err!(TrackableError::MUL))?
             .checked_add(denominator - 1)
             .ok_or_else(|| err!(TrackableError::ADD))?
             .checked_div(denominator)
-            .ok_or_else(|| err!(TrackableError::DIV))?
+            .ok_or_else(|| err!(TrackableError::DIV))?;
+
+        let casted_intermediate: U384T = (SqrtPrice::checked_from_value(intermediate))
+            .map_err(|_| err!("Can't parse from U448T to U384T"))?;
+
+        let result = casted_intermediate
             .checked_add(Self::almost_one().cast())
             .ok_or_else(|| err!(TrackableError::ADD))?
             .checked_div(SqrtPrice::one().cast())
@@ -59,7 +69,7 @@ impl SqrtPrice {
 
         Ok(TokenAmount::new(
             TokenAmount::checked_from_value(result)
-                .map_err(|_| err!("Can't parse from U448T to U256T"))?,
+                .map_err(|_| err!("Can't parse from U384T to U256T"))?,
         ))
     }
 

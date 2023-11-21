@@ -145,6 +145,12 @@ pub fn get_delta_x(
     };
     let nominator = delta_price.big_mul_to_value(liquidity);
 
+    println!(
+        "{:?} {:?}",
+        nominator,
+        sqrt_price_a.big_mul_to_value(sqrt_price_b)
+    );
+
     ok_or_mark_trace!(match rounding_up {
         true => SqrtPrice::big_div_values_to_token_up(
             nominator,
