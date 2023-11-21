@@ -1,9 +1,12 @@
 use decimal::*;
 
-use crate::uints::{U256T, U512T};
+use odra::{
+    types::{U256, U512},
+    OdraType,
+};
 
-#[decimal(0, U512T)]
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd)]
+#[decimal(0, U512)]
+#[derive(OdraType, Default, Debug, Copy, PartialEq, Eq, PartialOrd)]
 pub struct TokenAmount {
-    pub v: U256T,
+    pub v: U256,
 }
