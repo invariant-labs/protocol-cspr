@@ -1,10 +1,14 @@
 use decimal::*;
+use invariant_math::fee_growth::FeeGrowth;
 use invariant_math::liquidity::Liquidity;
-use invariant_math::sqrt_price::SqrtPrice;
-use invariant_math::U256T;
+use invariant_math::seconds_per_liquidity::SecondsPerLiquidity;
+use invariant_math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
+use invariant_math::{U128T, U256T};
 use odra::types::{U128, U256};
 use odra::OdraType;
 use traceable_result::*;
+
+use crate::contracts::Pool;
 
 #[derive(OdraType)]
 pub struct Tick {
@@ -36,72 +40,89 @@ impl Default for Tick {
 }
 
 impl Tick {
-    // pub fn create(index: i32, pool: &Pool, current_timestamp: u64) -> Self {
-    //     let below_current_tick = index <= pool.current_tick_index;
+    pub fn create(index: i32, pool: &Pool, current_timestamp: u64) -> Self {
+        let below_current_tick = index <= pool.current_tick_index;
 
-    //     Self {
-    //         index,
-    //         sign: true,
-    //         sqrt_price: calculate_sqrt_price(index).unwrap(),
-    //         fee_growth_outside_x: match below_current_tick {
-    //             true => pool.fee_growth_global_x,
-    //             false => FeeGrowth::new(0),
-    //         },
-    //         fee_growth_outside_y: match below_current_tick {
-    //             true => pool.fee_growth_global_y,
-    //             false => FeeGrowth::new(0),
-    //         },
-    //         seconds_outside: match below_current_tick {
-    //             true => current_timestamp - pool.start_timestamp,
-    //             false => 0,
-    //         },
-    //         seconds_per_liquidity_outside: match below_current_tick {
-    //             true => pool.seconds_per_liquidity_global,
-    //             false => SecondsPerLiquidity::new(0),
-    //         },
-    //         ..Self::default()
-    //     }
-    // }
+        Self {
+            index,
+            sign: true,
+            sqrt_price: U128(calculate_sqrt_price(index).unwrap().get().0),
+            fee_growth_outside_x: match below_current_tick {
+                true => pool.fee_growth_global_x,
+                false => U128(FeeGrowth::new(U128T::from(0)).get().0),
+            },
+            fee_growth_outside_y: match below_current_tick {
+                true => pool.fee_growth_global_y,
+                false => U128(FeeGrowth::new(U128T::from(0)).get().0),
+            },
+            seconds_outside: match below_current_tick {
+                true => current_timestamp - pool.start_timestamp,
+                false => 0,
+            },
+            seconds_per_liquidity_outside: match below_current_tick {
+                true => pool.seconds_per_liquidity_global,
+                false => U128(SecondsPerLiquidity::new(U128T::from(0)).get().0),
+            },
+            ..Self::default()
+        }
+    }
 
-    // pub fn cross(&mut self, pool: &mut Pool, current_timestamp: u64) -> TrackableResult<()> {
-    //     self.fee_growth_outside_x = pool
-    //         .fee_growth_global_x
-    //         .unchecked_sub(self.fee_growth_outside_x);
-    //     self.fee_growth_outside_y = pool
-    //         .fee_growth_global_y
-    //         .unchecked_sub(self.fee_growth_outside_y);
+    pub fn cross(&mut self, pool: &mut Pool, current_timestamp: u64) -> TrackableResult<()> {
+        self.fee_growth_outside_x = U128(
+            FeeGrowth::new(U128T(pool.fee_growth_global_x.0))
+                .unchecked_sub(FeeGrowth::new(U128T(self.fee_growth_outside_x.0)))
+                .get()
+                .0,
+        );
+        self.fee_growth_outside_y = U128(
+            FeeGrowth::new(U128T(pool.fee_growth_global_y.0))
+                .unchecked_sub(FeeGrowth::new(U128T(self.fee_growth_outside_y.0)))
+                .get()
+                .0,
+        );
 
-    //     let seconds_passed: u64 = current_timestamp
-    //         .checked_sub(pool.start_timestamp)
-    //         .ok_or_else(|| err!("current_timestamp - pool.start_timestamp underflow"))?;
-    //     self.seconds_outside = seconds_passed.wrapping_sub(self.seconds_outside);
+        let seconds_passed: u64 = current_timestamp
+            .checked_sub(pool.start_timestamp)
+            .ok_or_else(|| err!("current_timestamp - pool.start_timestamp underflow"))?;
+        self.seconds_outside = seconds_passed.wrapping_sub(self.seconds_outside);
 
-    //     if !pool.liquidity.is_zero() {
-    //         ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
-    //     } else {
-    //         pool.last_timestamp = current_timestamp;
-    //     }
-    //     self.seconds_per_liquidity_outside = pool
-    //         .seconds_per_liquidity_global
-    //         .unchecked_sub(self.seconds_per_liquidity_outside);
+        if !pool.liquidity.is_zero() {
+            ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
+        } else {
+            pool.last_timestamp = current_timestamp;
+        }
+        self.seconds_per_liquidity_outside = U128(
+            SecondsPerLiquidity::new(U128T(pool.seconds_per_liquidity_global.0))
+                .unchecked_sub(SecondsPerLiquidity::new(U128T(
+                    self.seconds_per_liquidity_outside.0,
+                )))
+                .get()
+                .0,
+        );
 
-    //     // When going to higher tick net_liquidity should be added and for going lower subtracted
-    //     if (pool.current_tick_index >= self.index) ^ self.sign {
-    //         // trunk-ignore(clippy/assign_op_pattern)
-    //         pool.liquidity = pool
-    //             .liquidity
-    //             .checked_add(self.liquidity_change)
-    //             .map_err(|_| err!("pool.liquidity + tick.liquidity_change overflow"))?;
-    //     } else {
-    //         // trunk-ignore(clippy/assign_op_pattern)
-    //         pool.liquidity = pool
-    //             .liquidity
-    //             .checked_sub(self.liquidity_change)
-    //             .map_err(|_| err!("pool.liquidity - tick.liquidity_change underflow"))?
-    //     }
+        // When going to higher tick net_liquidity should be added and for going lower subtracted
+        if (pool.current_tick_index >= self.index) ^ self.sign {
+            // trunk-ignore(clippy/assign_op_pattern)
+            pool.liquidity = U256(
+                Liquidity::new(U256T(pool.liquidity.0))
+                    .checked_add(Liquidity::new(U256T(self.liquidity_change.0)))
+                    .map_err(|_| err!("pool.liquidity + tick.liquidity_change overflow"))?
+                    .get()
+                    .0,
+            );
+        } else {
+            // trunk-ignore(clippy/assign_op_pattern)
+            pool.liquidity = U256(
+                Liquidity::new(U256T(pool.liquidity.0))
+                    .checked_sub(Liquidity::new(U256T(self.liquidity_change.0)))
+                    .map_err(|_| err!("pool.liquidity - tick.liquidity_change underflow"))?
+                    .get()
+                    .0,
+            )
+        }
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     pub fn update(
         &mut self,
