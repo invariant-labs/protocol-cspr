@@ -9,7 +9,17 @@ edition = "2021"
 path = "lib.rs"
 
 [dependencies]
+odra = { version = "*" , default-features = false }
+odra-modules = { version = "*" , default-features = false }
 decimal = { path = "../decimal" }
 traceable_result = { path = "../traceable_result" }
 uint = { version = "0.9", default-features = false }
 borsh = { version = "0.9.3", default-features = false }
+
+
+[features]
+default = ["mock-vm"]
+mock-vm = ["odra/mock-vm", "odra-modules/mock-vm"]
+casper = ["odra/casper", "odra-modules/casper"]
+odra-as-dependency = []
+odra-modules-as-dependency = []

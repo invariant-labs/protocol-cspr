@@ -8,7 +8,8 @@ use crate::contracts::State;
 use alloc::string::ToString;
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
-use invariant_math::uints::U256T;
+use invariant_math::sqrt_price::SqrtPrice;
+use invariant_math::uints::{U128T, U256T};
 use odra::{
     contract_env,
     types::{U128, U256},
