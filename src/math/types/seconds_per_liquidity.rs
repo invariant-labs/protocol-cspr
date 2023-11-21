@@ -44,6 +44,8 @@ impl SecondsPerLiquidity {
                 U256T::from(delta_time)
                     .checked_mul(Self::one().cast())
                     .ok_or_else(|| err!(TrackableError::MUL))?
+                    .checked_mul(Liquidity::one().cast())
+                    .ok_or_else(|| err!(TrackableError::MUL))?
                     .checked_div(liquidity.cast())
                     .ok_or_else(|| err!(TrackableError::DIV))?,
             )
@@ -190,7 +192,7 @@ mod tests {
                 .unwrap();
             assert_eq!(
                 seconds_per_liquidity.get(),
-                U128T::from_dec_str("3153600000000000000000000000000000").unwrap()
+                U128T::from_dec_str("315360000000000000000000000000000000000").unwrap()
             );
         }
         // max value outside domain
@@ -223,7 +225,7 @@ mod tests {
             assert_eq!(
                 result,
                 SecondsPerLiquidity::new(
-                    U128T::from_dec_str("3153600000000000000000000000000000").unwrap()
+                    U128T::from_dec_str("315360000000000000000000000000000000000").unwrap()
                 )
             )
         }
@@ -258,7 +260,7 @@ mod tests {
             assert_eq!(
                 result,
                 SecondsPerLiquidity::new(
-                    U128T::from_dec_str("10000000000000000000000000").unwrap()
+                    U128T::from_dec_str("1000000000000000000000000000000").unwrap()
                 )
             )
         }
