@@ -88,6 +88,17 @@ pub trait Factories<T>: Sized {
     fn from_scale_up(integer: T, scale: u8) -> Self;
 }
 
+pub trait FactoriesUnderlying {
+    type U: Debug + Default;
+
+    fn from_integer_underlying(integer: Self::U) -> Self;
+    fn from_scale_underlying(integer: Self::U, scale: u8) -> Self;
+    fn checked_from_scale_underlying(integer: Self::U, scale: u8) -> Result<Self, String>
+    where
+        Self: Sized;
+    fn from_scale_up_underlying(integer: Self::U, scale: u8) -> Self;
+}
+
 pub trait BetweenDecimals<T>: Sized {
     fn from_decimal(other: T) -> Self;
     fn checked_from_decimal(other: T) -> Result<Self, String>;

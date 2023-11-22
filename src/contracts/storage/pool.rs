@@ -1,36 +1,43 @@
-use super::{FeeTier, PoolKey, Tick, Tickmap}; // Oracle,
-use crate::{U128T, U256T};
-use alloc::string::ToString;
-use decimal::num_traits::WrappingAdd;
-use decimal::*;
-use invariant_math::{
-    calculate_amount_delta,
-    fee_growth::FeeGrowth,
-    is_enough_amount_to_change_price,
-    liquidity::Liquidity,
-    percentage::Percentage,
-    seconds_per_liquidity::{calculate_seconds_per_liquidity_inside, SecondsPerLiquidity},
-    sqrt_price::SqrtPrice,
-    sqrt_price::{calculate_sqrt_price, get_tick_at_sqrt_price},
-    token_amount::TokenAmount,
+use crate::math::seconds_per_liquidity::SecondsPerLiquidity;
+use crate::math::{
+    fee_growth::FeeGrowth, liquidity::Liquidity, sqrt_price::SqrtPrice, token_amount::TokenAmount,
 };
-use odra::types::{casper_types::account::AccountHash, Address, U128, U256};
+use odra::types::Address;
 use odra::OdraType;
 use traceable_result::*;
 
-#[derive(OdraType)]
+#[derive(OdraType, Default)]
 pub struct Pool {
-    pub liquidity: U256,
-    pub sqrt_price: U128,
+    pub liquidity: Liquidity,
+    pub sqrt_price: SqrtPrice,
     pub current_tick_index: i32, // nearest tick below the current sqrt_price
-    pub fee_growth_global_x: U128,
-    pub fee_growth_global_y: U128,
-    pub fee_protocol_token_x: U256,
-    pub fee_protocol_token_y: U256,
-    pub seconds_per_liquidity_global: U128,
+    pub fee_growth_global_x: FeeGrowth,
+    pub fee_growth_global_y: FeeGrowth,
+    pub fee_protocol_token_x: TokenAmount,
+    pub fee_protocol_token_y: TokenAmount,
+    pub seconds_per_liquidity_global: SecondsPerLiquidity,
     pub start_timestamp: u64,
     pub last_timestamp: u64,
-    pub fee_receiver: Address,
-    // pub oracle_address: Oracle,
+    // pub fee_receiver: Address,
     pub oracle_initialized: bool,
+}
+
+impl Pool {
+    pub fn update_seconds_per_liquidity_global(
+        &mut self,
+        current_timestamp: u64,
+    ) -> TrackableResult<()> {
+        let seconds_per_liquidity_global =
+            SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
+                self.liquidity,
+                current_timestamp,
+                self.last_timestamp,
+            )?;
+
+        self.seconds_per_liquidity_global = self
+            .seconds_per_liquidity_global
+            .unchecked_add(seconds_per_liquidity_global);
+        self.last_timestamp = current_timestamp;
+        Ok(())
+    }
 }
