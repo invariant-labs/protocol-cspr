@@ -3,14 +3,17 @@
 extern crate alloc;
 
 pub mod contracts;
+pub mod math;
 
 use crate::contracts::State;
-use alloc::string::ToString;
+use crate::math::{liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice};
+use contracts::{Pool, Tick};
 use decimal::Decimal;
-use invariant_math::liquidity::Liquidity;
-use invariant_math::sqrt_price::SqrtPrice;
-use invariant_math::uints::{U128T,U256T};
-use odra::{types::{U256, U128}, Variable, contract_env};
+use odra::{
+    contract_env,
+    types::{U128, U256},
+    Variable,
+};
 
 pub struct SwapResult {
     next_sqrt_price: SqrtPrice,
@@ -18,8 +21,10 @@ pub struct SwapResult {
 
 #[odra::module]
 pub struct Invariant {
+    pool: Variable<Pool>,
+    tick: Variable<Tick>,
     state: Variable<State>,
-    liquidity: Variable<U256>,
+    liquidity: Variable<Liquidity>,
 }
 
 #[odra::module]
@@ -27,12 +32,13 @@ impl Invariant {
     #[odra(init)]
     pub fn init(&mut self) {
         let caller = contract_env::caller();
-        let liquidity = Liquidity::new(U256T::from(100_000_000u128));
-        let liquidity_u256 = U256::from_dec_str(liquidity.get().to_string().as_str()).unwrap();
-        self.liquidity.set(liquidity_u256);
+        let liquidity = Liquidity::new(U256::from(100_000_000u128));
+        self.liquidity.set(liquidity);
+        self.tick.set(Tick::default());
+        self.pool.set(Pool::default());
         self.state.set(State {
             admin: caller,
-            protocol_fee: U128::from(10000000000u128),
+            protocol_fee: Percentage::new(U128::from(10000000000u128)),
         })
     }
 }

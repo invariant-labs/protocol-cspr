@@ -8,9 +8,5 @@ cd decimal_core
 cargo test
 cd ../../..
 
-cd src/math
-cargo test
-cd ../..
-
 cargo test
 cargo odra test -b casper
