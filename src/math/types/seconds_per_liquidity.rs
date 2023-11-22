@@ -8,7 +8,7 @@ use odra::{
     OdraType,
 };
 
-#[decimal(28, U256)]
+#[decimal(25, U256)]
 #[derive(OdraType, Default, Debug, Copy, PartialEq, Eq, PartialOrd)]
 pub struct SecondsPerLiquidity {
     pub v: U128,
@@ -186,15 +186,18 @@ mod tests {
             let liquidity = Liquidity::new(U256::from(1));
             let current_timestamp = 315360000;
             let last_timestamp = 0;
-            let (_, cause, stack) = SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
+            let result = SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
                 liquidity,
                 current_timestamp,
                 last_timestamp,
             )
-            .unwrap_err()
-            .get();
-            assert_eq!(cause, "conversion to invariant::math::types::seconds_per_liquidity::SecondsPerLiquidity type failed");
-            assert_eq!(stack.len(), 1);
+            .unwrap();
+            assert_eq!(
+                result,
+                SecondsPerLiquidity::new(
+                    U128::from_dec_str("315360000000000000000000000000000000000").unwrap()
+                )
+            );
         }
         // max value outside domain
         {
@@ -217,15 +220,18 @@ mod tests {
         let max_delta_time = 315360000 as u64;
         // max time, one liq
         {
-            let (_, cause, stack) = SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
+            let result = SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
                 one_liquidity,
                 max_delta_time,
                 0,
             )
-            .unwrap_err()
-            .get();
-            assert_eq!(cause, "conversion to invariant::math::types::seconds_per_liquidity::SecondsPerLiquidity type failed");
-            assert_eq!(stack.len(), 1);
+            .unwrap();
+            assert_eq!(
+                result,
+                SecondsPerLiquidity::new(
+                    U128::from_dec_str("315360000000000000000000000000000000000").unwrap()
+                )
+            );
         }
         // big liquidity
         {
@@ -258,7 +264,7 @@ mod tests {
             assert_eq!(
                 result,
                 SecondsPerLiquidity::new(
-                    U128::from_dec_str("1000000000000000000000000000000000").unwrap()
+                    U128::from_dec_str("1000000000000000000000000000000").unwrap()
                 )
             )
         }
