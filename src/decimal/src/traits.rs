@@ -81,14 +81,13 @@ pub trait OthersSameType {
     fn sub_abs(self, rhs: Self) -> Self;
 }
 
-pub trait Factories {
+pub trait Factories<T>: Sized {
     type U: Debug + Default;
 
-    fn from_integer(integer: Self::U) -> Self;
+    fn from_integer(integer: T) -> Self;
+    fn from_integer_underlying(integer: Self::U) -> Self;
     fn from_scale(integer: Self::U, scale: u8) -> Self;
-    fn checked_from_scale(integer: Self::U, scale: u8) -> Result<Self, String>
-    where
-        Self: Sized;
+    fn checked_from_scale(integer: Self::U, scale: u8) -> Result<Self, String>;
     fn from_scale_up(integer: Self::U, scale: u8) -> Self;
 }
 

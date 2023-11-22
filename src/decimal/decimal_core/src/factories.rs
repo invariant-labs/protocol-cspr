@@ -20,11 +20,23 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
 
     proc_macro::TokenStream::from(quote!(
 
-        impl Factories for #struct_name
+        impl <T>Factories<T> for #struct_name
+        where
+        T: TryInto<u128>,
+        T: TryFrom<u128>,
+        T: TryInto<#underlying_type>,
+        T: From<u8>,
+        // T: num_traits::ops::checked::CheckedDiv,
+        // T: num_traits::ops::checked::CheckedAdd,
+        // T: num_traits::ops::checked::CheckedSub
         {
             type U = #underlying_type;
 
-            fn from_integer(integer: Self::U) -> Self {
+            fn from_integer(integer: T) -> Self {
+                 Self::from_integer_underlying(#underlying_type::from(integer))
+            }
+
+            fn from_integer_underlying(integer: Self::U) -> Self {
                 Self::new(
                     integer.checked_mul(
                         Self::one().get()
