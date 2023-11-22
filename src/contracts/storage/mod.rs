@@ -1,11 +1,13 @@
 pub mod fee_tier;
 pub mod pool;
 pub mod pool_key;
+pub mod position;
 pub mod state;
 pub mod tick;
 
 pub use fee_tier::*;
 pub use pool::*;
 pub use pool_key::*;
+pub use position::*;
 pub use state::*;
 pub use tick::*;
