@@ -6,10 +6,9 @@ pub mod contracts;
 pub mod math;
 
 use crate::contracts::State;
+use crate::math::{liquidity::Liquidity, percentage::Percentage};
 use contracts::Tick;
 use decimal::Decimal;
-
-use crate::math::{liquidity::Liquidity, percentage::Percentage};
 use odra::{
     contract_env,
     types::{U128, U256},
