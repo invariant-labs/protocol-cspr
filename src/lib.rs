@@ -1,27 +1,42 @@
 #![no_std]
 
-pub mod contracts;
+extern crate alloc;
 
+pub mod contracts;
+pub mod math;
+
+use crate::contracts::State;
 use contracts::Tickmap;
+use decimal::Decimal;
 use decimal::Decimal;
 use invariant_math::liquidity::Liquidity;
 use invariant_math::uints::U256T;
+use math::{liquidity::Liquidity, percentage::Percentage};
+use odra::{
+    contract_env,
+    types::{U128, U256},
+    Variable,
+};
 use odra::{types::U256, Variable};
-extern crate alloc;
-use alloc::string::ToString;
+
 #[odra::module]
 pub struct Invariant {
     tickmap: Tickmap,
-    liquidity: Variable<U256>,
+    state: Variable<State>,
+    liquidity: Variable<Liquidity>,
 }
 
 #[odra::module]
 impl Invariant {
     #[odra(init)]
     pub fn init(&mut self) {
-        let liquidity = Liquidity::new(U256T::from(100_000_000u128));
-        let liquidity_u256 = U256::from_dec_str(liquidity.get().to_string().as_str()).unwrap();
-        self.liquidity.set(liquidity_u256);
+        let caller = contract_env::caller();
+        let liquidity = Liquidity::new(U256::from(100_000_000u128));
+        self.liquidity.set(liquidity);
+        self.state.set(State {
+            admin: caller,
+            protocol_fee: Percentage::new(U128::from(10000000000u128)),
+        })
     }
 }
 
