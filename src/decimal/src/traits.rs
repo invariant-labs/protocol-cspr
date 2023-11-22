@@ -85,7 +85,7 @@ pub trait Factories {
     type U: Debug + Default;
 
     fn from_integer(integer: Self::U) -> Self;
-    // fn from_scale(integer: T, scale: u8) -> Self;
+    fn from_scale(integer: Self::U, scale: u8) -> Self;
     // fn checked_from_scale(integer: T, scale: u8) -> Result<Self, String>;
     // fn from_scale_up(integer: T, scale: u8) -> Self;
 }

@@ -32,20 +32,20 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
                 )
             }
 
-            // fn from_scale(val: T, scale: u8) -> Self {
-            //     Self::new(
-            //         if #scale > scale {
-            //             let base: #underlying_type = val.try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"));
-            //             let multiplier: u128 = 10u128.checked_pow((#scale - scale) as u32).unwrap();
-            //             base.checked_mul(multiplier.try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"))).unwrap()
-            //         } else {
-            //             let denominator: u128 = 10u128.checked_pow((scale - #scale) as u32).unwrap();
-            //              val.checked_div(
-            //                 &denominator.try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"))
-            //             ).unwrap().try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"))
-            //         }
-            //     )
-            // }
+            fn from_scale(integer: Self::U, scale: u8)-> Self {
+                Self::new(
+                    if #scale > scale {
+                        let base: #underlying_type = integer.try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"));
+                        let multiplier: #underlying_type = #underlying_type::from(10u128.checked_pow((#scale - scale) as u32).unwrap());
+                        base.checked_mul(multiplier.try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"))).unwrap()
+                    } else {
+                        let denominator: #underlying_type = #underlying_type::from(10u128.checked_pow((scale - #scale) as u32).unwrap());
+                        integer.checked_div(
+                            denominator.try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"))
+                        ).unwrap().try_into().unwrap_or_else(|_| core::panic!("decimal: can't convert value"))
+                    }
+                )
+            }
 
             // fn checked_from_scale(val: T, scale: u8) -> core::result::Result<Self, alloc::string::String> {
             //     Ok(Self::new(
@@ -136,20 +136,20 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
         pub mod #module_name {
             use super::*;
 
-            // #[test]
-            // fn test_from_integer() {
-            //     assert_eq!(
-            //         #struct_name::from_integer(0),
-            //         #struct_name::new(#underlying_type::from(0u8))
-            //     );
-            // }
+            #[test]
+            fn test_from_integer() {
+                assert_eq!(
+                    #struct_name::from_integer(#underlying_type::from(0)),
+                    #struct_name::new(#underlying_type::from(0u8))
+                );
+            }
 
-            // #[test]
-            // fn test_from_scale() {
-            //     assert_eq!(
-            //         #struct_name::from_scale(0, 0),
-            //         #struct_name::new(#underlying_type::from(0u8))
-            //     );
+            #[test]
+            fn test_from_scale() {
+                assert_eq!(
+                    #struct_name::from_scale(#underlying_type::from(0), 0),
+                    #struct_name::new(#underlying_type::from(0u8))
+                );
             //     assert_eq!(
             //         #struct_name::from_scale_up(0, 0),
             //         #struct_name::new(#underlying_type::from(0u8))
@@ -211,7 +211,7 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
             //         #struct_name::checked_from_scale(max_u128, 100_000).is_err(),
             //         true
             //     );
-            // }
+            }
 
             #[test]
             fn test_checked_from_scale_to_value() {
