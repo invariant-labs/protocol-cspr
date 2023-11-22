@@ -6,18 +6,15 @@ pub mod contracts;
 pub mod math;
 
 use crate::contracts::State;
+use crate::math::liquidity::Liquidity;
 use contracts::Tickmap;
 use decimal::Decimal;
-use decimal::Decimal;
-use invariant_math::liquidity::Liquidity;
-use invariant_math::uints::U256T;
-use math::{liquidity::Liquidity, percentage::Percentage};
+use math::percentage::Percentage;
 use odra::{
     contract_env,
     types::{U128, U256},
     Variable,
 };
-use odra::{types::U256, Variable};
 
 #[odra::module]
 pub struct Invariant {
