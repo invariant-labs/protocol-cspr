@@ -12,7 +12,7 @@ pub struct Tickmap {
     pub bitmap: Mapping<(u16, PoolKey), u64>,
 }
 
-pub fn tick_to_position(tick: i32, tick_spacing: u16) -> (u16, u8) {
+pub fn tick_to_position(tick: i32, tick_spacing: u32) -> (u16, u8) {
     assert!(
         tick >= -MAX_TICK && tick <= MAX_TICK,
         "tick not in range of <{}, {}>",
@@ -42,7 +42,7 @@ fn flip_bit_at_position(value: u64, position: u8) -> u64 {
     value ^ (1 << position)
 }
 
-pub fn get_search_limit(tick: i32, tick_spacing: u16, up: bool) -> i32 {
+pub fn get_search_limit(tick: i32, tick_spacing: u32, up: bool) -> i32 {
     let index = tick / tick_spacing as i32;
 
     // limit unscaled
@@ -64,8 +64,9 @@ pub fn get_search_limit(tick: i32, tick_spacing: u16, up: bool) -> i32 {
     limit * tick_spacing as i32
 }
 
+#[odra::module]
 impl Tickmap {
-    pub fn next_initialized(&self, tick: i32, tick_spacing: u16, pool_key: PoolKey) -> Option<i32> {
+    pub fn next_initialized(&self, tick: i32, tick_spacing: u32, pool_key: PoolKey) -> Option<i32> {
         let limit = get_search_limit(tick, tick_spacing, true);
 
         if tick + tick_spacing as i32 > MAX_TICK {
@@ -94,7 +95,7 @@ impl Tickmap {
                     Some(
                         index
                             .checked_sub(MAX_TICK / tick_spacing as i32)?
-                            .checked_mul(tick_spacing.into())?,
+                            .checked_mul(i32::try_from(tick_spacing).ok()?)?,
                     )
                 } else {
                     None
@@ -115,7 +116,7 @@ impl Tickmap {
     }
 
     // tick_spacing - spacing already scaled by tick_spacing
-    pub fn prev_initialized(&self, tick: i32, tick_spacing: u16, pool_key: PoolKey) -> Option<i32> {
+    pub fn prev_initialized(&self, tick: i32, tick_spacing: u32, pool_key: PoolKey) -> Option<i32> {
         // don't subtract 1 to check the current tick
         let limit = get_search_limit(tick, tick_spacing, false); // limit scaled by tick_spacing
         let (mut chunk, mut bit) = tick_to_position(tick as i32, tick_spacing);
@@ -143,7 +144,7 @@ impl Tickmap {
                     Some(
                         index
                             .checked_sub(MAX_TICK / tick_spacing as i32)?
-                            .checked_mul(tick_spacing.into())?,
+                            .checked_mul(i32::try_from(tick_spacing).ok()?)?,
                     )
                 } else {
                     None
@@ -170,7 +171,7 @@ impl Tickmap {
         sqrt_price_limit: SqrtPrice,
         x_to_y: bool,
         current_tick: i32,
-        tick_spacing: u16,
+        tick_spacing: u32,
         pool_key: PoolKey,
     ) -> (SqrtPrice, Option<(i32, bool)>) {
         let closes_tick_index = if x_to_y {
@@ -207,13 +208,13 @@ impl Tickmap {
         }
     }
 
-    pub fn get(&self, tick: i32, tick_spacing: u16, pool_key: PoolKey) -> bool {
+    pub fn get(&self, tick: i32, tick_spacing: u32, pool_key: PoolKey) -> bool {
         let (chunk, bit) = tick_to_position(tick, tick_spacing);
         let returned_chunk = self.bitmap.get(&(chunk, pool_key)).unwrap_or(0);
         get_bit_at_position(returned_chunk, bit) == 1
     }
 
-    pub fn flip(&mut self, value: bool, tick: i32, tick_spacing: u16, pool_key: PoolKey) {
+    pub fn flip(&mut self, value: bool, tick: i32, tick_spacing: u32, pool_key: PoolKey) {
         let (chunk, bit) = tick_to_position(tick, tick_spacing);
         let returned_chunk = self.bitmap.get(&(chunk, pool_key.clone())).unwrap_or(0);
 
