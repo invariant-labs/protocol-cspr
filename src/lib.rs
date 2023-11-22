@@ -5,10 +5,8 @@ extern crate alloc;
 pub mod contracts;
 pub mod math;
 
-use crate::contracts::State;
-use crate::math::{liquidity::Liquidity, percentage::Percentage};
-use contracts::Tick;
-use contracts::Tickmap;
+use crate::math::{liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice};
+use contracts::{Pool, State, Tick, Tickmap};
 use decimal::Decimal;
 use odra::{
     contract_env,
@@ -45,9 +43,14 @@ pub enum ContractErrors {
     AmountUnderMinimumAmountOut,
 }
 
+pub struct SwapResult {
+    next_sqrt_price: SqrtPrice,
+}
+
 #[odra::module]
 pub struct Invariant {
     tickmap: Tickmap,
+    pool: Variable<Pool>,
     tick: Variable<Tick>,
     state: Variable<State>,
     liquidity: Variable<Liquidity>,
@@ -61,6 +64,7 @@ impl Invariant {
         let liquidity = Liquidity::new(U256::from(100_000_000u128));
         self.liquidity.set(liquidity);
         self.tick.set(Tick::default());
+        self.pool.set(Pool::default());
         self.state.set(State {
             admin: caller,
             protocol_fee: Percentage::new(U128::from(10000000000u128)),

@@ -1,9 +1,7 @@
+use super::fee_tier::FeeTier;
+use crate::ContractErrors;
 use odra::types::Address;
 use odra::OdraType;
-
-use crate::ContractErrors;
-
-use super::fee_tier::FeeTier;
 
 #[derive(OdraType)]
 pub struct PoolKey {

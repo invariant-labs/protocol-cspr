@@ -9,6 +9,5 @@ pub use fee_tier::*;
 pub use pool::*;
 pub use pool_key::*;
 pub use state::*;
-pub use state::*;
 pub use tick::*;
 pub use tickmap::*;
