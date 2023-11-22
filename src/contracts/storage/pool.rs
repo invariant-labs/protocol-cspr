@@ -1,23 +1,22 @@
 use crate::contracts::Oracle;
-use decimal::num_traits::WrappingAdd;
-use decimal::*;
-use invariant_math::liquidity::Liquidity;
-use invariant_math::seconds_per_liquidity::SecondsPerLiquidity;
-use invariant_math::U256T;
-use odra::types::{Address, U128, U256};
+use crate::math::seconds_per_liquidity::SecondsPerLiquidity;
+use crate::math::{
+    fee_growth::FeeGrowth, liquidity::Liquidity, sqrt_price::SqrtPrice, token_amount::TokenAmount,
+};
+use odra::types::Address;
 use odra::OdraType;
 use traceable_result::*;
 
 #[derive(OdraType)]
 pub struct Pool {
-    pub liquidity: U256,
-    pub sqrt_price: U128,
+    pub liquidity: Liquidity,
+    pub sqrt_price: SqrtPrice,
     pub current_tick_index: i32, // nearest tick below the current sqrt_price
-    pub fee_growth_global_x: U128,
-    pub fee_growth_global_y: U128,
-    pub fee_protocol_token_x: U256,
-    pub fee_protocol_token_y: U256,
-    pub seconds_per_liquidity_global: U128,
+    pub fee_growth_global_x: FeeGrowth,
+    pub fee_growth_global_y: FeeGrowth,
+    pub fee_protocol_token_x: TokenAmount,
+    pub fee_protocol_token_y: TokenAmount,
+    pub seconds_per_liquidity_global: SecondsPerLiquidity,
     pub start_timestamp: u64,
     pub last_timestamp: u64,
     pub fee_receiver: Address,
@@ -32,14 +31,14 @@ impl Pool {
     ) -> TrackableResult<()> {
         let seconds_per_liquidity_global =
             SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
-                Liquidity::new(U256T(self.liquidity.0)),
+                self.liquidity,
                 current_timestamp,
                 self.last_timestamp,
             )?;
 
         self.seconds_per_liquidity_global = self
             .seconds_per_liquidity_global
-            .wrapping_add(&U128(seconds_per_liquidity_global.get().0));
+            .unchecked_add(seconds_per_liquidity_global);
         self.last_timestamp = current_timestamp;
         Ok(())
     }
