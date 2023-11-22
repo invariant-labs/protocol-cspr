@@ -13,9 +13,6 @@ pub use traits::*;
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::alloc::string::ToString;
-    use alloc::string::String;
-    use alloc::vec::Vec;
     pub use decimal_core::decimal;
 
     #[cfg(test)]
@@ -35,41 +32,52 @@ pub mod tests {
     #[derive(Default, Debug, Clone, Copy, PartialEq)]
     struct N(U128);
 
-    // #[test]
-    // fn test_from_decimal() {
-    //     let r = R(42);
-    //     let q = Q { v: 144 };
-    //     let n = N(3);
+    #[test]
+    fn test_factories() {
+        let _r = R::from_integer(U128::from(0));
+        let _q = Q::from_integer(U128::from(0));
+        let _n = N::from_integer(U128::from(0));
 
-    //     assert_eq!(R::from_decimal(r), r);
-    //     assert_eq!(R::from_decimal(q), R(14400));
-    //     assert_eq!(R::from_decimal(n), R(3000));
+        let _r = R::from_integer(0);
+        let _q = Q::from_integer(0);
+        let _n = N::from_integer(0);
+    }
 
-    //     assert_eq!(Q::from_decimal(r), Q { v: 0 });
-    //     assert_eq!(Q::from_decimal(q), q);
-    //     assert_eq!(Q::from_decimal(n), Q { v: 30 });
+    #[test]
+    fn test_from_decimal() {
+        let r = R(U128::from(42));
+        let q = Q { v: U128::from(144) };
+        let n = N(U128::from(3));
 
-    //     assert_eq!(N::from_decimal(n), n);
-    //     assert_eq!(N::from_decimal(q), N(14));
-    // }
+        assert_eq!(R::from_decimal(r), r);
+        assert_eq!(R::from_decimal(q), R(U128::from(14400)));
+        assert_eq!(R::from_decimal(n), R(U128::from(3000)));
 
-    // #[test]
-    // fn test_from_decimal_up() {
-    //     let r = R(42);
-    //     let q = Q { v: 144 };
-    //     let n = N(3);
+        assert_eq!(Q::from_decimal(r), Q { v: U128::from(0) });
+        assert_eq!(Q::from_decimal(q), q);
+        assert_eq!(Q::from_decimal(n), Q { v: U128::from(30) });
 
-    //     assert_eq!(R::from_decimal_up(r), r);
-    //     assert_eq!(R::from_decimal_up(q), R(14400));
-    //     assert_eq!(R::from_decimal_up(n), R(3000));
+        assert_eq!(N::from_decimal(n), n);
+        assert_eq!(N::from_decimal(q), N(U128::from(14)));
+    }
 
-    //     assert_eq!(Q::from_decimal_up(r), Q { v: 1 });
-    //     assert_eq!(Q::from_decimal_up(q), q);
-    //     assert_eq!(Q::from_decimal_up(n), Q { v: 30 });
+    #[test]
+    fn test_from_decimal_up() {
+        let r = R(U128::from(42));
+        let q = Q { v: U128::from(144) };
+        let n = N(U128::from(3));
 
-    //     assert_eq!(N::from_decimal_up(n), n);
-    //     assert_eq!(N::from_decimal_up(q), N(15));
-    // }
+        assert_eq!(R::from_decimal_up(r), r);
+        assert_eq!(R::from_decimal_up(q), R(U128::from(14400)));
+        assert_eq!(R::from_decimal_up(n), R(U128::from(3000)));
+
+        assert_eq!(Q::from_decimal_up(r), Q { v: U128::from(1) });
+        assert_eq!(Q::from_decimal_up(q), q);
+        assert_eq!(Q::from_decimal_up(n), Q { v: U128::from(30) });
+
+        assert_eq!(N::from_decimal_up(n), n);
+        assert_eq!(N::from_decimal_up(q), N(U128::from(15)));
+    }
 
     #[test]
     fn test_ops() {

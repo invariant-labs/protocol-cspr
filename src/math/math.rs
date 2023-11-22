@@ -1,9 +1,10 @@
 use decimal::*;
 use traceable_result::*;
 
-use crate::consts::*;
-use crate::types::{liquidity::*, percentage::*, sqrt_price::*, token_amount::*};
-use crate::uints::{U256T, U384T, U448T};
+use crate::math::consts::*;
+use crate::math::types::{liquidity::*, percentage::*, sqrt_price::*, token_amount::*};
+use crate::math::uints::{U384T, U448T};
+use odra::types::U256;
 
 #[derive(PartialEq, Debug)]
 pub struct SwapResult {
@@ -24,17 +25,17 @@ pub fn compute_swap_step(
     if liquidity.is_zero() {
         return Ok(SwapResult {
             next_sqrt_price: target_sqrt_price,
-            amount_in: TokenAmount::new(U256T::from(0)),
-            amount_out: TokenAmount::new(U256T::from(0)),
-            fee_amount: TokenAmount::new(U256T::from(0)),
+            amount_in: TokenAmount::new(U256::from(0)),
+            amount_out: TokenAmount::new(U256::from(0)),
+            fee_amount: TokenAmount::new(U256::from(0)),
         });
     }
 
     let x_to_y = current_sqrt_price >= target_sqrt_price;
     let next_sqrt_price: SqrtPrice;
     let (mut amount_in, mut amount_out) = (
-        TokenAmount::new(U256T::from(0)),
-        TokenAmount::new(U256T::from(0)),
+        TokenAmount::new(U256::from(0)),
+        TokenAmount::new(U256::from(0)),
     );
 
     if by_amount_in {
@@ -144,12 +145,6 @@ pub fn get_delta_x(
         sqrt_price_b - sqrt_price_a
     };
     let nominator = delta_price.big_mul_to_value(liquidity);
-
-    println!(
-        "{:?} {:?}",
-        nominator,
-        sqrt_price_a.big_mul_to_value(sqrt_price_b)
-    );
 
     ok_or_mark_trace!(match rounding_up {
         true => SqrtPrice::big_div_values_to_token_up(
@@ -288,8 +283,8 @@ pub fn calculate_amount_delta(
     if upper_tick < lower_tick {
         return Err(err!("upper_tick is not greater than lower_tick"));
     }
-    let mut amount_x = TokenAmount::new(U256T::from(0));
-    let mut amount_y = TokenAmount::new(U256T::from(0));
+    let mut amount_x = TokenAmount::new(U256::from(0));
+    let mut amount_y = TokenAmount::new(U256::from(0));
     let mut update_liquidity = false;
 
     if current_tick_index < lower_tick {
@@ -380,17 +375,17 @@ pub fn check_tick(tick_index: i32, tick_spacing: u16) -> TrackableResult<()> {
 mod tests {
 
     use super::*;
-    use crate::uints::U128T;
+    use odra::types::{U128, U256};
 
     #[test]
     fn test_domain_get_next_sqrt_price_from_input() {
         let max_liquidity = Liquidity::max_instance();
-        let min_liquidity = Liquidity::new(U256T::from(1));
+        let min_liquidity = Liquidity::new(U256::from(1));
         let max_amount = TokenAmount::max_instance();
         let min_sqrt_price = SqrtPrice::from_tick(-MAX_TICK).unwrap();
         let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK).unwrap();
-        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128T::from(1));
-        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128T::from(1));
+        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128::from(1));
+        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128::from(1));
 
         // max result, increase sqrt_price case
         {
@@ -398,14 +393,14 @@ mod tests {
             let result = get_next_sqrt_price_from_input(
                 almost_max_sqrt_price,
                 max_liquidity,
-                TokenAmount::new(U256T::from(u128::MAX) * U256T::from(10u128.pow(10))),
+                TokenAmount::new(U256::from(u128::MAX) * U256::from(10u128.pow(10))),
                 false,
             )
             .unwrap();
 
             assert_eq!(
                 result,
-                SqrtPrice::new(U128T::from(65535383934512647000000000001u128))
+                SqrtPrice::new(U128::from(65535383934512647000000000001u128))
             );
         }
         // min result, decrease sqrt_price case
@@ -414,22 +409,19 @@ mod tests {
             let result = get_next_sqrt_price_from_input(
                 almost_min_sqrt_price,
                 max_liquidity,
-                TokenAmount::new(U256T::from(u128::MAX) * U256T::from(10u128.pow(20))),
+                TokenAmount::new(U256::from(u128::MAX) * U256::from(10u128.pow(20))),
                 true,
             )
             .unwrap();
 
-            assert_eq!(
-                result,
-                SqrtPrice::new(U128T::from(15258931999999999995u128))
-            );
+            assert_eq!(result, SqrtPrice::new(U128::from(15258931999999999995u128)));
         }
         // amount == 0
         {
             let result = get_next_sqrt_price_from_input(
                 min_sqrt_price,
                 max_liquidity,
-                TokenAmount::new(U256T::from(0)),
+                TokenAmount::new(U256::from(0)),
                 true,
             )
             .unwrap();
@@ -440,13 +432,13 @@ mod tests {
         {
             let result = get_next_sqrt_price_from_input(
                 min_sqrt_price,
-                Liquidity::new(U256T::from(0)),
-                TokenAmount::new(U256T::from(20)),
+                Liquidity::new(U256::from(0)),
+                TokenAmount::new(U256::from(20)),
                 true,
             )
             .unwrap();
 
-            assert_eq!(result, SqrtPrice::new(U128T::from(0)));
+            assert_eq!(result, SqrtPrice::new(U128::from(0)));
         }
         // error handling
         {
@@ -454,7 +446,7 @@ mod tests {
                 get_next_sqrt_price_from_input(max_sqrt_price, min_liquidity, max_amount, false)
                     .unwrap_err()
                     .get();
-            assert_eq!(cause, "Can't parse from U448T to U128T");
+            assert_eq!(cause, "Can't parse from U448T to U128");
             assert_eq!(stack.len(), 3);
         }
     }
@@ -462,12 +454,12 @@ mod tests {
     #[test]
     fn test_domain_get_next_sqrt_price_from_output() {
         let max_liquidity = Liquidity::max_instance();
-        let min_liquidity = Liquidity::new(U256T::from(1));
+        let min_liquidity = Liquidity::new(U256::from(1));
         let max_amount = TokenAmount::max_instance();
         let min_sqrt_price = SqrtPrice::from_tick(-MAX_TICK).unwrap();
         let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK).unwrap();
-        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128T::from(1));
-        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128T::from(1));
+        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128::from(1));
+        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128::from(1));
 
         // max result, increase sqrt_price case
         {
@@ -475,14 +467,14 @@ mod tests {
             let result = get_next_sqrt_price_from_output(
                 almost_max_sqrt_price, // 65535383934512646999999999999
                 max_liquidity,
-                TokenAmount::new(U256T::from(1)),
+                TokenAmount::new(U256::from(1)),
                 false,
             )
             .unwrap();
 
             assert_eq!(
                 result,
-                SqrtPrice::new(U128T::from(65535383934512647000000000000u128))
+                SqrtPrice::new(U128::from(65535383934512647000000000000u128))
             );
         }
         // min result, decrease sqrt_price case
@@ -491,22 +483,19 @@ mod tests {
             let result = get_next_sqrt_price_from_output(
                 almost_min_sqrt_price,
                 max_liquidity,
-                TokenAmount::new(U256T::from(1)),
+                TokenAmount::new(U256::from(1)),
                 true,
             )
             .unwrap();
 
-            assert_eq!(
-                result,
-                SqrtPrice::new(U128T::from(15258932000000000000u128))
-            );
+            assert_eq!(result, SqrtPrice::new(U128::from(15258932000000000000u128)));
         }
         // amount == 0
         {
             let result = get_next_sqrt_price_from_output(
                 min_sqrt_price,
                 max_liquidity,
-                TokenAmount::new(U256T::from(0)),
+                TokenAmount::new(U256::from(0)),
                 true,
             )
             .unwrap();
@@ -517,8 +506,8 @@ mod tests {
         {
             let (_, cause, stack) = get_next_sqrt_price_from_output(
                 min_sqrt_price,
-                Liquidity::new(U256T::from(0)),
-                TokenAmount::new(U256T::from(20)),
+                Liquidity::new(U256::from(0)),
+                TokenAmount::new(U256::from(20)),
                 true,
             )
             .unwrap_err()
@@ -544,9 +533,9 @@ mod tests {
         // one token by amount in
         {
             let sqrt_price = SqrtPrice::from_integer(1);
-            let target = SqrtPrice::new(U128T::from(1004987562112089027021926u128));
+            let target = SqrtPrice::new(U128::from(1004987562112089027021926u128));
             let liquidity = Liquidity::from_integer(2000);
-            let amount = TokenAmount::new(U256T::from(1));
+            let amount = TokenAmount::new(U256::from(1));
             let fee = Percentage::from_scale(6, 4);
 
             let result =
@@ -554,18 +543,18 @@ mod tests {
 
             let expected_result = SwapResult {
                 next_sqrt_price: sqrt_price,
-                amount_in: TokenAmount::new(U256T::from(0)),
-                amount_out: TokenAmount::new(U256T::from(0)),
-                fee_amount: TokenAmount::new(U256T::from(1)),
+                amount_in: TokenAmount::new(U256::from(0)),
+                amount_out: TokenAmount::new(U256::from(0)),
+                fee_amount: TokenAmount::new(U256::from(1)),
             };
             assert_eq!(result, expected_result)
         }
         // amount out capped at target sqrt_price
         {
             let sqrt_price = SqrtPrice::from_integer(1);
-            let target = SqrtPrice::new(U128T::from(1004987562112089027021926u128));
+            let target = SqrtPrice::new(U128::from(1004987562112089027021926u128));
             let liquidity = Liquidity::from_integer(2000);
-            let amount = TokenAmount::new(U256T::from(20));
+            let amount = TokenAmount::new(U256::from(20));
             let fee = Percentage::from_scale(6, 4);
 
             let result_in =
@@ -575,9 +564,9 @@ mod tests {
 
             let expected_result = SwapResult {
                 next_sqrt_price: target,
-                amount_in: TokenAmount::new(U256T::from(10)),
-                amount_out: TokenAmount::new(U256T::from(9)),
-                fee_amount: TokenAmount::new(U256T::from(1)),
+                amount_in: TokenAmount::new(U256::from(10)),
+                amount_out: TokenAmount::new(U256::from(9)),
+                fee_amount: TokenAmount::new(U256::from(1)),
             };
             assert_eq!(result_in, expected_result);
             assert_eq!(result_out, expected_result);
@@ -587,16 +576,16 @@ mod tests {
             let sqrt_price = SqrtPrice::from_scale(101, 2);
             let target = SqrtPrice::from_integer(10);
             let liquidity = Liquidity::from_integer(300000000);
-            let amount = TokenAmount::new(U256T::from(1000000));
+            let amount = TokenAmount::new(U256::from(1000000));
             let fee = Percentage::from_scale(6, 4);
 
             let result =
                 compute_swap_step(sqrt_price, target, liquidity, amount, true, fee).unwrap();
             let expected_result = SwapResult {
-                next_sqrt_price: SqrtPrice::new(U128T::from(1013331333333_333333333333u128)),
-                amount_in: TokenAmount::new(U256T::from(999400)),
-                amount_out: TokenAmount::new(U256T::from(976487)), // ((1.013331333333 - 1.01) * 300000000) / (1.013331333333 * 1.01)
-                fee_amount: TokenAmount::new(U256T::from(600)),
+                next_sqrt_price: SqrtPrice::new(U128::from(1013331333333_333333333333u128)),
+                amount_in: TokenAmount::new(U256::from(999400)),
+                amount_out: TokenAmount::new(U256::from(976487)), // ((1.013331333333 - 1.01) * 300000000) / (1.013331333333 * 1.01)
+                fee_amount: TokenAmount::new(U256::from(600)),
             };
             assert_eq!(result, expected_result)
         }
@@ -605,26 +594,26 @@ mod tests {
             let sqrt_price = SqrtPrice::from_integer(101);
             let target = SqrtPrice::from_integer(100);
             let liquidity = Liquidity::from_integer(5000000000000u128);
-            let amount = TokenAmount::new(U256T::from(2000000));
+            let amount = TokenAmount::new(U256::from(2000000));
             let fee = Percentage::from_scale(6, 4);
 
             let result =
                 compute_swap_step(sqrt_price, target, liquidity, amount, false, fee).unwrap();
             let expected_result = SwapResult {
-                next_sqrt_price: SqrtPrice::new(U128T::from(100999999600000_000000000000u128)),
-                amount_in: TokenAmount::new(U256T::from(197)), // (5000000000000 * (101 - 100.9999996)) /  (101 * 100.9999996)
+                next_sqrt_price: SqrtPrice::new(U128::from(100999999600000_000000000000u128)),
+                amount_in: TokenAmount::new(U256::from(197)), // (5000000000000 * (101 - 100.9999996)) /  (101 * 100.9999996)
                 amount_out: amount,
-                fee_amount: TokenAmount::new(U256T::from(1)),
+                fee_amount: TokenAmount::new(U256::from(1)),
             };
             assert_eq!(result, expected_result)
         }
         // empty swap step when sqrt_price is at tick
         {
-            let current_sqrt_price = SqrtPrice::new(U128T::from(999500149965_000000000000u128));
-            let target_sqrt_price = SqrtPrice::new(U128T::from(999500149965_000000000000u128));
+            let current_sqrt_price = SqrtPrice::new(U128::from(999500149965_000000000000u128));
+            let target_sqrt_price = SqrtPrice::new(U128::from(999500149965_000000000000u128));
 
-            let liquidity = Liquidity::new(U256T::from(20006000_000000u128));
-            let amount = TokenAmount::new(U256T::from(1_000_000));
+            let liquidity = Liquidity::new(U256::from(20006000_000000u128));
+            let amount = TokenAmount::new(U256::from(1_000_000));
             let by_amount_in = true;
             let fee = Percentage::from_scale(6, 4); // 0.0006 -> 0.06%
 
@@ -639,9 +628,9 @@ mod tests {
             .unwrap();
             let expected_result = SwapResult {
                 next_sqrt_price: current_sqrt_price,
-                amount_in: TokenAmount::new(U256T::from(0)),
-                amount_out: TokenAmount::new(U256T::from(0)),
-                fee_amount: TokenAmount::new(U256T::from(0)),
+                amount_in: TokenAmount::new(U256::from(0)),
+                amount_out: TokenAmount::new(U256::from(0)),
+                fee_amount: TokenAmount::new(U256::from(0)),
             };
             assert_eq!(result, expected_result)
         }
@@ -650,7 +639,7 @@ mod tests {
             let current_sqrt_price = SqrtPrice::from_scale(999500149965u128, 12);
             let target_sqrt_price = SqrtPrice::from_scale(1999500149965u128, 12);
             let liquidity = Liquidity::from_integer(100_000000000000_000000000000u128);
-            let amount = TokenAmount::new(U256T::from(10));
+            let amount = TokenAmount::new(U256::from(10));
             let by_amount_in = true;
             let fee = Percentage::from_scale(6, 4); // 0.0006 -> 0.06%
 
@@ -665,9 +654,9 @@ mod tests {
             .unwrap();
             let expected_result = SwapResult {
                 next_sqrt_price: current_sqrt_price,
-                amount_in: TokenAmount::new(U256T::from(0)),
-                amount_out: TokenAmount::new(U256T::from(0)),
-                fee_amount: TokenAmount::new(U256T::from(10)),
+                amount_in: TokenAmount::new(U256::from(0)),
+                amount_out: TokenAmount::new(U256::from(0)),
+                fee_amount: TokenAmount::new(U256::from(10)),
             };
             assert_eq!(result, expected_result)
         }
@@ -676,7 +665,7 @@ mod tests {
             let current_sqrt_price = SqrtPrice::from_integer(1);
             let target_sqrt_price = SqrtPrice::from_scale(100005, 5); // 1.00005
             let liquidity = Liquidity::from_integer(368944000000_000000000000u128);
-            let amount = TokenAmount::new(U256T::from(1));
+            let amount = TokenAmount::new(U256::from(1));
             let by_amount_in = true;
             let fee = Percentage::from_scale(6, 4); // 0.0006 -> 0.06%
 
@@ -691,9 +680,9 @@ mod tests {
             .unwrap();
             let expected_result = SwapResult {
                 next_sqrt_price: current_sqrt_price,
-                amount_in: TokenAmount::new(U256T::from(0)),
-                amount_out: TokenAmount::new(U256T::from(0)),
-                fee_amount: TokenAmount::new(U256T::from(1)),
+                amount_in: TokenAmount::new(U256::from(0)),
+                amount_out: TokenAmount::new(U256::from(0)),
+                fee_amount: TokenAmount::new(U256::from(1)),
             };
             assert_eq!(result, expected_result)
         }
@@ -702,7 +691,7 @@ mod tests {
             let current_sqrt_price = SqrtPrice::from_integer(1);
             let target_sqrt_price = SqrtPrice::from_scale(100005, 5); // 1.00005
             let liquidity = Liquidity::from_integer(368944000000_000000000000u128);
-            let amount = TokenAmount::new(U256T::from(1));
+            let amount = TokenAmount::new(U256::from(1));
             let by_amount_in = false;
             let fee = Percentage::from_scale(6, 4); // 0.0006 -> 0.06%
 
@@ -716,10 +705,10 @@ mod tests {
             )
             .unwrap();
             let expected_result = SwapResult {
-                next_sqrt_price: SqrtPrice::new(U128T::from(1_000000000000_000000000003u128)),
-                amount_in: TokenAmount::new(U256T::from(2)),
-                amount_out: TokenAmount::new(U256T::from(1)),
-                fee_amount: TokenAmount::new(U256T::from(1)),
+                next_sqrt_price: SqrtPrice::new(U128::from(1_000000000000_000000000003u128)),
+                amount_in: TokenAmount::new(U256::from(2)),
+                amount_out: TokenAmount::new(U256::from(1)),
+                fee_amount: TokenAmount::new(U256::from(1)),
             };
             assert_eq!(result, expected_result)
         }
@@ -727,8 +716,8 @@ mod tests {
         {
             let current_sqrt_price = SqrtPrice::from_integer(1);
             let target_sqrt_price = SqrtPrice::from_scale(100005, 5); // 1.00005
-            let liquidity = Liquidity::new(U256T::from(0));
-            let amount = TokenAmount::new(U256T::from(100000));
+            let liquidity = Liquidity::new(U256::from(0));
+            let amount = TokenAmount::new(U256::from(100000));
             let by_amount_in = true;
             let fee = Percentage::from_scale(6, 4); // 0.0006 -> 0.06%
 
@@ -743,9 +732,9 @@ mod tests {
             .unwrap();
             let expected_result = SwapResult {
                 next_sqrt_price: target_sqrt_price,
-                amount_in: TokenAmount::new(U256T::from(0)),
-                amount_out: TokenAmount::new(U256T::from(0)),
-                fee_amount: TokenAmount::new(U256T::from(0)),
+                amount_in: TokenAmount::new(U256::from(0)),
+                amount_out: TokenAmount::new(U256::from(0)),
+                fee_amount: TokenAmount::new(U256::from(0)),
             };
             assert_eq!(result, expected_result)
         }
@@ -753,8 +742,8 @@ mod tests {
         {
             let current_sqrt_price = SqrtPrice::from_integer(1);
             let target_sqrt_price = SqrtPrice::from_scale(100005, 5); // 1.00005
-            let liquidity = Liquidity::new(U256T::from(0));
-            let amount = TokenAmount::new(U256T::from(100000));
+            let liquidity = Liquidity::new(U256::from(0));
+            let amount = TokenAmount::new(U256::from(100000));
             let by_amount_in = false;
             let fee = Percentage::from_scale(6, 4); // 0.0006 -> 0.06%
 
@@ -769,9 +758,9 @@ mod tests {
             .unwrap();
             let expected_result = SwapResult {
                 next_sqrt_price: target_sqrt_price,
-                amount_in: TokenAmount::new(U256T::from(0)),
-                amount_out: TokenAmount::new(U256T::from(0)),
-                fee_amount: TokenAmount::new(U256T::from(0)),
+                amount_in: TokenAmount::new(U256::from(0)),
+                amount_out: TokenAmount::new(U256::from(0)),
+                fee_amount: TokenAmount::new(U256::from(0)),
             };
             assert_eq!(result, expected_result)
         }
@@ -780,9 +769,9 @@ mod tests {
             let current_sqrt_price = SqrtPrice::from_scale(99995, 5); // 0.99995
             let target_sqrt_price = SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(50000000);
-            let amount = TokenAmount::new(U256T::from(1000));
+            let amount = TokenAmount::new(U256::from(1000));
             let by_amount_in = true;
-            let fee = Percentage::new(U128T::from(0));
+            let fee = Percentage::new(U128::from(0));
 
             let result = compute_swap_step(
                 current_sqrt_price,
@@ -795,9 +784,9 @@ mod tests {
             .unwrap();
             let expected_result = SwapResult {
                 next_sqrt_price: SqrtPrice::from_scale(99997, 5),
-                amount_in: TokenAmount::new(U256T::from(1000)),
-                amount_out: TokenAmount::new(U256T::from(1000)),
-                fee_amount: TokenAmount::new(U256T::from(0)),
+                amount_in: TokenAmount::new(U256::from(1000)),
+                amount_out: TokenAmount::new(U256::from(1000)),
+                fee_amount: TokenAmount::new(U256::from(0)),
             };
             assert_eq!(result, expected_result)
         }
@@ -806,9 +795,9 @@ mod tests {
             let target_sqrt_price = SqrtPrice::from_tick(-10).unwrap();
             let current_sqrt_price = target_sqrt_price + SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(340282366920938463463374607u128);
-            let one_token = TokenAmount::new(U256T::from(1));
-            let tokens_with_same_output = TokenAmount::new(U256T::from(85));
-            let zero_token = TokenAmount::new(U256T::from(0));
+            let one_token = TokenAmount::new(U256::from(1));
+            let tokens_with_same_output = TokenAmount::new(U256::from(85));
+            let zero_token = TokenAmount::new(U256::from(0));
             let by_amount_in = false;
             let max_fee = Percentage::from_scale(9, 1);
             let min_fee = Percentage::from_integer(0);
@@ -846,22 +835,22 @@ mod tests {
                 it does not matter if you want 1 or 85 y tokens, will take you the same input amount
             */
             let expected_one_token_result = SwapResult {
-                next_sqrt_price: current_sqrt_price - SqrtPrice::new(U128T::from(1)),
-                amount_in: TokenAmount::new(U256T::from(86)),
-                amount_out: TokenAmount::new(U256T::from(1)),
-                fee_amount: TokenAmount::new(U256T::from(78)),
+                next_sqrt_price: current_sqrt_price - SqrtPrice::new(U128::from(1)),
+                amount_in: TokenAmount::new(U256::from(86)),
+                amount_out: TokenAmount::new(U256::from(1)),
+                fee_amount: TokenAmount::new(U256::from(78)),
             };
             let expected_tokens_with_same_output_result = SwapResult {
-                next_sqrt_price: current_sqrt_price - SqrtPrice::new(U128T::from(1)),
-                amount_in: TokenAmount::new(U256T::from(86)),
-                amount_out: TokenAmount::new(U256T::from(85)),
-                fee_amount: TokenAmount::new(U256T::from(78)),
+                next_sqrt_price: current_sqrt_price - SqrtPrice::new(U128::from(1)),
+                amount_in: TokenAmount::new(U256::from(86)),
+                amount_out: TokenAmount::new(U256::from(85)),
+                fee_amount: TokenAmount::new(U256::from(78)),
             };
             let expected_zero_token_result = SwapResult {
                 next_sqrt_price: current_sqrt_price,
-                amount_in: TokenAmount::new(U256T::from(0)),
-                amount_out: TokenAmount::new(U256T::from(0)),
-                fee_amount: TokenAmount::new(U256T::from(0)),
+                amount_in: TokenAmount::new(U256::from(0)),
+                amount_out: TokenAmount::new(U256::from(0)),
+                fee_amount: TokenAmount::new(U256::from(0)),
             };
             assert_eq!(one_token_result, expected_one_token_result);
             assert_eq!(
@@ -881,9 +870,9 @@ mod tests {
         let one_liquidity = Liquidity::from_integer(1);
         let max_liquidity = Liquidity::max_instance();
         let max_amount = TokenAmount::max_instance();
-        let max_amount_not_reached_target_sqrt_price = TokenAmount::new(U256T::MAX - 1);
+        let max_amount_not_reached_target_sqrt_price = TokenAmount::new(U256::MAX - 1);
         let max_fee = Percentage::from_integer(1);
-        let min_fee = Percentage::new(U128T::from(0));
+        let min_fee = Percentage::new(U128::from(0));
 
         // 100% fee | max_amount
         {
@@ -900,8 +889,8 @@ mod tests {
                 result,
                 SwapResult {
                     next_sqrt_price: SqrtPrice::from_integer(1),
-                    amount_in: TokenAmount::new(U256T::from(0)),
-                    amount_out: TokenAmount::new(U256T::from(0)),
+                    amount_in: TokenAmount::new(U256::from(0)),
+                    amount_out: TokenAmount::new(U256::from(0)),
                     fee_amount: max_amount,
                 }
             )
@@ -921,12 +910,12 @@ mod tests {
             assert_eq!(
                 result,
                 SwapResult {
-                    next_sqrt_price: SqrtPrice::new(U128T::from(2000000000000000000000000u128)),
-                    amount_in: TokenAmount::new(U256T::from_dec_str("1157920892373161954235709850086879078532699846656405640394575840079131297").unwrap()),
-                    amount_out: TokenAmount::new(U256T::from_dec_str(
+                    next_sqrt_price: SqrtPrice::new(U128::from(2000000000000000000000000u128)),
+                    amount_in: TokenAmount::new(U256::from_dec_str("1157920892373161954235709850086879078532699846656405640394575840079131297").unwrap()),
+                    amount_out: TokenAmount::new(U256::from_dec_str(
                         "578960446186580977117854925043439539266349923328202820197287920039565648"
                     ).unwrap()),
-                    fee_amount: TokenAmount::new(U256T::from(0)),
+                    fee_amount: TokenAmount::new(U256::from(0)),
                 }
             )
         }
@@ -934,13 +923,13 @@ mod tests {
         {
             let big_liquidity = Liquidity::from_integer(100_000_000_000_000u128);
             let amount_pushing_sqrt_price_to_target =
-                TokenAmount::new(U256T::from(100000000000000u128));
+                TokenAmount::new(U256::from(100000000000000u128));
 
             let result = compute_swap_step(
                 one_sqrt_price,
                 two_sqrt_price,
                 big_liquidity,
-                amount_pushing_sqrt_price_to_target - TokenAmount::new(U256T::from(1)),
+                amount_pushing_sqrt_price_to_target - TokenAmount::new(U256::from(1)),
                 true,
                 min_fee,
             )
@@ -948,27 +937,27 @@ mod tests {
             assert_eq!(
                 result,
                 SwapResult {
-                    next_sqrt_price: SqrtPrice::new(U128T::from(1999999999999990000000000u128)),
-                    amount_in: TokenAmount::new(U256T::from(99999999999999u128)),
-                    amount_out: TokenAmount::new(U256T::from(49999999999999u128)),
-                    fee_amount: TokenAmount::new(U256T::from(0)),
+                    next_sqrt_price: SqrtPrice::new(U128::from(1999999999999990000000000u128)),
+                    amount_in: TokenAmount::new(U256::from(99999999999999u128)),
+                    amount_out: TokenAmount::new(U256::from(49999999999999u128)),
+                    fee_amount: TokenAmount::new(U256::from(0)),
                 }
             )
         }
         // maximize fee_amount || close to target_sqrt_price but not reached
         {
             let expected_result = SwapResult {
-                next_sqrt_price: SqrtPrice::new(U128T::from(1000001899999999999999999u128)),
+                next_sqrt_price: SqrtPrice::new(U128::from(1000001899999999999999999u128)),
                 amount_in: TokenAmount::new(
-                    U256T::from_dec_str(
+                    U256::from_dec_str(
                         "2200049695509007711889927822791908294976419858560291638216994249494",
                     )
                     .unwrap(),
                 ),
-                amount_out: TokenAmount::new(U256T::from_dec_str(
+                amount_out: TokenAmount::new(U256::from_dec_str(
                     "2200045515422528409085952759527180615861658807361317178894970210709",
                 ).unwrap()),
-                fee_amount: TokenAmount::new(U256T::from_dec_str(
+                fee_amount: TokenAmount::new(U256::from_dec_str(
                     "115792089235116145728061977296797980030478076370664144180897292369696135390441",
                 ).unwrap()),
             };
@@ -979,7 +968,7 @@ mod tests {
                 max_liquidity,
                 TokenAmount::max_instance(),
                 true,
-                max_fee - Percentage::new(U128T::from(19)),
+                max_fee - Percentage::new(U128::from(19)),
             )
             .unwrap();
             assert_eq!(result, expected_result)
@@ -1002,14 +991,14 @@ mod tests {
             assert_eq!(
                 result,
                 SwapResult {
-                    next_sqrt_price: SqrtPrice::new(U128T::from(15258932000000000000u128)),
-                    amount_in: TokenAmount::new(U256T::from_dec_str(
+                    next_sqrt_price: SqrtPrice::new(U128::from(15258932000000000000u128)),
+                    amount_in: TokenAmount::new(U256::from_dec_str(
                         "75884792730156830614567103553061795263351065677581979504561495713443442818879"
                     ).unwrap()),
-                    amount_out: TokenAmount::new(U256T::from_dec_str(
+                    amount_out: TokenAmount::new(U256::from_dec_str(
                         "75884790229800029582010010030152469040784228171629896065450012281800526658805"
                     ).unwrap()),
-                    fee_amount: TokenAmount::new(U256T::from(0)),
+                    fee_amount: TokenAmount::new(U256::from(0)),
                 }
             )
         }
@@ -1034,27 +1023,27 @@ mod tests {
                 assert_eq!(
                     result,
                     SwapResult {
-                        next_sqrt_price: SqrtPrice::new(U128T::from(
+                        next_sqrt_price: SqrtPrice::new(U128::from(
                             65535383934512647000000000000u128
                         )),
-                        amount_in: TokenAmount::new(U256T::from_dec_str(
+                        amount_in: TokenAmount::new(U256::from_dec_str(
                             "75884790229800029582010010030152469040784228171629896065450012281800526658806"
                         ).unwrap()),
-                        amount_out: TokenAmount::new(U256T::from_dec_str(
+                        amount_out: TokenAmount::new(U256::from_dec_str(
                             "75884792730156830614567103553061795263351065677581979504561495713443442818878"
                         ).unwrap()),
-                        fee_amount: TokenAmount::new(U256T::from(0)),
+                        fee_amount: TokenAmount::new(U256::from(0)),
                     }
                 )
             }
             // 2. checked_big_div - no possible to trigger from compute_swap_step
             {
-                let min_overflow_token_amount = TokenAmount::new(U256T::from(340282366920939u128));
+                let min_overflow_token_amount = TokenAmount::new(U256::from(340282366920939u128));
                 let result = compute_swap_step(
                     min_sqrt_price,
                     max_sqrt_price,
-                    one_liquidity - Liquidity::new(U256T::from(1)),
-                    min_overflow_token_amount - TokenAmount::new(U256T::from(1)),
+                    one_liquidity - Liquidity::new(U256::from(1)),
+                    min_overflow_token_amount - TokenAmount::new(U256::from(1)),
                     true,
                     min_fee,
                 )
@@ -1063,9 +1052,9 @@ mod tests {
                     result,
                     SwapResult {
                         next_sqrt_price: max_sqrt_price,
-                        amount_in: TokenAmount::new(U256T::from(65535)),
-                        amount_out: TokenAmount::new(U256T::from(65534)),
-                        fee_amount: TokenAmount::new(U256T::from(0)),
+                        amount_in: TokenAmount::new(U256::from(65535)),
+                        amount_out: TokenAmount::new(U256::from(65534)),
+                        fee_amount: TokenAmount::new(U256::from(0)),
                     }
                 )
             }
@@ -1080,10 +1069,10 @@ mod tests {
             {
                 let min_diff = 232_826_265_438_719_159_684u128;
                 let result = compute_swap_step(
-                    max_sqrt_price - SqrtPrice::new(U128T::from(min_diff)),
+                    max_sqrt_price - SqrtPrice::new(U128::from(min_diff)),
                     max_sqrt_price,
                     max_liquidity,
-                    TokenAmount::new(U256T::MAX - 1),
+                    TokenAmount::new(U256::MAX - 1),
                     false,
                     min_fee,
                 )
@@ -1092,14 +1081,14 @@ mod tests {
                 assert_eq!(
                     result,
                     SwapResult {
-                        next_sqrt_price: SqrtPrice::new(U128T::from(
+                        next_sqrt_price: SqrtPrice::new(U128::from(
                             65535383934512647000000000000u128
                         )),
-                        amount_in: TokenAmount::new(U256T::from_dec_str(
+                        amount_in: TokenAmount::new(U256::from_dec_str(
                             "269594397044712364927302271135767871256767389391069984018896158734608"
                         ).unwrap()),
-                        amount_out: TokenAmount::new(U256T::from_dec_str("62771017353866807635074993554120737773068233085134433767742").unwrap()),
-                        fee_amount: TokenAmount::new(U256T::from(0)),
+                        amount_out: TokenAmount::new(U256::from_dec_str("62771017353866807635074993554120737773068233085134433767742").unwrap()),
+                        fee_amount: TokenAmount::new(U256::from(0)),
                     }
                 )
                 // assert_eq!(cause, "multiplication overflow");
@@ -1111,7 +1100,7 @@ mod tests {
                     min_sqrt_price,
                     max_sqrt_price,
                     Liquidity::from_integer(281_477_613_507_675u128),
-                    TokenAmount::new(U256T::MAX - 1),
+                    TokenAmount::new(U256::MAX - 1),
                     false,
                     min_fee,
                 )
@@ -1120,12 +1109,12 @@ mod tests {
                 assert_eq!(
                     result,
                     SwapResult {
-                        next_sqrt_price: SqrtPrice::new(U128T::from(
+                        next_sqrt_price: SqrtPrice::new(U128::from(
                             65535383934512647000000000000u128
                         )),
-                        amount_in: TokenAmount::new(U256T::from(18446743465900796471u128)),
-                        amount_out: TokenAmount::new(U256T::from(18446744073709559494u128)),
-                        fee_amount: TokenAmount::new(U256T::from(0)),
+                        amount_in: TokenAmount::new(U256::from(18446743465900796471u128)),
+                        amount_out: TokenAmount::new(U256::from(18446744073709559494u128)),
+                        fee_amount: TokenAmount::new(U256::from(0)),
                     }
                 );
             }
@@ -1135,7 +1124,7 @@ mod tests {
                     max_sqrt_price - SqrtPrice::from_integer(1),
                     max_sqrt_price,
                     Liquidity::from_integer(100_000_000_00u128),
-                    TokenAmount::new(U256T::from(1)),
+                    TokenAmount::new(U256::from(1)),
                     false,
                     min_fee,
                 )
@@ -1144,12 +1133,12 @@ mod tests {
                 assert_eq!(
                     result,
                     SwapResult {
-                        next_sqrt_price: SqrtPrice::new(U128T::from(
+                        next_sqrt_price: SqrtPrice::new(U128::from(
                             65534813412874974599766965330u128
                         )),
-                        amount_in: TokenAmount::new(U256T::from(4294783624u128)),
-                        amount_out: TokenAmount::new(U256T::from(1)),
-                        fee_amount: TokenAmount::new(U256T::from(0)),
+                        amount_in: TokenAmount::new(U256::from(4294783624u128)),
+                        amount_out: TokenAmount::new(U256::from(1)),
+                        fee_amount: TokenAmount::new(U256::from(0)),
                     }
                 );
             }
@@ -1169,14 +1158,14 @@ mod tests {
             assert_eq!(
                 result,
                 SwapResult {
-                    next_sqrt_price: SqrtPrice::new(U128T::from(15258932000000000000u128)),
-                    amount_in: TokenAmount::new(U256T::from_dec_str(
+                    next_sqrt_price: SqrtPrice::new(U128::from(15258932000000000000u128)),
+                    amount_in: TokenAmount::new(U256::from_dec_str(
                         "75884792730156830614567103553061795263351065677581979504561495713443442818879"
                     ).unwrap()),
-                    amount_out: TokenAmount::new(U256T::from_dec_str(
+                    amount_out: TokenAmount::new(U256::from_dec_str(
                         "75884790229800029582010010030152469040784228171629896065450012281800526658805"
                     ).unwrap()),
-                    fee_amount: TokenAmount::new(U256T::from(0)),
+                    fee_amount: TokenAmount::new(U256::from(0)),
                 }
             )
         }
@@ -1188,7 +1177,7 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(1);
-            let y = TokenAmount::new(U256T::from(1));
+            let y = TokenAmount::new(U256::from(1));
 
             let result = get_next_sqrt_price_y_down(sqrt_price, liquidity, y, true).unwrap();
 
@@ -1197,7 +1186,7 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(2);
-            let y = TokenAmount::new(U256T::from(3));
+            let y = TokenAmount::new(U256::from(3));
 
             let result = get_next_sqrt_price_y_down(sqrt_price, liquidity, y, true).unwrap();
 
@@ -1206,7 +1195,7 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(2);
             let liquidity = Liquidity::from_integer(3);
-            let y = TokenAmount::new(U256T::from(5));
+            let y = TokenAmount::new(U256::from(5));
 
             let result = get_next_sqrt_price_y_down(sqrt_price, liquidity, y, true).unwrap();
 
@@ -1218,7 +1207,7 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(24234);
             let liquidity = Liquidity::from_integer(3000);
-            let y = TokenAmount::new(U256T::from(5000));
+            let y = TokenAmount::new(U256::from(5000));
 
             let result = get_next_sqrt_price_y_down(sqrt_price, liquidity, y, true).unwrap();
 
@@ -1231,7 +1220,7 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(2);
-            let y = TokenAmount::new(U256T::from(1));
+            let y = TokenAmount::new(U256::from(1));
 
             let result = get_next_sqrt_price_y_down(sqrt_price, liquidity, y, false).unwrap();
 
@@ -1240,18 +1229,18 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(100_000);
             let liquidity = Liquidity::from_integer(500_000_000);
-            let y = TokenAmount::new(U256T::from(4_000));
+            let y = TokenAmount::new(U256::from(4_000));
 
             let result = get_next_sqrt_price_y_down(sqrt_price, liquidity, y, false).unwrap();
             assert_eq!(
                 result,
-                SqrtPrice::new(U128T::from(99999999992000000_000000000000u128))
+                SqrtPrice::new(U128::from(99999999992000000_000000000000u128))
             );
         }
         {
             let sqrt_price = SqrtPrice::from_integer(3);
             let liquidity = Liquidity::from_integer(222);
-            let y = TokenAmount::new(U256T::from(37));
+            let y = TokenAmount::new(U256::from(37));
 
             let result = get_next_sqrt_price_y_down(sqrt_price, liquidity, y, false).unwrap();
 
@@ -1259,24 +1248,24 @@ mod tests {
             // real     2.999999999999833...
             assert_eq!(
                 result,
-                SqrtPrice::new(U128T::from(2833333333333_333333333333u128))
+                SqrtPrice::new(U128::from(2833333333333_333333333333u128))
             );
         }
     }
 
     #[test]
     fn test_domain_get_next_sqrt_price_y_down() {
-        let min_y = TokenAmount::new(U256T::from(1));
+        let min_y = TokenAmount::new(U256::from(1));
         let max_y = TokenAmount::max_instance();
         let min_sqrt_price = SqrtPrice::from_tick(-MAX_TICK).unwrap();
         let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK).unwrap();
-        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128T::from(1));
-        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128T::from(1));
-        let min_sqrt_price_outside_domain = SqrtPrice::new(U128T::from(1));
-        let min_liquidity = Liquidity::new(U256T::from(1));
+        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128::from(1));
+        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128::from(1));
+        let min_sqrt_price_outside_domain = SqrtPrice::new(U128::from(1));
+        let min_liquidity = Liquidity::new(U256::from(1));
         let max_liquidity: Liquidity = Liquidity::max_instance();
         // let min_overflow_token_y = TokenAmount::new(340282366920939);
-        let min_overflow_token_y = TokenAmount::new(U256T::from(340282366920940u128));
+        let min_overflow_token_y = TokenAmount::new(U256::from(340282366920940u128));
         // let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK).unwrap();
         let one_liquidity: Liquidity = Liquidity::from_integer(1);
 
@@ -1289,7 +1278,7 @@ mod tests {
                 let target_sqrt_price = get_next_sqrt_price_y_down(
                     min_sqrt_price,
                     max_liquidity,
-                    min_y + TokenAmount::new(U256T::from(u128::MAX) * U256T::from(2u128.pow(32))),
+                    min_y + TokenAmount::new(U256::from(u128::MAX) * U256::from(2u128.pow(32))),
                     true,
                 )
                 .unwrap();
@@ -1298,7 +1287,7 @@ mod tests {
                 // 15258932000000000001u128 expected
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(15258932000000000001u128))
+                    SqrtPrice::new(U128::from(15258932000000000001u128))
                 );
             }
             // decreases almost_min_sqrt_price
@@ -1309,7 +1298,7 @@ mod tests {
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(15258932000000000000u128))
+                    SqrtPrice::new(U128::from(15258932000000000000u128))
                 );
             }
         }
@@ -1320,14 +1309,14 @@ mod tests {
                 let target_sqrt_price = get_next_sqrt_price_y_down(
                     max_sqrt_price,
                     max_liquidity,
-                    min_y + TokenAmount::new(U256T::from(u128::MAX) * U256T::from(2u128.pow(32))),
+                    min_y + TokenAmount::new(U256::from(u128::MAX) * U256::from(2u128.pow(32))),
                     false,
                 )
                 .unwrap();
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(65535383934512646999999999998u128))
+                    SqrtPrice::new(U128::from(65535383934512646999999999998u128))
                 );
             }
             // increases almost_max_sqrt_price
@@ -1335,14 +1324,14 @@ mod tests {
                 let target_sqrt_price: SqrtPrice = get_next_sqrt_price_y_down(
                     almost_max_sqrt_price,
                     max_liquidity,
-                    min_y + TokenAmount::new(U256T::from(600000000u128)),
+                    min_y + TokenAmount::new(U256::from(600000000u128)),
                     true,
                 )
                 .unwrap();
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(65535383934512646999999999999u128))
+                    SqrtPrice::new(U128::from(65535383934512646999999999999u128))
                 );
             }
         }
@@ -1353,7 +1342,7 @@ mod tests {
                     get_next_sqrt_price_y_down(max_sqrt_price, min_liquidity, max_y, true)
                         .unwrap_err()
                         .get();
-                assert_eq!(cause, "Can't parse from U448T to U128T");
+                assert_eq!(cause, "Can't parse from U448T to U128");
                 assert_eq!(stack.len(), 2);
             }
             {
@@ -1365,7 +1354,7 @@ mod tests {
                 )
                 .unwrap_err()
                 .get();
-                assert_eq!(cause, "Can't parse from U448T to U128T");
+                assert_eq!(cause, "Can't parse from U448T to U128");
                 assert_eq!(stack.len(), 2);
             }
         }
@@ -1375,7 +1364,7 @@ mod tests {
                 let result = get_next_sqrt_price_y_down(
                     max_sqrt_price,
                     one_liquidity,
-                    min_overflow_token_y - TokenAmount::new(U256T::from(2)),
+                    min_overflow_token_y - TokenAmount::new(U256::from(2)),
                     true,
                 )
                 .unwrap_err();
@@ -1387,7 +1376,7 @@ mod tests {
                 let result = get_next_sqrt_price_y_down(
                     min_sqrt_price_outside_domain,
                     one_liquidity,
-                    min_overflow_token_y - TokenAmount::new(U256T::from(2)),
+                    min_overflow_token_y - TokenAmount::new(U256::from(2)),
                     false,
                 )
                 .unwrap_err();
@@ -1404,9 +1393,9 @@ mod tests {
         // min sqrt highest underflow
         {
             {
-                let min_y_overflow_decimal_extension = TokenAmount::new(U256T::from(1) << 225);
+                let min_y_overflow_decimal_extension = TokenAmount::new(U256::from(1) << 225);
 
-                let irrelevant_sqrt_price = SqrtPrice::new(U128T::from(1));
+                let irrelevant_sqrt_price = SqrtPrice::new(U128::from(1));
                 let irrelevant_liquidity: Liquidity = Liquidity::from_integer(1);
 
                 {
@@ -1418,7 +1407,7 @@ mod tests {
                     )
                     .unwrap_err()
                     .get();
-                    assert_eq!(cause, "Can't parse from U448T to U128T");
+                    assert_eq!(cause, "Can't parse from U448T to U128");
                     assert_eq!(stack.len(), 2);
                 }
                 {
@@ -1430,7 +1419,7 @@ mod tests {
                     )
                     .unwrap_err()
                     .get();
-                    assert_eq!(cause, "Can't parse from U448T to U128T");
+                    assert_eq!(cause, "Can't parse from U448T to U128");
                     assert_eq!(stack.len(), 2);
                 }
             }
@@ -1443,7 +1432,7 @@ mod tests {
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(100000000015258932000000000000u128)) // Tick 1
+                    SqrtPrice::new(U128::from(100000000015258932000000000000u128)) // Tick 1
                 );
             }
         }
@@ -1453,7 +1442,7 @@ mod tests {
             {
                 let (_, cause, stack) = get_next_sqrt_price_y_down(
                     min_sqrt_price,
-                    Liquidity::new(U256T::from(0)),
+                    Liquidity::new(U256::from(0)),
                     min_y,
                     true,
                 )
@@ -1469,7 +1458,7 @@ mod tests {
                 let target_sqrt_price = get_next_sqrt_price_y_down(
                     min_sqrt_price,
                     max_liquidity,
-                    TokenAmount::new(U256T::from(0)),
+                    TokenAmount::new(U256::from(0)),
                     true,
                 )
                 .unwrap();
@@ -1487,11 +1476,11 @@ mod tests {
             let result = get_delta_x(
                 SqrtPrice::from_integer(1u8),
                 SqrtPrice::from_integer(1u8),
-                Liquidity::new(U256T::from(0)),
+                Liquidity::new(U256::from(0)),
                 false,
             )
             .unwrap();
-            assert_eq!(result, TokenAmount::new(U256T::from(0)));
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
         }
         // equal at equal liquidity
         {
@@ -1502,20 +1491,20 @@ mod tests {
                 false,
             )
             .unwrap();
-            assert_eq!(result, TokenAmount::new(U256T::from(1)));
+            assert_eq!(result, TokenAmount::new(U256::from(1)));
         }
         // complex
         {
-            let sqrt_price_a = SqrtPrice::new(U128T::from(234__878_324_943_782_000000000000u128));
-            let sqrt_price_b = SqrtPrice::new(U128T::from(87__854_456_421_658_000000000000u128));
-            let liquidity = Liquidity::new(U256T::from(983_983__249_092u128));
+            let sqrt_price_a = SqrtPrice::new(U128::from(234__878_324_943_782_000000000000u128));
+            let sqrt_price_b = SqrtPrice::new(U128::from(87__854_456_421_658_000000000000u128));
+            let liquidity = Liquidity::new(U256::from(983_983__249_092u128));
 
             let result_down = get_delta_x(sqrt_price_a, sqrt_price_b, liquidity, false).unwrap();
             let result_up = get_delta_x(sqrt_price_a, sqrt_price_b, liquidity, true).unwrap();
 
             // 7010.8199533068819376891841727789301497024557314488455622925765280
-            assert_eq!(result_down, TokenAmount::new(U256T::from(70108)));
-            assert_eq!(result_up, TokenAmount::new(U256T::from(70109)));
+            assert_eq!(result_down, TokenAmount::new(U256::from(70108)));
+            assert_eq!(result_up, TokenAmount::new(U256::from(70109)));
         }
         // big
         {
@@ -1526,11 +1515,8 @@ mod tests {
             let result_down = get_delta_x(sqrt_price_a, sqrt_price_b, liquidity, false).unwrap();
             let result_up = get_delta_x(sqrt_price_a, sqrt_price_b, liquidity, true).unwrap();
 
-            assert_eq!(
-                result_down,
-                TokenAmount::new(U256T::from(2u128.pow(64) - 1))
-            );
-            assert_eq!(result_up, TokenAmount::new(U256T::from(2u128.pow(64) - 1)));
+            assert_eq!(result_down, TokenAmount::new(U256::from(2u128.pow(64) - 1)));
+            assert_eq!(result_up, TokenAmount::new(U256::from(2u128.pow(64) - 1)));
         }
         // no more overflow after extending the type in intermediate operations
         {
@@ -1546,8 +1532,8 @@ mod tests {
         // huge liquidity
         {
             let sqrt_price_a = SqrtPrice::from_integer(1u8);
-            let sqrt_price_b = SqrtPrice::new(U128T::from(
-                SqrtPrice::one().get() + SqrtPrice::new(U128T::from(1000000)).get(),
+            let sqrt_price_b = SqrtPrice::new(U128::from(
+                SqrtPrice::one().get() + SqrtPrice::new(U128::from(1000000)).get(),
             ));
             let liquidity = Liquidity::from_integer(2u128.pow(80));
 
@@ -1567,7 +1553,7 @@ mod tests {
         let almost_min_sqrt_price = SqrtPrice::from_tick(-MAX_TICK + 1).unwrap();
 
         let max_liquidity = Liquidity::max_instance();
-        let min_liquidity = Liquidity::new(U256T::from(1));
+        let min_liquidity = Liquidity::new(U256::from(1));
 
         // maximize delta_sqrt_price and liquidity
         {
@@ -1577,7 +1563,7 @@ mod tests {
 
                 assert_eq!(
                 result,
-                TokenAmount::new(U256T::from_dec_str("75884792730156830614567103553061795263351065677581979504561495713443442818879").unwrap())
+                TokenAmount::new(U256::from_dec_str("75884792730156830614567103553061795263351065677581979504561495713443442818879").unwrap())
             );
             }
             {
@@ -1586,7 +1572,7 @@ mod tests {
 
                 assert_eq!(
                 result,
-                TokenAmount::new(U256T::from_dec_str("75884792730156830614567103553061795263351065677581979504561495713443442818878").unwrap())
+                TokenAmount::new(U256::from_dec_str("75884792730156830614567103553061795263351065677581979504561495713443442818878").unwrap())
             )
             }
         }
@@ -1595,13 +1581,13 @@ mod tests {
                 let result =
                     get_delta_x(max_sqrt_price, min_sqrt_price, min_liquidity, true).unwrap();
 
-                assert_eq!(result, TokenAmount::new(U256T::from(1)));
+                assert_eq!(result, TokenAmount::new(U256::from(1)));
             }
             {
                 let result =
                     get_delta_x(max_sqrt_price, min_sqrt_price, min_liquidity, false).unwrap();
 
-                assert_eq!(result, TokenAmount::new(U256T::from(0)))
+                assert_eq!(result, TokenAmount::new(U256::from(0)))
             }
         }
         // minimize denominator on maximize liquidity which fit into TokenAmount
@@ -1613,7 +1599,7 @@ mod tests {
 
                 assert_eq!(
                 TokenAmount::new(
-                    U256T::from_dec_str(
+                    U256::from_dec_str(
                         "3794315473971847510172532341754979462199874072217062973965311338137066234"
                     )
                     .unwrap()
@@ -1627,7 +1613,7 @@ mod tests {
                         .unwrap();
                 assert_eq!(
                 TokenAmount::new(
-                    U256T::from_dec_str(
+                    U256::from_dec_str(
                         "3794315473971847510172532341754979462199874072217062973965311338137066233"
                     )
                     .unwrap()
@@ -1642,13 +1628,13 @@ mod tests {
                 let result =
                     get_delta_x(min_sqrt_price, almost_min_sqrt_price, min_liquidity, true)
                         .unwrap();
-                assert_eq!(TokenAmount::new(U256T::from(1)), result);
+                assert_eq!(TokenAmount::new(U256::from(1)), result);
             }
             {
                 let result =
                     get_delta_x(min_sqrt_price, almost_min_sqrt_price, min_liquidity, false)
                         .unwrap();
-                assert_eq!(TokenAmount::new(U256T::from(0)), result);
+                assert_eq!(TokenAmount::new(U256::from(0)), result);
             }
         }
 
@@ -1690,7 +1676,7 @@ mod tests {
             assert_eq!(
                 result,
                 TokenAmount::new(
-                    U256T::from_dec_str(
+                    U256::from_dec_str(
                         "45875017378130362421757891862614875858481775310156442203847653871247"
                     )
                     .unwrap()
@@ -1709,7 +1695,7 @@ mod tests {
 
                 assert_eq!(
                     TokenAmount::new(
-                        U256T::from_dec_str(
+                        U256::from_dec_str(
                             "269608649375997235557394191156352599353486422139915865816324471"
                         )
                         .unwrap()
@@ -1727,7 +1713,7 @@ mod tests {
 
                 assert_eq!(
                 TokenAmount::new(
-                    U256T::from_dec_str(
+                    U256::from_dec_str(
                         "75883634844601460750582416171430603974060896681619645705711819135499453546638"
                     )
                     .unwrap()
@@ -1738,16 +1724,16 @@ mod tests {
         }
         // liquidity is zero
         {
-            let zero_liquidity = Liquidity::new(U256T::from(0));
+            let zero_liquidity = Liquidity::new(U256::from(0));
             {
                 let result =
                     get_delta_x(max_sqrt_price, min_sqrt_price, zero_liquidity, true).unwrap();
-                assert_eq!(TokenAmount::new(U256T::from(0)), result);
+                assert_eq!(TokenAmount::new(U256::from(0)), result);
             }
             {
                 let result =
                     get_delta_x(max_sqrt_price, min_sqrt_price, zero_liquidity, false).unwrap();
-                assert_eq!(TokenAmount::new(U256T::from(0)), result);
+                assert_eq!(TokenAmount::new(U256::from(0)), result);
             }
         }
         // }
@@ -1760,11 +1746,11 @@ mod tests {
             let result = get_delta_y(
                 SqrtPrice::from_integer(1),
                 SqrtPrice::from_integer(1),
-                Liquidity::new(U256T::from(0)),
+                Liquidity::new(U256::from(0)),
                 false,
             )
             .unwrap();
-            assert_eq!(result, TokenAmount::new(U256T::from(0)));
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
         }
         // equal at equal liquidity
         {
@@ -1775,20 +1761,20 @@ mod tests {
                 false,
             )
             .unwrap();
-            assert_eq!(result, TokenAmount::new(U256T::from(2)));
+            assert_eq!(result, TokenAmount::new(U256::from(2)));
         }
         // // big numbers
         {
-            let sqrt_price_a = SqrtPrice::new(U128T::from(234__878_324_943_782_000000000000u128));
-            let sqrt_price_b = SqrtPrice::new(U128T::from(87__854_456_421_658_000000000000u128));
-            let liquidity = Liquidity::new(U256T::from(983_983__249_092u128));
+            let sqrt_price_a = SqrtPrice::new(U128::from(234__878_324_943_782_000000000000u128));
+            let sqrt_price_b = SqrtPrice::new(U128::from(87__854_456_421_658_000000000000u128));
+            let liquidity = Liquidity::new(U256::from(983_983__249_092u128));
 
             let result_down = get_delta_y(sqrt_price_a, sqrt_price_b, liquidity, false).unwrap();
             let result_up = get_delta_y(sqrt_price_a, sqrt_price_b, liquidity, true).unwrap();
 
             // 144669023.842474597804911408
-            assert_eq!(result_down, TokenAmount::new(U256T::from(1446690238)));
-            assert_eq!(result_up, TokenAmount::new(U256T::from(1446690239)));
+            assert_eq!(result_down, TokenAmount::new(U256::from(1446690238)));
+            assert_eq!(result_up, TokenAmount::new(U256::from(1446690239)));
         }
         // // big
         {
@@ -1823,8 +1809,8 @@ mod tests {
         // // huge liquidity
         {
             let sqrt_price_a = SqrtPrice::from_integer(1u8);
-            let sqrt_price_b = SqrtPrice::one() + SqrtPrice::new(U128T::from(1000000));
-            let liquidity = Liquidity::new(U256T::MAX);
+            let sqrt_price_b = SqrtPrice::one() + SqrtPrice::new(U128::from(1000000));
+            let liquidity = Liquidity::new(U256::MAX);
 
             let result_down = get_delta_y(sqrt_price_a, sqrt_price_b, liquidity, false);
             let result_up = get_delta_y(sqrt_price_a, sqrt_price_b, liquidity, true);
@@ -1839,7 +1825,7 @@ mod tests {
         let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK).unwrap();
         let min_sqrt_price = SqrtPrice::from_tick(-MAX_TICK).unwrap();
         let max_liquidity = Liquidity::max_instance();
-        let min_liquidity = Liquidity::new(U256T::from(1));
+        let min_liquidity = Liquidity::new(U256::from(1));
         // maximize delta_sqrt_price and liquidity
         {
             {
@@ -1847,7 +1833,7 @@ mod tests {
                     get_delta_y(max_sqrt_price, min_sqrt_price, max_liquidity, true).unwrap();
                 assert_eq!(
                 result,
-                TokenAmount::new(U256T::from_dec_str(
+                TokenAmount::new(U256::from_dec_str(
                     "75884790229800029582010010030152469040784228171629896065450012281800526658806"
                 ).unwrap())
             );
@@ -1857,7 +1843,7 @@ mod tests {
                     get_delta_y(max_sqrt_price, min_sqrt_price, max_liquidity, false).unwrap();
                 assert_eq!(
                 result,
-                TokenAmount::new(U256T::from_dec_str(
+                TokenAmount::new(U256::from_dec_str(
                     "75884790229800029582010010030152469040784228171629896065450012281800526658805"
                 ).unwrap())
             );
@@ -1871,7 +1857,7 @@ mod tests {
                     false,
                 )
                 .unwrap();
-                assert_eq!(result, TokenAmount::new(U256T::from(0)));
+                assert_eq!(result, TokenAmount::new(U256::from(0)));
             }
         }
         // liquidity is zero
@@ -1879,15 +1865,15 @@ mod tests {
             let result = get_delta_y(
                 max_sqrt_price,
                 min_sqrt_price,
-                Liquidity::new(U256T::from(0)),
+                Liquidity::new(U256::from(0)),
                 true,
             )
             .unwrap();
-            assert_eq!(result, TokenAmount::new(U256T::from(0)));
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
         }
         {
             let result = get_delta_y(max_sqrt_price, max_sqrt_price, max_liquidity, true).unwrap();
-            assert_eq!(result, TokenAmount::new(U256T::from(0)));
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
         }
     }
 
@@ -1898,7 +1884,7 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(1);
-            let x = TokenAmount::new(U256T::from(1));
+            let x = TokenAmount::new(U256::from(1));
 
             let result = get_next_sqrt_price_x_up(sqrt_price, liquidity, x, true);
 
@@ -1907,7 +1893,7 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(2);
-            let x = TokenAmount::new(U256T::from(3));
+            let x = TokenAmount::new(U256::from(3));
 
             let result = get_next_sqrt_price_x_up(sqrt_price, liquidity, x, true);
 
@@ -1916,32 +1902,32 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(2);
             let liquidity = Liquidity::from_integer(3);
-            let x = TokenAmount::new(U256T::from(5));
+            let x = TokenAmount::new(U256::from(5));
 
             let result = get_next_sqrt_price_x_up(sqrt_price, liquidity, x, true);
 
             assert_eq!(
                 result.unwrap(),
-                SqrtPrice::new(U128T::from(461538461538461538461539u128)) // rounded up Decimal::from_integer(6).div(Decimal::from_integer(13))
+                SqrtPrice::new(U128::from(461538461538461538461539u128)) // rounded up Decimal::from_integer(6).div(Decimal::from_integer(13))
             );
         }
         {
             let sqrt_price = SqrtPrice::from_integer(24234);
             let liquidity = Liquidity::from_integer(3000);
-            let x = TokenAmount::new(U256T::from(5000));
+            let x = TokenAmount::new(U256::from(5000));
 
             let result = get_next_sqrt_price_x_up(sqrt_price, liquidity, x, true);
 
             assert_eq!(
                 result.unwrap(),
-                SqrtPrice::new(U128T::from(599985145205615112277488u128)) // rounded up Decimal::from_integer(24234).div(Decimal::from_integer(40391))
+                SqrtPrice::new(U128::from(599985145205615112277488u128)) // rounded up Decimal::from_integer(24234).div(Decimal::from_integer(40391))
             );
         }
         // Subtract
         {
             let sqrt_price = SqrtPrice::from_integer(1);
             let liquidity = Liquidity::from_integer(2);
-            let x = TokenAmount::new(U256T::from(1));
+            let x = TokenAmount::new(U256::from(1));
 
             let result = get_next_sqrt_price_x_up(sqrt_price, liquidity, x, false);
 
@@ -1950,16 +1936,16 @@ mod tests {
         {
             let sqrt_price = SqrtPrice::from_integer(100_000);
             let liquidity = Liquidity::from_integer(500_000_000);
-            let x = TokenAmount::new(U256T::from(4_000));
+            let x = TokenAmount::new(U256::from(4_000));
 
             let result = get_next_sqrt_price_x_up(sqrt_price, liquidity, x, false);
 
             assert_eq!(result.unwrap(), SqrtPrice::from_integer(500_000));
         }
         {
-            let sqrt_price = SqrtPrice::new(U128T::from(3_333333333333333333333333u128));
-            let liquidity = Liquidity::new(U256T::from(222_22222));
-            let x = TokenAmount::new(U256T::from(37));
+            let sqrt_price = SqrtPrice::new(U128::from(3_333333333333333333333333u128));
+            let liquidity = Liquidity::new(U256::from(222_22222));
+            let x = TokenAmount::new(U256::from(37));
 
             // expected 7490636797542399944773031
             // real     7.490636797542399944773031...
@@ -1967,7 +1953,7 @@ mod tests {
 
             assert_eq!(
                 result.unwrap(),
-                SqrtPrice::new(U128T::from(7490636797542399944773031u128))
+                SqrtPrice::new(U128::from(7490636797542399944773031u128))
             );
         }
     }
@@ -1976,25 +1962,25 @@ mod tests {
     fn test_domain_get_next_sqrt_price_x_up() {
         // DOMAIN:
         let max_liquidity = Liquidity::max_instance();
-        let min_liquidity = Liquidity::new(U256T::from(1));
+        let min_liquidity = Liquidity::new(U256::from(1));
         // let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK);
         let max_x = TokenAmount::max_instance();
-        let min_x = TokenAmount::new(U256T::from(1));
+        let min_x = TokenAmount::new(U256::from(1));
         let min_sqrt_price = SqrtPrice::from_tick(-MAX_TICK).unwrap();
         let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK).unwrap();
-        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128T::from(1));
-        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128T::from(1));
+        let almost_min_sqrt_price = min_sqrt_price + SqrtPrice::new(U128::from(1));
+        let almost_max_sqrt_price = max_sqrt_price - SqrtPrice::new(U128::from(1));
         // min value inside domain
         {
             // increases min_sqrt_price
             {
                 let target_sqrt_price =
                                   // get_next_sqrt_price_y_down(min_sqrt_price, max_liquidity, min_x, true).unwrap();
-                                  get_next_sqrt_price_x_up(min_sqrt_price, max_liquidity, TokenAmount::new(U256T::from(600000000)), false).unwrap();
+                                  get_next_sqrt_price_x_up(min_sqrt_price, max_liquidity, TokenAmount::new(U256::from(600000000)), false).unwrap();
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(15258932000000000001u128))
+                    SqrtPrice::new(U128::from(15258932000000000001u128))
                 );
             }
             // decreases almost_min_sqrt_price
@@ -2002,14 +1988,14 @@ mod tests {
                 let target_sqrt_price = get_next_sqrt_price_x_up(
                     almost_min_sqrt_price,
                     max_liquidity,
-                    TokenAmount::new(U256T::from(u128::MAX) * U256T::from(2u128.pow(64))),
+                    TokenAmount::new(U256::from(u128::MAX) * U256::from(2u128.pow(64))),
                     true,
                 )
                 .unwrap();
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(15258932000000000000u128))
+                    SqrtPrice::new(U128::from(15258932000000000000u128))
                 );
             }
         }
@@ -2020,14 +2006,14 @@ mod tests {
                 let target_sqrt_price = get_next_sqrt_price_x_up(
                     max_sqrt_price,
                     max_liquidity,
-                    TokenAmount::new(U256T::from(u128::MAX)),
+                    TokenAmount::new(U256::from(u128::MAX)),
                     true,
                 )
                 .unwrap();
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(65535383934512646999999999999u128))
+                    SqrtPrice::new(U128::from(65535383934512646999999999999u128))
                 );
             }
             // increases almost_max_sqrt_price
@@ -2035,14 +2021,14 @@ mod tests {
                 let target_sqrt_price: SqrtPrice = get_next_sqrt_price_x_up(
                     almost_max_sqrt_price,
                     max_liquidity,
-                    TokenAmount::new(U256T::from(u128::MAX)),
+                    TokenAmount::new(U256::from(u128::MAX)),
                     false,
                 )
                 .unwrap();
 
                 assert_eq!(
                     target_sqrt_price,
-                    SqrtPrice::new(U128T::from(65535383934512647000000000001u128))
+                    SqrtPrice::new(U128::from(65535383934512647000000000001u128))
                 );
             }
         }
@@ -2050,7 +2036,7 @@ mod tests {
             let result =
                 get_next_sqrt_price_x_up(max_sqrt_price, max_liquidity, max_x, true).unwrap();
 
-            assert_eq!(result, SqrtPrice::new(U128T::from(9999999998474106750u128)));
+            assert_eq!(result, SqrtPrice::new(U128::from(9999999998474106750u128)));
         }
         // subtraction underflow (not possible from upper-level function)
         {
@@ -2069,47 +2055,47 @@ mod tests {
 
             assert_eq!(
                 result,
-                SqrtPrice::new(U128T::from(65535383934512647000000000000u128))
+                SqrtPrice::new(U128::from(65535383934512647000000000000u128))
             );
         }
         // Liquidity is zero
         {
             let result = get_next_sqrt_price_x_up(
                 max_sqrt_price,
-                Liquidity::new(U256T::from(0)),
+                Liquidity::new(U256::from(0)),
                 min_x,
                 true,
             )
             .unwrap();
 
-            assert_eq!(result, SqrtPrice::new(U128T::from(0)));
+            assert_eq!(result, SqrtPrice::new(U128::from(0)));
         }
         // Amount is zero
         {
             let result = get_next_sqrt_price_x_up(
                 max_sqrt_price,
                 max_liquidity,
-                TokenAmount::new(U256T::from(0)),
+                TokenAmount::new(U256::from(0)),
                 true,
             )
             .unwrap();
 
             assert_eq!(
                 result,
-                SqrtPrice::new(U128T::from(65535383934512647000000000000u128))
+                SqrtPrice::new(U128::from(65535383934512647000000000000u128))
             );
         }
     }
 
     #[test]
     fn test_domain_is_enough_amount_to_push_price() {
-        let zero_liquidity = Liquidity::new(U256T::from(0));
+        let zero_liquidity = Liquidity::new(U256::from(0));
         let max_fee = Percentage::from_integer(1);
         let max_amount = TokenAmount::max_instance();
-        let min_amount = TokenAmount::new(U256T::from(1));
+        let min_amount = TokenAmount::new(U256::from(1));
 
         // Validate traceable error
-        let min_liquidity = Liquidity::new(U256T::from(1));
+        let min_liquidity = Liquidity::new(U256::from(1));
         let max_sqrt_price = SqrtPrice::from_tick(MAX_TICK).unwrap();
         let min_fee = Percentage::from_integer(0);
         {
@@ -2197,7 +2183,7 @@ mod tests {
         // current tick between lower tick and upper tick
         {
             let current_tick_index = 2;
-            let current_sqrt_price = SqrtPrice::new(U128T::from(1000140000000_000000000000u128));
+            let current_sqrt_price = SqrtPrice::new(U128::from(1000140000000_000000000000u128));
 
             let liquidity_delta = Liquidity::from_integer(5_000_000);
             let liquidity_sign = true;
@@ -2214,13 +2200,13 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(x, TokenAmount::new(U256T::from(51)));
-            assert_eq!(y, TokenAmount::new(U256T::from(700)));
+            assert_eq!(x, TokenAmount::new(U256::from(51)));
+            assert_eq!(y, TokenAmount::new(U256::from(700)));
             assert_eq!(add, true)
         }
         {
             let current_tick_index = 2;
-            let current_sqrt_price = SqrtPrice::new(U128T::from(1000140000000_000000000000u128));
+            let current_sqrt_price = SqrtPrice::new(U128::from(1000140000000_000000000000u128));
 
             let liquidity_delta = Liquidity::from_integer(5_000_000);
             let liquidity_sign = true;
@@ -2237,8 +2223,8 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(x, TokenAmount::new(U256T::from(300)));
-            assert_eq!(y, TokenAmount::new(U256T::from(700)));
+            assert_eq!(x, TokenAmount::new(U256::from(300)));
+            assert_eq!(y, TokenAmount::new(U256::from(700)));
             assert_eq!(add, true)
         }
         // current tick smaller than lower tick
@@ -2260,8 +2246,8 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(x, TokenAmount::new(U256T::from(1)));
-            assert_eq!(y, TokenAmount::new(U256T::from(0)));
+            assert_eq!(x, TokenAmount::new(U256::from(1)));
+            assert_eq!(y, TokenAmount::new(U256::from(0)));
             assert_eq!(add, false)
         }
         // current tick greater than upper tick
@@ -2284,8 +2270,8 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(x, TokenAmount::new(U256T::from(0)));
-            assert_eq!(y, TokenAmount::new(U256T::from(1)));
+            assert_eq!(x, TokenAmount::new(U256::from(0)));
+            assert_eq!(y, TokenAmount::new(U256::from(1)));
             assert_eq!(add, false)
         }
     }
@@ -2316,10 +2302,10 @@ mod tests {
             assert_eq!(
                 x,
                 TokenAmount::new(
-                    U256T::from_dec_str("75880998414682858767056931020720040283888865803509762441587530402105305752645").unwrap()
+                    U256::from_dec_str("75880998414682858767056931020720040283888865803509762441587530402105305752645").unwrap()
                 )
             );
-            assert_eq!(y, TokenAmount::new(U256T::from(0)));
+            assert_eq!(y, TokenAmount::new(U256::from(0)));
             assert_eq!(add, false)
         }
 
@@ -2340,11 +2326,11 @@ mod tests {
                 lower_tick,
             )
             .unwrap();
-            assert_eq!(x, TokenAmount::new(U256T::from(0)));
+            assert_eq!(x, TokenAmount::new(U256::from(0)));
             assert_eq!(
                 y,
                 TokenAmount::new(
-                    U256T::from_dec_str("75880996274614937472454279923345931777432945506580976077368827511053494714377").unwrap()
+                    U256::from_dec_str("75880996274614937472454279923345931777432945506580976077368827511053494714377").unwrap()
                 )
             );
             assert_eq!(add, false)
@@ -2353,7 +2339,7 @@ mod tests {
         // delta liquidity = 0
         {
             let current_tick_index = 2;
-            let current_sqrt_price = SqrtPrice::new(U128T::from(1000140000000_000000000000u128));
+            let current_sqrt_price = SqrtPrice::new(U128::from(1000140000000_000000000000u128));
 
             let liquidity_delta = Liquidity::from_integer(0);
             let liquidity_sign = true;
@@ -2370,15 +2356,15 @@ mod tests {
             )
             .unwrap();
 
-            assert_eq!(x, TokenAmount::new(U256T::from(0)));
-            assert_eq!(y, TokenAmount::new(U256T::from(0)));
+            assert_eq!(x, TokenAmount::new(U256::from(0)));
+            assert_eq!(y, TokenAmount::new(U256::from(0)));
             assert_eq!(add, true)
         }
 
         // Error handling
         {
             let current_tick_index = 0;
-            let current_sqrt_price = SqrtPrice::new(U128T::from(1000140000000_000000000000u128));
+            let current_sqrt_price = SqrtPrice::new(U128::from(1000140000000_000000000000u128));
             let liquidity_delta = Liquidity::from_integer(0);
             let liquidity_sign = true;
             let upper_tick = 4;
@@ -2419,7 +2405,7 @@ mod tests {
                 .get();
                 assert_eq!(
                     cause,
-                    "conversion to invariant_math::types::token_amount::TokenAmount type failed"
+                    "conversion to invariant::math::types::token_amount::TokenAmount type failed"
                 );
                 assert_eq!(stack.len(), 2)
             }
@@ -2492,7 +2478,7 @@ mod tests {
             assert_eq!(
                 max_l,
                 Liquidity::new(
-                    U256T::from_dec_str(
+                    U256::from_dec_str(
                         "261006384132333857238172165551313140818439365214444611336425014162283870"
                     )
                     .unwrap()
@@ -2504,8 +2490,8 @@ mod tests {
             let max_l = calculate_max_liquidity_per_tick(2);
             assert_eq!(
                 max_l,
-                Liquidity::new(U256T::from(
-                    U256T::from_dec_str(
+                Liquidity::new(U256::from(
+                    U256::from_dec_str(
                         "522013944933757384087725004321957225532959384115087883036803072825077900"
                     )
                     .unwrap()
@@ -2517,8 +2503,8 @@ mod tests {
             let max_l = calculate_max_liquidity_per_tick(5);
             assert_eq!(
                 max_l,
-                Liquidity::new(U256T::from(
-                    U256T::from_dec_str(
+                Liquidity::new(U256::from(
+                    U256::from_dec_str(
                         "1305037804020379314341417888677492847197245310510223089245185614389229091"
                     )
                     .unwrap()
@@ -2530,8 +2516,8 @@ mod tests {
             let max_l = calculate_max_liquidity_per_tick(100);
             assert_eq!(
             max_l,
-            Liquidity::new(U256T::from(
-                U256T::from_dec_str(
+            Liquidity::new(U256::from(
+                U256::from_dec_str(
                     "26102815427708790672581376241814226296949951457538449963809193870133708214"
                 )
                 .unwrap()
