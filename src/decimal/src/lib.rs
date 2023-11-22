@@ -37,6 +37,10 @@ pub mod tests {
         let _r = R::from_integer(U128::from(0));
         let _q = Q::from_integer(U128::from(0));
         let _n = N::from_integer(U128::from(0));
+
+        let _r = R::from_integer(0);
+        let _q = Q::from_integer(0);
+        let _n = N::from_integer(0);
     }
 
     // #[test]

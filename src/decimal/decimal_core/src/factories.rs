@@ -20,21 +20,25 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
 
     proc_macro::TokenStream::from(quote!(
 
-        impl <T>Factories<T> for #struct_name
+        impl<T> Factories<T> for #struct_name
         where
-        T: TryInto<u128>,
-        T: TryFrom<u128>,
-        T: TryInto<#underlying_type>,
-        T: From<u8>,
-        // T: num_traits::ops::checked::CheckedDiv,
-        // T: num_traits::ops::checked::CheckedAdd,
-        // T: num_traits::ops::checked::CheckedSub
+        T: core::ops::Add<Output = T>,
+        #underlying_type: From<T>
+        {
+
+            fn from_integer(integer: T) -> Self {
+                Self::from_integer_underlying(#underlying_type::from(integer))
+            }
+
+            fn from_scale(integer:T, scale:u8) -> Self {
+                Self::from_scale_underlying(#underlying_type::from(integer), scale)
+            }
+        }
+
+        impl FactoriesUnderlying for #struct_name
         {
             type U = #underlying_type;
 
-            fn from_integer(integer: T) -> Self {
-                 Self::from_integer_underlying(#underlying_type::from(integer))
-            }
 
             fn from_integer_underlying(integer: Self::U) -> Self {
                 Self::new(
@@ -44,7 +48,7 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
                 )
             }
 
-            fn from_scale(integer: Self::U, scale: u8)-> Self {
+            fn from_scale_underlying(integer: Self::U, scale: u8)-> Self {
                 Self::new(
                     if #scale > scale {
                         let multiplier: #underlying_type = #underlying_type::from(10).checked_pow(#underlying_type::from((#scale - scale))).unwrap();
@@ -87,7 +91,7 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
         //     Self: Factories<T::U>,
         // {
         //     fn from_decimal(other: T) -> Self {
-        //         Self::from_scale(other.get(), T::scale())
+        //         Self::from_scale_underlying(other.get(), T::scale())
         //     }
 
         //     fn checked_from_decimal(other: T) -> core::result::Result<Self, alloc::string::String> {
@@ -141,7 +145,7 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
             #[test]
             fn test_from_integer() {
                 assert_eq!(
-                    #struct_name::from_integer(#underlying_type::from(0)),
+                    #struct_name::from_integer_underlying(#underlying_type::from(0)),
                     #struct_name::new(#underlying_type::from(0u8))
                 );
             }
