@@ -16,6 +16,35 @@ use odra::{
     Variable,
 };
 
+#[derive(Debug)]
+pub enum ContractErrors {
+    InsufficientSenderBalance,
+    InsufficientLPLocked,
+    PairNotFound,
+    MintFailed,
+    BurnFailed,
+    SwapFailed,
+    NotAnAdmin,
+    PoolAlreadyExist,
+    PoolNotFound,
+    TickAlreadyExist,
+    InvalidTickIndexOrTickSpacing,
+    PositionNotFound,
+    TickNotFound,
+    FeeTierNotFound,
+    AmountIsZero,
+    WrongLimit,
+    PriceLimitReached,
+    NoGainSwap,
+    InvalidTickSpacing,
+    FeeTierAlreadyAdded,
+    NotAFeeReceiver,
+    ZeroLiquidity,
+    TransferError,
+    TokensAreTheSame,
+    AmountUnderMinimumAmountOut,
+}
+
 #[odra::module]
 pub struct Invariant {
     tickmap: Tickmap,
