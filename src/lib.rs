@@ -6,8 +6,8 @@ pub mod contracts;
 pub mod math;
 
 use crate::contracts::State;
-use crate::math::{liquidity::Liquidity, percentage::Percentage};
-use contracts::Tick;
+use crate::math::{liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice};
+use contracts::{Pool, Position, Tick};
 use decimal::Decimal;
 use odra::{
     contract_env,
@@ -15,8 +15,14 @@ use odra::{
     Variable,
 };
 
+pub struct SwapResult {
+    next_sqrt_price: SqrtPrice,
+}
+
 #[odra::module]
 pub struct Invariant {
+    position: Variable<Position>,
+    pool: Variable<Pool>,
     tick: Variable<Tick>,
     state: Variable<State>,
     liquidity: Variable<Liquidity>,
@@ -29,7 +35,9 @@ impl Invariant {
         let caller = contract_env::caller();
         let liquidity = Liquidity::new(U256::from(100_000_000u128));
         self.liquidity.set(liquidity);
+        self.position.set(Position::default());
         self.tick.set(Tick::default());
+        self.pool.set(Pool::default());
         self.state.set(State {
             admin: caller,
             protocol_fee: Percentage::new(U128::from(10000000000u128)),

@@ -40,7 +40,7 @@ impl Position {
         tick_spacing: u16,
     ) -> TrackableResult<(TokenAmount, TokenAmount)> {
         if !pool.liquidity.is_zero() {
-            // ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
+            ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
         } else {
             pool.last_timestamp = current_timestamp;
         }
@@ -49,8 +49,8 @@ impl Position {
         let max_liquidity_per_tick = calculate_max_liquidity_per_tick(tick_spacing);
 
         // update initialized tick
-        // lower_tick.update(liquidity_delta, max_liquidity_per_tick, false, add)?;
-        // upper_tick.update(liquidity_delta, max_liquidity_per_tick, true, add)?;
+        lower_tick.update(liquidity_delta, max_liquidity_per_tick, false, add)?;
+        upper_tick.update(liquidity_delta, max_liquidity_per_tick, true, add)?;
 
         // update fee inside position
         let (fee_growth_inside_x, fee_growth_inside_y) = calculate_fee_growth_inside(
@@ -72,14 +72,13 @@ impl Position {
             fee_growth_inside_y,
         )?;
 
-        Ok((TokenAmount::default(), TokenAmount::default()))
         // calculate tokens amounts and update pool liquidity
-        // ok_or_mark_trace!(pool.update_liquidity(
-        //     liquidity_delta,
-        //     add,
-        //     upper_tick.index,
-        //     lower_tick.index
-        // ))
+        ok_or_mark_trace!(pool.update_liquidity(
+            liquidity_delta,
+            add,
+            upper_tick.index,
+            lower_tick.index
+        ))
     }
 
     pub fn update(
@@ -165,7 +164,6 @@ impl Position {
         lower_tick: &mut Tick,
         upper_tick: &mut Tick,
         current_timestamp: u64,
-        // tickmap: &mut Tickmap,
         liquidity_delta: Liquidity,
         slippage_limit_lower: SqrtPrice,
         slippage_limit_upper: SqrtPrice,
@@ -175,13 +173,6 @@ impl Position {
         if pool.sqrt_price < slippage_limit_lower || pool.sqrt_price > slippage_limit_upper {
             return Err("Price limit reached".to_string());
         }
-
-        // if !tickmap.get(lower_tick.index, pool.tick_spacing) {
-        //     tickmap.flip(true, lower_tick.index, pool.tick_spacing)
-        // }
-        // if !tickmap.get(upper_tick.index, pool.tick_spacing) {
-        //     tickmap.flip(true, upper_tick.index, pool.tick_spacing)
-        // }
 
         // init position
         let mut position = Position {

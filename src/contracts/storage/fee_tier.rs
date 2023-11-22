@@ -1,9 +1,9 @@
-
-use odra::types::U128;
 use odra::OdraType;
+
+use crate::math::percentage::Percentage;
 
 #[derive(OdraType, Default)]
 pub struct FeeTier {
-    pub fee: U128,
+    pub fee: Percentage,
     pub tick_spacing: u16,
 }
