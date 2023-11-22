@@ -14,7 +14,6 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
     } = characteristics;
 
     let name_str = &struct_name.to_string();
-    let underlying_str = &underlying_type.to_string();
 
     let module_name = string_to_ident("tests_factories_", &name_str);
 
@@ -33,12 +32,19 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
             fn from_scale(integer:T, scale:u8) -> Self {
                 Self::from_scale_underlying(#underlying_type::from(integer), scale)
             }
+
+            fn checked_from_scale(integer:T,scale:u8) -> core::result::Result<Self,alloc::string::String> {
+                Self::checked_from_scale_underlying(#underlying_type::from(integer),scale)
+            }
+
+            fn from_scale_up(integer:T, scale:u8) -> Self {
+                Self::from_scale_up_underlying(#underlying_type::from(integer), scale)
+            }
         }
 
         impl FactoriesUnderlying for #struct_name
         {
             type U = #underlying_type;
-
 
             fn from_integer_underlying(integer: Self::U) -> Self {
                 Self::new(
@@ -60,7 +66,7 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
                 )
             }
 
-            fn checked_from_scale(integer: Self::U, scale: u8) -> core::result::Result<Self, alloc::string::String> {
+            fn checked_from_scale_underlying(integer: Self::U, scale: u8) -> core::result::Result<Self, alloc::string::String> {
                 Ok(Self::new(
                     if #scale > scale {
                         let multiplier: #underlying_type = #underlying_type::from(10).checked_pow(#underlying_type::from((#scale - scale))).ok_or_else(|| "checked_from_scale: delta scale overflow")?;
@@ -72,7 +78,7 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
                 ))
             }
 
-            fn from_scale_up(integer: Self::U, scale: u8) -> Self {
+            fn from_scale_up_underlying(integer: Self::U, scale: u8) -> Self {
                 Self::new(
                     if #scale > scale {
                         let multiplier: #underlying_type = #underlying_type::from(10).checked_pow(#underlying_type::from((#scale - scale))).unwrap();
@@ -86,22 +92,23 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
             }
         }
 
-        // impl<T: Decimal> BetweenDecimals<T> for #struct_name
-        // where
-        //     Self: Factories<T::U>,
-        // {
-        //     fn from_decimal(other: T) -> Self {
-        //         Self::from_scale_underlying(other.get(), T::scale())
-        //     }
+        impl<T: Decimal> BetweenDecimals<T> for #struct_name
+        where
+            Self: Factories<T::U>,
 
-        //     fn checked_from_decimal(other: T) -> core::result::Result<Self, alloc::string::String> {
-        //         Self::checked_from_scale(other.get(), T::scale())
-        //     }
+        {
+            fn from_decimal(other: T) -> Self {
+                Self::from_scale(other.get(), T::scale())
+            }
 
-        //     fn from_decimal_up(other: T) -> Self {
-        //         Self::from_scale_up(other.get(), T::scale())
-        //     }
-        // }
+            fn checked_from_decimal(other: T) -> core::result::Result<Self, alloc::string::String> {
+                Self::checked_from_scale(other.get(), T::scale())
+            }
+
+            fn from_decimal_up(other: T) -> Self {
+                Self::from_scale_up(other.get(), T::scale())
+            }
+        }
 
         impl<T> FactoriesToValue<T, #big_type> for #struct_name
         where
@@ -153,38 +160,42 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
             #[test]
             fn test_from_scale() {
                 assert_eq!(
-                    #struct_name::from_scale(#underlying_type::from(0), 0),
-                    #struct_name::new(#underlying_type::from(0u8))
-                );
-                assert_eq!(
-                    #struct_name::from_scale_up(#underlying_type::from(0), 0),
+                    #struct_name::from_scale(0, 0),
                     #struct_name::new(#underlying_type::from(0u8))
                 );
 
                 assert_eq!(
-                    #struct_name::from_scale(#underlying_type::from(0), 3),
-                    #struct_name::new(#underlying_type::from(0u8))
-                );
-                assert_eq!(
-                    #struct_name::from_scale_up(#underlying_type::from(0), 3),
+                    #struct_name::from_scale_up(0, 0),
                     #struct_name::new(#underlying_type::from(0u8))
                 );
 
                 assert_eq!(
-                    #struct_name::from_scale(#underlying_type::from(42), #scale),
+                    #struct_name::from_scale(0, 3),
+                    #struct_name::new(#underlying_type::from(0u8))
+                );
+
+                assert_eq!(
+                    #struct_name::from_scale_up(0, 3),
+                    #struct_name::new(#underlying_type::from(0u8))
+                );
+
+                assert_eq!(
+                    #struct_name::from_scale(42, #scale),
                     #struct_name::new(#underlying_type::from(42u8))
                 );
+
                 assert_eq!(
-                    #struct_name::from_scale_up(#underlying_type::from(42), #scale),
+                    #struct_name::from_scale_up(42, #scale),
                     #struct_name::new(#underlying_type::from(42u8))
                 );
 
                 assert_eq!(
-                    #struct_name::from_scale(#underlying_type::from(42), #scale + 1),
+                    #struct_name::from_scale(42, #scale + 1),
                     #struct_name::new(#underlying_type::from(4u8))
                 );
+
                 assert_eq!(
-                    #struct_name::from_scale_up(#underlying_type::from(42), #scale + 1),
+                    #struct_name::from_scale_up(42, #scale + 1),
                     #struct_name::new(#underlying_type::from(5u8))
                 );
             }
@@ -192,28 +203,28 @@ pub fn generate_factories(characteristics: DecimalCharacteristics) -> proc_macro
             #[test]
             fn test_checked_from_scale() {
                 assert_eq!(
-                    #struct_name::checked_from_scale(#underlying_type::from(0), 0).unwrap(),
+                    #struct_name::checked_from_scale_underlying(#underlying_type::from(0), 0).unwrap(),
                     #struct_name::new(#underlying_type::from(0u8))
                 );
 
                 assert_eq!(
-                    #struct_name::checked_from_scale(#underlying_type::from(0), 3).unwrap(),
+                    #struct_name::checked_from_scale_underlying(#underlying_type::from(0), 3).unwrap(),
                     #struct_name::new(#underlying_type::from(0u8))
                 );
 
                 assert_eq!(
-                    #struct_name::checked_from_scale(#underlying_type::from(42), #scale).unwrap(),
+                    #struct_name::checked_from_scale_underlying(#underlying_type::from(42), #scale).unwrap(),
                     #struct_name::new(#underlying_type::from(42u8))
                 );
 
                 assert_eq!(
-                    #struct_name::checked_from_scale(#underlying_type::from(42), #scale + 1).unwrap(),
+                    #struct_name::checked_from_scale_underlying(#underlying_type::from(42), #scale + 1).unwrap(),
                     #struct_name::new(#underlying_type::from(4u8))
                 );
 
                 let max_u128: u128 = u128::MAX;
                 assert_eq!(
-                    #struct_name::checked_from_scale(#underlying_type::from(max_u128), 100_000).is_err(),
+                    #struct_name::checked_from_scale_underlying(#underlying_type::from(max_u128), 100_000).is_err(),
                     true
                 );
             }

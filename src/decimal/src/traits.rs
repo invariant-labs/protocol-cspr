@@ -81,26 +81,29 @@ pub trait OthersSameType {
     fn sub_abs(self, rhs: Self) -> Self;
 }
 
-pub trait Factories<T> {
+pub trait Factories<T>: Sized {
     fn from_integer(integer: T) -> Self;
     fn from_scale(integer: T, scale: u8) -> Self;
+    fn checked_from_scale(integer: T, scale: u8) -> Result<Self, String>;
+    fn from_scale_up(integer: T, scale: u8) -> Self;
 }
+
 pub trait FactoriesUnderlying {
     type U: Debug + Default;
 
     fn from_integer_underlying(integer: Self::U) -> Self;
     fn from_scale_underlying(integer: Self::U, scale: u8) -> Self;
-    fn checked_from_scale(integer: Self::U, scale: u8) -> Result<Self, String>
+    fn checked_from_scale_underlying(integer: Self::U, scale: u8) -> Result<Self, String>
     where
         Self: Sized;
-    fn from_scale_up(integer: Self::U, scale: u8) -> Self;
+    fn from_scale_up_underlying(integer: Self::U, scale: u8) -> Self;
 }
 
-// pub trait BetweenDecimals<T>: Sized {
-//     fn from_decimal(other: T) -> Self;
-//     fn checked_from_decimal(other: T) -> Result<Self, String>;
-//     fn from_decimal_up(other: T) -> Self;
-// }
+pub trait BetweenDecimals<T>: Sized {
+    fn from_decimal(other: T) -> Self;
+    fn checked_from_decimal(other: T) -> Result<Self, String>;
+    fn from_decimal_up(other: T) -> Self;
+}
 
 pub trait ToValue<T, B> {
     fn big_mul_to_value(self, value: T) -> B;
