@@ -203,42 +203,17 @@ pub fn calculate_sqrt_price(tick_index: i32) -> TrackableResult<SqrtPrice> {
         sqrt_price *= FixedPoint::new(U128::from(701536086265529u128));
     }
 
-    //TODO - refactor converting to sqrt_price with `checked_from_decimal` method
-
-    // Parsing to the Sqrt_price type by the end by convention (should always have 12 zeros at the end)
-    let missing_scale = FixedPoint::new(U128::from(
-        10u128.pow((SqrtPrice::scale() - FixedPoint::scale()) as u32),
-    ));
     Ok(if tick_index >= 0 {
-        let extended_value = sqrt_price
-            .get()
-            .checked_mul(missing_scale.get())
-            .ok_or_else(|| err!("calculate_sqrt_price::checked_mul multiplication failed"))?;
-
-        SqrtPrice::new(extended_value)
+        SqrtPrice::checked_from_decimal(sqrt_price)
+            .map_err(|_| err!("calculate_sqrt_price: parsing from scale failed"))?
     } else {
-        let one = FixedPoint::from_integer(1);
-        SqrtPrice::new(
-            one.get()
-                .checked_mul(FixedPoint::one().get())
-                .ok_or_else(|| err!("calculate_sqrt_price::checked_mul multiplication failed"))?
-                .checked_div(sqrt_price.get())
-                .ok_or_else(|| err!("calculate_sqrt_price::checked_div division failed"))?
-                .checked_mul(missing_scale.get())
-                .ok_or_else(|| err!("calculate_sqrt_price::checked_mul multiplication failed"))?,
+        SqrtPrice::checked_from_decimal(
+            FixedPoint::from_integer(1)
+                .checked_div(sqrt_price)
+                .map_err(|_| err!("calculate_sqrt_price::checked_div division failed"))?,
         )
+        .map_err(|_| err!("calculate_sqrt_price: parsing scale failed"))?
     })
-    // if tick_index >= 0 {
-    // SqrtPrice::checked_from_decimal(sqrt_price)
-    // .map_err(|_| err!("calculate_sqrt_price: parsing from scale failed"))?, // } else {
-    //     SqrtPrice::checked_from_decimal(
-    //         FixedPoint::from_integer(1)
-    //             .checked_div(sqrt_price)
-    //             .map_err(|_| err!("calculate_sqrt_price::checked_div division failed"))?,
-    //     )
-    //     .map_err(|_| err!("calculate_sqrt_price: parsing scale failed"))?
-    // }
-    // Ok(SqrtPrice::new(U128::from(0)))
 }
 
 pub fn get_max_tick(tick_spacing: u16) -> i32 {
