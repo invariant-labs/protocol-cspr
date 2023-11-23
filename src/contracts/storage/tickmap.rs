@@ -1,11 +1,8 @@
 use super::PoolKey;
 use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::sqrt_price::SqrtPrice;
-use crate::math::MAX_TICK;
+use crate::math::{CHUNK_SIZE, MAX_TICK, TICK_SEARCH_RANGE};
 use odra::Mapping;
-
-pub const TICK_SEARCH_RANGE: i32 = 256;
-pub const CHUNK_SIZE: i32 = 64;
 
 #[odra::module]
 pub struct Tickmap {
