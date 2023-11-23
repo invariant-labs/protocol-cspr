@@ -46,7 +46,7 @@ impl SecondsPerLiquidity {
 
         Ok(Self::new(
             Self::checked_from_value(
-                U256::from(delta_time)
+                U128::from(delta_time)
                     .checked_mul(Self::one().cast())
                     .ok_or_else(|| err!(TrackableError::MUL))?
                     .checked_mul(Liquidity::one().cast())
