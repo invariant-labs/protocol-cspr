@@ -23,6 +23,11 @@ construct_uint! {
 
 construct_uint! {
     #[derive(BorshSerialize, BorshDeserialize)]
+    pub struct U320T(5);
+}
+
+construct_uint! {
+    #[derive(BorshSerialize, BorshDeserialize)]
     pub struct U384T(6);
 }
 
