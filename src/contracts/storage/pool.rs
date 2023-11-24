@@ -539,7 +539,7 @@ mod tests {
             );
             assert_eq!(
                 seconds_per_liquidity_inside.unwrap().get(),
-                U128::from(19999999999994957300000u128)
+                U128::from(1999999999999994957300000u128)
             );
         }
         {
@@ -600,7 +600,7 @@ mod tests {
             );
             assert_eq!(
                 pool.seconds_per_liquidity_global.get(),
-                U128::from(50000000000000000000000u128)
+                U128::from(5000000000000000000000000u128)
             );
         }
         // updates timestamp
@@ -621,7 +621,7 @@ mod tests {
             );
             assert_eq!(
                 pool.seconds_per_liquidity_global.get(),
-                U128::from(50000000000000000000000u128)
+                U128::from(5000000000000000000000000u128)
             );
         }
         // L > 0
@@ -642,7 +642,7 @@ mod tests {
             );
             assert_eq!(
                 pool.seconds_per_liquidity_global.get(),
-                U128::from(60000000000000000000000u128)
+                U128::from(6000000000000000000000000u128)
             );
         }
         // L == 0
@@ -663,7 +663,7 @@ mod tests {
             );
             assert_eq!(
                 pool.seconds_per_liquidity_global.get(),
-                U128::from(60000000000000000000000u128)
+                U128::from(6000000000000000000000000u128)
             );
         }
     }
