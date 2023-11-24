@@ -9,4 +9,5 @@ cargo test
 cd ../../..
 
 cargo test
-cargo odra test -b casper
+cargo odra test
+cargo odra build -b casper

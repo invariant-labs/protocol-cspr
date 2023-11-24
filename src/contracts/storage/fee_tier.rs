@@ -1,6 +1,5 @@
-use odra::OdraType;
-
 use crate::math::percentage::Percentage;
+use odra::OdraType;
 
 #[derive(OdraType, Default)]
 pub struct FeeTier {
