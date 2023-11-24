@@ -46,7 +46,7 @@ impl SecondsPerLiquidity {
 
         Ok(Self::new(
             Self::checked_from_value(
-                U128::from(delta_time)
+                U256::from(delta_time)
                     .checked_mul(Self::one().cast())
                     .ok_or_else(|| err!(TrackableError::MUL))?
                     .checked_mul(Liquidity::one().cast())
@@ -167,7 +167,7 @@ mod tests {
             assert_eq!(cause, "division overflow or division by zero");
             assert_eq!(stack.len(), 1);
         }
-        // // min value
+        // min value
         {
             let liquidity = Liquidity::max_instance();
             let current_timestamp = 1;
