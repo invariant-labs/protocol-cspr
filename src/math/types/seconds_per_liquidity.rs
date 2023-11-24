@@ -46,15 +46,17 @@ impl SecondsPerLiquidity {
 
         Ok(Self::new(
             Self::checked_from_value(
-                U256::from(delta_time)
-                    .checked_mul(Self::one().cast())
-                    .ok_or_else(|| err!(TrackableError::MUL))?
-                    .checked_mul(Liquidity::one().cast())
-                    .ok_or_else(|| err!(TrackableError::MUL))?
-                    .checked_div(liquidity.cast())
-                    .ok_or_else(|| err!(TrackableError::DIV))?,
+                Self::from_value::<U256, U128>(
+                    U128::from(delta_time)
+                        .checked_mul(Self::one().cast())
+                        .ok_or_else(|| err!(TrackableError::MUL))?
+                        .checked_mul(Liquidity::one().cast())
+                        .ok_or_else(|| err!(TrackableError::MUL))?,
+                )
+                .checked_div(liquidity.get())
+                .ok_or_else(|| err!(TrackableError::DIV))?,
             )
-            .map_err(|_| err!(TrackableError::cast::<Self>().as_str()))?,
+            .map_err(|_| err!(TrackableError::cast::<U128>().as_str()))?,
         ))
     }
 }
@@ -211,7 +213,7 @@ mod tests {
             )
             .unwrap_err()
             .get();
-            assert_eq!(cause, "conversion to invariant::math::types::seconds_per_liquidity::SecondsPerLiquidity type failed");
+            assert_eq!(cause, "multiplication overflow");
             assert_eq!(stack.len(), 1);
         }
 
