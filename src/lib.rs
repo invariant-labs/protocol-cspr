@@ -14,7 +14,7 @@ use odra::{
     Variable,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ContractErrors {
     InsufficientSenderBalance,
     InsufficientLPLocked,
@@ -27,6 +27,8 @@ pub enum ContractErrors {
     PoolNotFound,
     TickAlreadyExist,
     InvalidTickIndexOrTickSpacing,
+    FeeTierAlreadyExist,
+    InvalidFee,
     PositionNotFound,
     TickNotFound,
     FeeTierNotFound,
