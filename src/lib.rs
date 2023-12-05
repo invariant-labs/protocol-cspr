@@ -29,6 +29,8 @@ pub enum ContractErrors {
     InvalidTickIndexOrTickSpacing,
     FeeTierAlreadyExist,
     InvalidFee,
+    PoolKeyNotFound,
+    PoolKeyAlreadyExist,
     PositionNotFound,
     TickNotFound,
     FeeTierNotFound,

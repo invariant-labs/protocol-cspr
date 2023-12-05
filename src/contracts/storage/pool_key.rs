@@ -4,7 +4,7 @@ use odra::types::casper_types::ContractPackageHash;
 use odra::types::Address;
 use odra::OdraType;
 
-#[derive(OdraType)]
+#[derive(OdraType, PartialEq, Copy, Debug)]
 pub struct PoolKey {
     pub token_x: Address,
     pub token_y: Address,
