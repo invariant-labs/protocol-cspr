@@ -20,21 +20,22 @@ impl Ticks {
     }
 
     pub fn update(&mut self, pool_key: PoolKey, index: i32, tick: &Tick) {
-        self.get(pool_key, index);
+        self.get(pool_key, index)
+            .unwrap_or_revert_with(InvariantExecutionError::TickNotFound);
 
         self.ticks.set(&(pool_key, index), Some(*tick));
     }
 
     pub fn remove(&mut self, pool_key: PoolKey, index: i32) {
-        self.get(pool_key, index);
+        self.get(pool_key, index)
+            .unwrap_or_revert_with(InvariantExecutionError::TickNotFound);
 
         self.ticks.set(&(pool_key, index), None);
     }
 
-    pub fn get(&self, pool_key: PoolKey, index: i32) -> Tick {
+    pub fn get(&self, pool_key: PoolKey, index: i32) -> Option<Tick> {
         self.ticks
             .get(&(pool_key, index))
-            .unwrap_or_revert_with(InvariantExecutionError::TickNotFound)
             .unwrap_or_revert_with(InvariantExecutionError::TickNotFound)
     }
 }
@@ -61,10 +62,10 @@ mod tests {
         let tick = Tick::default();
 
         ticks.add(pool_key, 0, &tick);
-        assert_eq!(ticks.get(pool_key, 0), tick);
+        assert_eq!(ticks.get(pool_key, 0).unwrap(), tick);
 
         odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
-            ticks.get(pool_key, 1);
+            ticks.get(pool_key, 1).unwrap();
         });
 
         odra::test_env::assert_exception(InvariantExecutionError::TickAlreadyExist, || {
@@ -93,7 +94,7 @@ mod tests {
 
         ticks.update(pool_key, 0, &new_tick);
 
-        assert_eq!(ticks.get(pool_key, 0), new_tick);
+        assert_eq!(ticks.get(pool_key, 0).unwrap(), new_tick);
 
         odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
             ticks.update(pool_key, 1, &new_tick);
@@ -117,9 +118,7 @@ mod tests {
 
         ticks.remove(pool_key, 0);
 
-        odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
-            ticks.get(pool_key, 0);
-        });
+        assert_eq!(ticks.get(pool_key, 0), None);
 
         odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
             ticks.remove(pool_key, 0);
