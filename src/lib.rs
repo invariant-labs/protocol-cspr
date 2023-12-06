@@ -6,45 +6,47 @@ pub mod contracts;
 pub mod math;
 
 use crate::math::{liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice};
-use contracts::{FeeTier, Pool, PoolKey, Position, State, Tick, Tickmap};
+use contracts::{FeeTier, Pool, PoolKey, Position, State, Tick, Tickmap, Ticks};
 use decimal::Decimal;
+use odra::execution_error;
 use odra::{
     contract_env,
     types::{casper_types::ContractPackageHash, Address, U128, U256},
     Variable,
 };
 
+execution_error! {
+    pub enum TestError {
+        TickAlreadyExist => 1,
+        TickNotFound => 2,
+    }
+}
 #[derive(Debug, PartialEq)]
-pub enum ContractErrors {
-    InsufficientSenderBalance,
-    InsufficientLPLocked,
-    PairNotFound,
-    MintFailed,
-    BurnFailed,
-    SwapFailed,
-    NotAnAdmin,
+pub enum InvariantError {
+    NotAdmin,
+    NotFeeReceiver,
     PoolAlreadyExist,
     PoolNotFound,
     TickAlreadyExist,
     InvalidTickIndexOrTickSpacing,
-    FeeTierAlreadyExist,
-    InvalidFee,
-    PoolKeyNotFound,
-    PoolKeyAlreadyExist,
     PositionNotFound,
     TickNotFound,
     FeeTierNotFound,
+    PoolKeyNotFound,
     AmountIsZero,
     WrongLimit,
     PriceLimitReached,
     NoGainSwap,
     InvalidTickSpacing,
-    FeeTierAlreadyAdded,
-    NotAFeeReceiver,
+    FeeTierAlreadyExist,
+    PoolKeyAlreadyExist,
+    UnauthorizedFeeReceiver,
     ZeroLiquidity,
     TransferError,
     TokensAreTheSame,
     AmountUnderMinimumAmountOut,
+    InvalidFee,
+    NotEmptyTickDeinitialization,
 }
 
 pub struct SwapResult {
@@ -54,6 +56,7 @@ pub struct SwapResult {
 #[odra::module]
 pub struct Invariant {
     tickmap: Tickmap,
+    ticks: Ticks,
     position: Variable<Position>,
     pool: Variable<Pool>,
     tick: Variable<Tick>,

@@ -8,7 +8,7 @@ use odra::types::{U128, U256};
 use odra::OdraType;
 use traceable_result::*;
 
-#[derive(OdraType)]
+#[derive(OdraType, PartialEq, Debug, Copy)]
 pub struct Tick {
     pub index: i32,
     pub sign: bool,

@@ -1,5 +1,5 @@
 use crate::contracts::PoolKey;
-use crate::ContractErrors;
+use crate::InvariantError;
 use odra::prelude::vec::Vec;
 use odra::OdraType;
 
@@ -9,9 +9,9 @@ pub struct PoolKeys {
 }
 
 impl PoolKeys {
-    pub fn add(&mut self, pool_key: PoolKey) -> Result<(), ContractErrors> {
+    pub fn add(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
         if self.contains(pool_key) {
-            return Err(ContractErrors::PoolKeyAlreadyExist);
+            return Err(InvariantError::PoolKeyAlreadyExist);
         }
 
         self.pool_keys.push(pool_key);
@@ -19,12 +19,12 @@ impl PoolKeys {
     }
 
     #[allow(dead_code)]
-    pub fn remove(&mut self, pool_key: PoolKey) -> Result<(), ContractErrors> {
+    pub fn remove(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
         let index = self
             .pool_keys
             .iter()
             .position(|vec_pool_key| *vec_pool_key == pool_key)
-            .ok_or(ContractErrors::PoolKeyNotFound)?;
+            .ok_or(InvariantError::PoolKeyNotFound)?;
 
         self.pool_keys.remove(index);
 
@@ -66,7 +66,7 @@ mod tests {
         assert!(!pool_keys.contains(new_pool_key));
 
         let result = pool_keys.add(pool_key);
-        assert_eq!(result, Err(ContractErrors::PoolKeyAlreadyExist));
+        assert_eq!(result, Err(InvariantError::PoolKeyAlreadyExist));
     }
 
     #[test]
@@ -80,7 +80,7 @@ mod tests {
         assert!(!pool_keys.contains(pool_key));
 
         let result = pool_keys.remove(pool_key);
-        assert_eq!(result, Err(ContractErrors::PoolKeyNotFound));
+        assert_eq!(result, Err(InvariantError::PoolKeyNotFound));
     }
 
     #[test]

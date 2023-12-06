@@ -1,5 +1,5 @@
 use super::fee_tier::FeeTier;
-use crate::ContractErrors;
+use crate::InvariantError;
 use odra::types::casper_types::ContractPackageHash;
 use odra::types::Address;
 use odra::OdraType;
@@ -26,9 +26,9 @@ impl PoolKey {
         token_0: Address,
         token_1: Address,
         fee_tier: FeeTier,
-    ) -> Result<Self, ContractErrors> {
+    ) -> Result<Self, InvariantError> {
         if token_0 == token_1 {
-            return Err(ContractErrors::TokensAreTheSame);
+            return Err(InvariantError::TokensAreTheSame);
         }
 
         if token_0 < token_1 {
