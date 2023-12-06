@@ -3,6 +3,7 @@ use crate::contracts::{PoolKey, Tick};
 use odra::contract_env;
 use odra::Mapping;
 use odra::UnwrapOrRevert;
+// use odra::prelude::
 
 #[odra::module]
 pub struct Ticks {
@@ -12,11 +13,15 @@ pub struct Ticks {
 #[odra::module]
 impl Ticks {
     pub fn add(&mut self, pool_key: PoolKey, index: i32, tick: &Tick) {
-        self.ticks.get(&(pool_key, index)).map_or((), |_| {
-            contract_env::revert(InvariantExecutionError::TickAlreadyExist)
-        });
-
-        self.ticks.set(&(pool_key, index), Some(*tick));
+        if self
+            .ticks
+            .get(&(pool_key, index))
+            .map_or(true, |tick_opt| tick_opt.is_none())
+        {
+            self.ticks.set(&(pool_key, index), Some(*tick));
+        } else {
+            contract_env::revert(InvariantExecutionError::TickAlreadyExist);
+        }
     }
 
     pub fn update(&mut self, pool_key: PoolKey, index: i32, tick: &Tick) {
@@ -34,9 +39,10 @@ impl Ticks {
     }
 
     pub fn get(&self, pool_key: PoolKey, index: i32) -> Option<Tick> {
-        self.ticks
-            .get(&(pool_key, index))
-            .unwrap_or_revert_with(InvariantExecutionError::TickNotFound)
+        match self.ticks.get(&(pool_key, index)) {
+            Some(t) => t,
+            None => None,
+        }
     }
 }
 
@@ -64,9 +70,7 @@ mod tests {
         ticks.add(pool_key, 0, &tick);
         assert_eq!(ticks.get(pool_key, 0).unwrap(), tick);
 
-        odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
-            ticks.get(pool_key, 1).unwrap();
-        });
+        assert_eq!(ticks.get(pool_key, 1), None);
 
         odra::test_env::assert_exception(InvariantExecutionError::TickAlreadyExist, || {
             ticks.add(pool_key, 0, &tick);
@@ -123,5 +127,30 @@ mod tests {
         odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
             ticks.remove(pool_key, 0);
         });
+    }
+
+    #[test]
+    fn test_recreation() {
+        let ticks = &mut TicksDeployer::default();
+        let token_x = Address::Contract(ContractPackageHash::from([0x01; 32]));
+        let token_y = Address::Contract(ContractPackageHash::from([0x02; 32]));
+        let fee_tier = FeeTier {
+            fee: Percentage::new(U128::from(0)),
+            tick_spacing: 1,
+        };
+
+        let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
+        let tick = Tick::default();
+
+        assert_eq!(ticks.get(pool_key, 0), None);
+
+        ticks.add(pool_key, 0, &tick);
+        assert_eq!(ticks.get(pool_key, 0).unwrap(), tick);
+
+        ticks.remove(pool_key, 0);
+        assert_eq!(ticks.get(pool_key, 0), None);
+
+        ticks.add(pool_key, 0, &tick);
+        assert_eq!(ticks.get(pool_key, 0).unwrap(), tick);
     }
 }
