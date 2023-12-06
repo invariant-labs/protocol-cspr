@@ -6,5 +6,6 @@ execution_error! {
         TickNotFound => 2,
         PoolAlreadyExist => 3,
         PoolNotFound => 4,
+        PositionNotFound => 5,
     }
 }

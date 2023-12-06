@@ -14,7 +14,7 @@ use decimal::*;
 use odra::types::{U128, U256};
 use odra::OdraType;
 use traceable_result::*;
-#[derive(OdraType, Default)]
+#[derive(OdraType, Debug, Default, Copy, PartialEq)]
 pub struct Position {
     pub pool_key: PoolKey,
     pub liquidity: Liquidity,
