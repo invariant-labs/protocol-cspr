@@ -1,5 +1,5 @@
 use crate::contracts::FeeTier;
-use crate::ContractErrors;
+use crate::InvariantError;
 use odra::prelude::vec::Vec;
 use odra::OdraType;
 
@@ -9,21 +9,21 @@ pub struct FeeTiers {
 }
 
 impl FeeTiers {
-    pub fn add(&mut self, fee_tier: FeeTier) -> Result<(), ContractErrors> {
+    pub fn add(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
         if self.contains(fee_tier) {
-            return Err(ContractErrors::FeeTierAlreadyExist);
+            return Err(InvariantError::FeeTierAlreadyExist);
         }
 
         self.fee_tiers.push(fee_tier);
         Ok(())
     }
 
-    pub fn remove(&mut self, fee_tier: FeeTier) -> Result<(), ContractErrors> {
+    pub fn remove(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
         let index = self
             .fee_tiers
             .iter()
             .position(|vec_fee_tier| *vec_fee_tier == fee_tier)
-            .ok_or(ContractErrors::FeeTierNotFound)?;
+            .ok_or(InvariantError::FeeTierNotFound)?;
 
         self.fee_tiers.remove(index);
         Ok(())
@@ -57,7 +57,7 @@ mod tests {
         assert!(!fee_tier_keys.contains(new_fee_tier_key));
 
         let result = fee_tier_keys.add(fee_tier_key);
-        assert_eq!(result, Err(ContractErrors::FeeTierAlreadyExist));
+        assert_eq!(result, Err(InvariantError::FeeTierAlreadyExist));
     }
 
     #[test]
@@ -71,7 +71,7 @@ mod tests {
         assert!(!fee_tier_keys.contains(fee_tier_key));
 
         let result = fee_tier_keys.remove(fee_tier_key);
-        assert_eq!(result, Err(ContractErrors::FeeTierNotFound));
+        assert_eq!(result, Err(InvariantError::FeeTierNotFound));
     }
 
     #[test]

@@ -164,11 +164,6 @@ mod tests {
         let account_id = Address::Account(AccountHash::new([0x01; 32]));
         let receiver_account_id = Address::Account(AccountHash::new([0x02; 32]));
         let position = Position::default();
-        let new_position = Position {
-            lower_tick_index: -1,
-            upper_tick_index: 1,
-            ..Position::default()
-        };
 
         positions.add(account_id, &position);
 

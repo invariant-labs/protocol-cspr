@@ -16,7 +16,7 @@ use odra::types::{casper_types::account::AccountHash, Address};
 use odra::OdraType;
 use traceable_result::*;
 
-#[derive(OdraType)]
+#[derive(OdraType, Debug, Copy, PartialEq)]
 pub struct Pool {
     pub liquidity: Liquidity,
     pub sqrt_price: SqrtPrice,
