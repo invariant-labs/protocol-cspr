@@ -1,5 +1,5 @@
 use crate::math::percentage::Percentage;
-use crate::ContractErrors;
+use crate::InvariantError;
 use decimal::*;
 use odra::types::U128;
 use odra::OdraType;
@@ -20,13 +20,13 @@ impl Default for FeeTier {
 }
 
 impl FeeTier {
-    pub fn new(fee: Percentage, tick_spacing: u16) -> Result<Self, ContractErrors> {
+    pub fn new(fee: Percentage, tick_spacing: u16) -> Result<Self, InvariantError> {
         if tick_spacing == 0 || tick_spacing > 100 {
-            return Err(ContractErrors::InvalidTickSpacing);
+            return Err(InvariantError::InvalidTickSpacing);
         }
 
         if fee > Percentage::from_integer(1) {
-            return Err(ContractErrors::InvalidFee);
+            return Err(InvariantError::InvalidFee);
         }
 
         Ok(Self { fee, tick_spacing })
