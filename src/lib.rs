@@ -8,19 +8,12 @@ pub mod math;
 use crate::math::{liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{FeeTier, Pool, PoolKey, Position, State, Tick, Tickmap, Ticks};
 use decimal::Decimal;
-use odra::execution_error;
 use odra::{
     contract_env,
     types::{casper_types::ContractPackageHash, Address, U128, U256},
     Variable,
 };
 
-execution_error! {
-    pub enum TestError {
-        TickAlreadyExist => 1,
-        TickNotFound => 2,
-    }
-}
 #[derive(Debug, PartialEq)]
 pub enum InvariantError {
     NotAdmin,
@@ -70,9 +63,10 @@ impl Invariant {
     pub fn init(&mut self) {
         let caller = contract_env::caller();
         let liquidity = Liquidity::new(U256::from(100_000_000u128));
+        let tick = Tick::default();
         self.liquidity.set(liquidity);
         self.position.set(Position::default());
-        self.tick.set(Tick::default());
+        self.tick.set(tick);
         self.pool.set(Pool::default());
 
         let token_0: Address = Address::Contract(ContractPackageHash::from([0x01; 32]));
@@ -83,6 +77,7 @@ impl Invariant {
         };
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
         self.tickmap.flip(true, 0, 1, pool_key);
+        self.ticks.add(pool_key, 0, &tick);
 
         self.state.set(State {
             admin: caller,
