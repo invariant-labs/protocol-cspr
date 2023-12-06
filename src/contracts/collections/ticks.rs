@@ -3,7 +3,6 @@ use crate::contracts::{PoolKey, Tick};
 use odra::contract_env;
 use odra::Mapping;
 use odra::UnwrapOrRevert;
-// use odra::prelude::
 
 #[odra::module]
 pub struct Ticks {
