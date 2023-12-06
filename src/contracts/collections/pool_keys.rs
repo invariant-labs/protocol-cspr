@@ -3,7 +3,7 @@ use crate::ContractErrors;
 use odra::prelude::vec::Vec;
 use odra::OdraType;
 
-#[derive(OdraType, Default)]
+#[derive(OdraType, Default, Debug)]
 pub struct PoolKeys {
     pub pool_keys: Vec<PoolKey>,
 }

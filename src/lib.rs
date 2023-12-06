@@ -6,7 +6,7 @@ pub mod contracts;
 pub mod math;
 
 use crate::math::{liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice};
-use contracts::{FeeTier, Pool, PoolKey, Position, State, Tick, Tickmap};
+use contracts::{FeeTier, Pool, PoolKey, Pools, Position, State, Tick, Tickmap};
 use decimal::Decimal;
 use odra::{
     contract_env,
@@ -53,6 +53,7 @@ pub struct SwapResult {
 
 #[odra::module]
 pub struct Invariant {
+    pools: Pools,
     tickmap: Tickmap,
     position: Variable<Position>,
     pool: Variable<Pool>,
@@ -67,10 +68,11 @@ impl Invariant {
     pub fn init(&mut self) {
         let caller = contract_env::caller();
         let liquidity = Liquidity::new(U256::from(100_000_000u128));
+        let pool = Pool::default();
         self.liquidity.set(liquidity);
         self.position.set(Position::default());
         self.tick.set(Tick::default());
-        self.pool.set(Pool::default());
+        self.pool.set(pool);
 
         let token_0: Address = Address::Contract(ContractPackageHash::from([0x01; 32]));
         let token_1: Address = Address::Contract(ContractPackageHash::from([0x02; 32]));
@@ -81,6 +83,7 @@ impl Invariant {
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
         self.tickmap.flip(true, 0, 1, pool_key);
 
+        self.pools.add(pool_key, &pool);
         self.state.set(State {
             admin: caller,
             protocol_fee: Percentage::new(U128::from(10000000000u128)),
