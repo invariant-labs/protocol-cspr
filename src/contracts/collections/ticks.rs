@@ -59,10 +59,7 @@ mod tests {
         let ticks = &mut TicksDeployer::default();
         let token_x = Address::Contract(ContractPackageHash::from([0x01; 32]));
         let token_y = Address::Contract(ContractPackageHash::from([0x02; 32]));
-        let fee_tier = FeeTier {
-            fee: Percentage::new(U128::from(0)),
-            tick_spacing: 1,
-        };
+        let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let tick = Tick::default();
 
@@ -81,11 +78,7 @@ mod tests {
         let ticks = &mut TicksDeployer::default();
         let token_x = Address::Contract(ContractPackageHash::from([0x01; 32]));
         let token_y = Address::Contract(ContractPackageHash::from([0x02; 32]));
-        let fee_tier = FeeTier {
-            fee: Percentage::new(U128::from(0)),
-            tick_spacing: 1,
-        };
-
+        let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let tick = Tick::default();
         let new_tick = Tick {
@@ -109,11 +102,7 @@ mod tests {
         let ticks = &mut TicksDeployer::default();
         let token_x = Address::Contract(ContractPackageHash::from([0x01; 32]));
         let token_y = Address::Contract(ContractPackageHash::from([0x02; 32]));
-        let fee_tier = FeeTier {
-            fee: Percentage::new(U128::from(0)),
-            tick_spacing: 1,
-        };
-
+        let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let tick = Tick::default();
 
@@ -133,11 +122,7 @@ mod tests {
         let ticks = &mut TicksDeployer::default();
         let token_x = Address::Contract(ContractPackageHash::from([0x01; 32]));
         let token_y = Address::Contract(ContractPackageHash::from([0x02; 32]));
-        let fee_tier = FeeTier {
-            fee: Percentage::new(U128::from(0)),
-            tick_spacing: 1,
-        };
-
+        let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let tick = Tick::default();
 
