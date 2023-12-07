@@ -11,10 +11,10 @@ use decimal::Decimal;
 use odra::{
     contract_env,
     types::{casper_types::ContractPackageHash, Address, U128, U256},
-    Variable,
+    OdraType, Variable,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(OdraType, Debug, PartialEq)]
 pub enum InvariantError {
     NotAdmin,
     NotFeeReceiver,
@@ -79,9 +79,9 @@ impl Invariant {
         };
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
         self.tickmap.flip(true, 0, 1, pool_key);
-        self.ticks.add(pool_key, 0, &tick);
+        self.ticks.add(pool_key, 0, &tick).unwrap();
 
-        self.pools.add(pool_key, &pool);
+        self.pools.add(pool_key, &pool).unwrap();
         self.state.set(State {
             admin: caller,
             protocol_fee: Percentage::new(U128::from(10000000000u128)),

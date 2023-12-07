@@ -1,10 +1,9 @@
-use crate::contracts::InvariantExecutionError;
 use crate::contracts::Position;
-use odra::contract_env;
+use crate::InvariantError;
 use odra::prelude::vec::Vec;
 use odra::types::Address;
 use odra::Mapping;
-use odra::UnwrapOrRevert;
+
 #[odra::module]
 pub struct Positions {
     positions_length: Mapping<Address, u32>,
@@ -18,24 +17,29 @@ impl Positions {
 
         self.positions
             .set(&(account_id, positions_length), Some(*position));
+
         self.positions_length.add(&account_id, 1);
     }
 
-    pub fn update(&mut self, account_id: Address, index: u32, position: &Position) {
+    pub fn update(
+        &mut self,
+        account_id: Address,
+        index: u32,
+        position: &Position,
+    ) -> Result<(), InvariantError> {
         let positions_length = self.get_length(account_id);
 
         if index >= positions_length {
-            contract_env::revert(InvariantExecutionError::PositionNotFound);
+            return Err(InvariantError::PositionNotFound);
         }
 
         self.positions.set(&(account_id, index), Some(*position));
+        Ok(())
     }
 
-    pub fn remove(&mut self, account_id: Address, index: u32) -> Position {
+    pub fn remove(&mut self, account_id: Address, index: u32) -> Result<Position, InvariantError> {
         let positions_length = self.get_length(account_id);
-        let position = self
-            .get(account_id, index)
-            .unwrap_or_revert_with(InvariantExecutionError::PositionNotFound);
+        let position = self.get(account_id, index)?;
 
         if index < positions_length - 1 {
             let last_position = self
@@ -50,19 +54,28 @@ impl Positions {
         }
 
         self.positions_length.subtract(&account_id, 1);
-        position
+        Ok(position)
     }
 
-    pub fn transfer(&mut self, account_id: Address, index: u32, receiver_account_id: Address) {
-        let position = self.remove(account_id, index);
+    pub fn transfer(
+        &mut self,
+        account_id: Address,
+        index: u32,
+        receiver_account_id: Address,
+    ) -> Result<(), InvariantError> {
+        let position = self.remove(account_id, index)?;
         self.add(receiver_account_id, &position);
+        Ok(())
     }
 
-    pub fn get(&self, account_id: Address, index: u32) -> Option<Position> {
-        match self.positions.get(&(account_id, index)) {
-            Some(p) => p,
-            None => None,
-        }
+    pub fn get(&self, account_id: Address, index: u32) -> Result<Position, InvariantError> {
+        let position = self
+            .positions
+            .get(&(account_id, index))
+            .ok_or(InvariantError::PositionNotFound)?
+            .ok_or(InvariantError::PositionNotFound)?;
+
+        Ok(position)
     }
 
     pub fn get_all(&self, account_id: Address) -> Vec<Position> {
@@ -103,7 +116,10 @@ mod tests {
 
         assert_eq!(positions.get(account_id, 0).unwrap(), position);
         assert_eq!(positions.get(account_id, 1).unwrap(), new_position);
-        assert_eq!(positions.get(account_id, 2), None);
+        assert_eq!(
+            positions.get(account_id, 2),
+            Err(InvariantError::PositionNotFound)
+        );
         assert_eq!(positions.get_length(account_id), 2);
     }
 
@@ -120,13 +136,15 @@ mod tests {
 
         positions.add(account_id, &position);
 
-        positions.update(account_id, 0, &new_position);
+        positions.update(account_id, 0, &new_position).unwrap();
+
         assert_eq!(positions.get(account_id, 0).unwrap(), new_position);
         assert_eq!(positions.get_length(account_id), 1);
 
-        odra::test_env::assert_exception(InvariantExecutionError::PositionNotFound, || {
-            positions.update(account_id, 1, &new_position);
-        });
+        assert_eq!(
+            positions.update(account_id, 1, &new_position),
+            Err(InvariantError::PositionNotFound)
+        );
     }
 
     #[test]
@@ -143,19 +161,23 @@ mod tests {
         positions.add(account_id, &position);
         positions.add(account_id, &new_position);
 
-        let result = positions.remove(account_id, 0);
+        let result = positions.remove(account_id, 0).unwrap();
         assert_eq!(result, position);
         assert_eq!(positions.get(account_id, 0).unwrap(), new_position);
         assert_eq!(positions.get_length(account_id), 1);
 
-        let result = positions.remove(account_id, 0);
+        let result = positions.remove(account_id, 0).unwrap();
         assert_eq!(result, new_position);
-        assert_eq!(positions.get(account_id, 0), None);
+        assert_eq!(
+            positions.get(account_id, 0),
+            Err(InvariantError::PositionNotFound)
+        );
         assert_eq!(positions.get_length(account_id), 0);
 
-        odra::test_env::assert_exception(InvariantExecutionError::PositionNotFound, || {
-            positions.remove(account_id, 0);
-        });
+        assert_eq!(
+            positions.remove(account_id, 0),
+            Err(InvariantError::PositionNotFound)
+        )
     }
 
     #[test]
@@ -167,15 +189,22 @@ mod tests {
 
         positions.add(account_id, &position);
 
-        positions.transfer(account_id, 0, receiver_account_id);
-        assert_eq!(positions.get(account_id, 0), None);
+        positions
+            .transfer(account_id, 0, receiver_account_id)
+            .unwrap();
+
+        assert_eq!(
+            positions.get(account_id, 0),
+            Err(InvariantError::PositionNotFound)
+        );
         assert_eq!(positions.get_length(account_id), 0);
         assert_eq!(positions.get(receiver_account_id, 0).unwrap(), position);
         assert_eq!(positions.get_length(receiver_account_id), 1);
 
-        odra::test_env::assert_exception(InvariantExecutionError::PositionNotFound, || {
-            positions.transfer(account_id, 0, receiver_account_id);
-        });
+        assert_eq!(
+            positions.transfer(account_id, 0, receiver_account_id),
+            Err(InvariantError::PositionNotFound)
+        )
     }
 
     #[test]
