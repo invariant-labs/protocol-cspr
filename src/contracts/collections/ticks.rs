@@ -1,8 +1,6 @@
-use crate::contracts::InvariantExecutionError;
 use crate::contracts::{PoolKey, Tick};
-use odra::contract_env;
+use crate::InvariantError;
 use odra::Mapping;
-use odra::UnwrapOrRevert;
 
 #[odra::module]
 pub struct Ticks {
@@ -11,37 +9,43 @@ pub struct Ticks {
 
 #[odra::module]
 impl Ticks {
-    pub fn add(&mut self, pool_key: PoolKey, index: i32, tick: &Tick) {
-        if self
+    pub fn add(
+        &mut self,
+        pool_key: PoolKey,
+        index: i32,
+        tick: &Tick,
+    ) -> Result<(), InvariantError> {
+        self.get(pool_key, index)
+            .map_or(Ok(()), |_| Err(InvariantError::TickAlreadyExist))?;
+        self.ticks.set(&(pool_key, index), Some(*tick));
+        Ok(())
+    }
+
+    pub fn update(
+        &mut self,
+        pool_key: PoolKey,
+        index: i32,
+        tick: &Tick,
+    ) -> Result<(), InvariantError> {
+        self.get(pool_key, index)?;
+        self.ticks.set(&(pool_key, index), Some(*tick));
+        Ok(())
+    }
+
+    pub fn remove(&mut self, pool_key: PoolKey, index: i32) -> Result<(), InvariantError> {
+        self.get(pool_key, index)?;
+        self.ticks.set(&(pool_key, index), None);
+        Ok(())
+    }
+
+    pub fn get(&self, pool_key: PoolKey, index: i32) -> Result<Tick, InvariantError> {
+        let tick = self
             .ticks
             .get(&(pool_key, index))
-            .map_or(true, |tick_opt| tick_opt.is_none())
-        {
-            self.ticks.set(&(pool_key, index), Some(*tick));
-        } else {
-            contract_env::revert(InvariantExecutionError::TickAlreadyExist);
-        }
-    }
+            .ok_or(InvariantError::TickNotFound)?
+            .ok_or(InvariantError::TickNotFound)?;
 
-    pub fn update(&mut self, pool_key: PoolKey, index: i32, tick: &Tick) {
-        self.get(pool_key, index)
-            .unwrap_or_revert_with(InvariantExecutionError::TickNotFound);
-
-        self.ticks.set(&(pool_key, index), Some(*tick));
-    }
-
-    pub fn remove(&mut self, pool_key: PoolKey, index: i32) {
-        self.get(pool_key, index)
-            .unwrap_or_revert_with(InvariantExecutionError::TickNotFound);
-
-        self.ticks.set(&(pool_key, index), None);
-    }
-
-    pub fn get(&self, pool_key: PoolKey, index: i32) -> Option<Tick> {
-        match self.ticks.get(&(pool_key, index)) {
-            Some(t) => t,
-            None => None,
-        }
+        Ok(tick)
     }
 }
 
@@ -63,14 +67,15 @@ mod tests {
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let tick = Tick::default();
 
-        ticks.add(pool_key, 0, &tick);
+        ticks.add(pool_key, 0, &tick).unwrap();
         assert_eq!(ticks.get(pool_key, 0).unwrap(), tick);
 
-        assert_eq!(ticks.get(pool_key, 1), None);
+        assert_eq!(ticks.get(pool_key, 1), Err(InvariantError::TickNotFound));
 
-        odra::test_env::assert_exception(InvariantExecutionError::TickAlreadyExist, || {
-            ticks.add(pool_key, 0, &tick);
-        })
+        assert_eq!(
+            ticks.add(pool_key, 0, &tick),
+            Err(InvariantError::TickAlreadyExist)
+        );
     }
 
     #[test]
@@ -86,15 +91,16 @@ mod tests {
             ..Tick::default()
         };
 
-        ticks.add(pool_key, 0, &tick);
+        ticks.add(pool_key, 0, &tick).unwrap();
 
-        ticks.update(pool_key, 0, &new_tick);
+        ticks.update(pool_key, 0, &new_tick).unwrap();
 
         assert_eq!(ticks.get(pool_key, 0).unwrap(), new_tick);
 
-        odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
-            ticks.update(pool_key, 1, &new_tick);
-        });
+        assert_eq!(
+            ticks.update(pool_key, 1, &new_tick),
+            Err(InvariantError::TickNotFound)
+        );
     }
 
     #[test]
@@ -106,15 +112,13 @@ mod tests {
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let tick = Tick::default();
 
-        ticks.add(pool_key, 0, &tick);
+        ticks.add(pool_key, 0, &tick).unwrap();
 
-        ticks.remove(pool_key, 0);
+        ticks.remove(pool_key, 0).unwrap();
 
-        assert_eq!(ticks.get(pool_key, 0), None);
+        assert_eq!(ticks.get(pool_key, 0), Err(InvariantError::TickNotFound));
 
-        odra::test_env::assert_exception(InvariantExecutionError::TickNotFound, || {
-            ticks.remove(pool_key, 0);
-        });
+        assert_eq!(ticks.remove(pool_key, 0), Err(InvariantError::TickNotFound));
     }
 
     #[test]
@@ -126,15 +130,15 @@ mod tests {
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let tick = Tick::default();
 
-        assert_eq!(ticks.get(pool_key, 0), None);
+        assert_eq!(ticks.get(pool_key, 0), Err(InvariantError::TickNotFound));
 
-        ticks.add(pool_key, 0, &tick);
+        ticks.add(pool_key, 0, &tick).unwrap();
         assert_eq!(ticks.get(pool_key, 0).unwrap(), tick);
 
-        ticks.remove(pool_key, 0);
-        assert_eq!(ticks.get(pool_key, 0), None);
+        ticks.remove(pool_key, 0).unwrap();
+        assert_eq!(ticks.get(pool_key, 0), Err(InvariantError::TickNotFound));
 
-        ticks.add(pool_key, 0, &tick);
+        ticks.add(pool_key, 0, &tick).unwrap();
         assert_eq!(ticks.get(pool_key, 0).unwrap(), tick);
     }
 }

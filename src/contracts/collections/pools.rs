@@ -1,8 +1,6 @@
-use crate::contracts::InvariantExecutionError;
 use crate::contracts::{Pool, PoolKey};
-use odra::contract_env;
+use crate::InvariantError;
 use odra::Mapping;
-use odra::UnwrapOrRevert;
 
 #[odra::module]
 pub struct Pools {
@@ -11,38 +9,33 @@ pub struct Pools {
 
 #[odra::module]
 impl Pools {
-    pub fn add(&mut self, pool_key: PoolKey, pool: &Pool) {
-        if self
-            .pools
-            .get(&pool_key)
-            .map_or(true, |pool_opt| pool_opt.is_none())
-        {
-            self.pools.set(&pool_key, Some(*pool));
-        } else {
-            contract_env::revert(InvariantExecutionError::PoolAlreadyExist);
-        }
+    pub fn add(&mut self, pool_key: PoolKey, pool: &Pool) -> Result<(), InvariantError> {
+        self.get(pool_key)
+            .map_or(Ok(()), |_| Err(InvariantError::PoolAlreadyExist))?;
+        self.pools.set(&pool_key, Some(*pool));
+        Ok(())
     }
 
-    pub fn update(&mut self, pool_key: PoolKey, pool: &Pool) {
-        self.get(pool_key)
-            .unwrap_or_revert_with(InvariantExecutionError::PoolNotFound);
-
+    pub fn update(&mut self, pool_key: PoolKey, pool: &Pool) -> Result<(), InvariantError> {
+        self.get(pool_key)?;
         self.pools.set(&pool_key, Some(*pool));
+        Ok(())
     }
 
     #[allow(dead_code)]
-    pub fn remove(&mut self, pool_key: PoolKey) {
-        self.get(pool_key)
-            .unwrap_or_revert_with(InvariantExecutionError::PoolNotFound);
-
+    pub fn remove(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
+        self.get(pool_key)?;
         self.pools.set(&pool_key, None);
+        Ok(())
     }
 
-    pub fn get(&self, pool_key: PoolKey) -> Option<Pool> {
-        match self.pools.get(&pool_key) {
-            Some(p) => p,
-            None => None,
-        }
+    pub fn get(&self, pool_key: PoolKey) -> Result<Pool, InvariantError> {
+        let pool = self
+            .pools
+            .get(&pool_key)
+            .ok_or(InvariantError::PoolNotFound)?
+            .ok_or(InvariantError::PoolNotFound)?;
+        Ok(pool)
     }
 }
 
@@ -66,15 +59,16 @@ mod tests {
         let new_pool_key = PoolKey::new(token_x, token_y, new_fee_tier).unwrap();
         let pool = Pool::default();
 
-        pools.add(pool_key, &pool);
+        pools.add(pool_key, &pool).unwrap();
 
         assert_eq!(pools.get(pool_key).unwrap(), pool);
 
-        assert_eq!(pools.get(new_pool_key), None);
+        assert_eq!(pools.get(new_pool_key), Err(InvariantError::PoolNotFound));
 
-        odra::test_env::assert_exception(InvariantExecutionError::PoolAlreadyExist, || {
-            pools.add(pool_key, &pool);
-        });
+        assert_eq!(
+            pools.add(pool_key, &pool),
+            Err(InvariantError::PoolAlreadyExist)
+        );
     }
 
     #[test]
@@ -92,14 +86,15 @@ mod tests {
             ..Pool::default()
         };
 
-        pools.add(pool_key, &pool);
+        pools.add(pool_key, &pool).unwrap();
 
-        pools.update(pool_key, &new_pool);
+        pools.update(pool_key, &new_pool).unwrap();
         assert_eq!(pools.get(pool_key).unwrap(), new_pool);
 
-        odra::test_env::assert_exception(InvariantExecutionError::PoolNotFound, || {
-            pools.update(new_pool_key, &new_pool);
-        });
+        assert_eq!(
+            pools.update(new_pool_key, &new_pool),
+            Err(InvariantError::PoolNotFound)
+        );
     }
 
     #[test]
@@ -111,14 +106,12 @@ mod tests {
         let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
         let pool = Pool::default();
 
-        pools.add(pool_key, &pool);
+        pools.add(pool_key, &pool).unwrap();
 
-        pools.remove(pool_key);
+        pools.remove(pool_key).unwrap();
 
-        assert_eq!(pools.get(pool_key), None);
+        assert_eq!(pools.get(pool_key), Err(InvariantError::PoolNotFound));
 
-        odra::test_env::assert_exception(InvariantExecutionError::PoolNotFound, || {
-            pools.remove(pool_key);
-        });
+        assert_eq!(pools.remove(pool_key), Err(InvariantError::PoolNotFound));
     }
 }

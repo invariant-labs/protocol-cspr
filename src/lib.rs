@@ -5,13 +5,14 @@ extern crate alloc;
 pub mod contracts;
 pub mod math;
 
-// #[cfg(test)]
-// pub mod e2e;
+#[cfg(test)]
+pub mod e2e;
 
-use crate::contracts::InvariantTrait;
+// use crate::contracts::Entrypoints;
 use crate::math::{percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{FeeTier, FeeTiers, PoolKeys, Pools, Positions, State, Tickmap, Ticks};
-use odra::{contract_env, Variable};
+use odra::prelude::vec::Vec;
+use odra::{contract_env, OdraType, Variable};
 
 #[derive(OdraType, Debug, PartialEq)]
 pub enum InvariantError {
@@ -67,21 +68,46 @@ impl Invariant {
             protocol_fee,
         })
     }
-
-    // impl InvariantTrait for Invariant {
-
     pub fn add_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
-        let state = self.state.get();
+        let state = self.state.get().unwrap();
+        let mut fee_tiers = self.fee_tiers.get_or_default();
 
-        if caller != state.get().admin {
-            // contract_env::revert(InvariantError::NotAdmin);
+        if caller != state.admin {
             return Err(InvariantError::NotAdmin);
         }
 
-        self.fee_tiers.add(fee_tier)?;
+        fee_tiers.add(fee_tier)?;
+
+        self.fee_tiers.set(fee_tiers);
+        Ok(())
+    }
+
+    pub fn fee_tier_exist(&self, fee_tier: FeeTier) -> bool {
+        let fee_tiers = self.fee_tiers.get_or_default();
+        fee_tiers.contains(fee_tier)
+    }
+
+    pub fn remove_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let state = self.state.get().unwrap();
+        let mut fee_tiers = self.fee_tiers.get_or_default();
+
+        if caller != state.admin {
+            return Err(InvariantError::NotAdmin);
+        }
+
+        fee_tiers.remove(fee_tier)?;
+
+        self.fee_tiers.set(fee_tiers);
 
         Ok(())
     }
-    // }
+
+    pub fn get_fee_tiers(&self) -> Vec<FeeTier> {
+        let fee_tiers = self.fee_tiers.get_or_default();
+        fee_tiers.get_all()
+    }
 }
+
+// impl Entrypoints for Invariant {}
