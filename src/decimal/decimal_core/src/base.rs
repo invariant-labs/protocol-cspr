@@ -4,7 +4,6 @@ use quote::quote;
 use crate::utils::string_to_ident;
 use crate::DecimalCharacteristics;
 
-
 pub fn generate_base(characteristics: DecimalCharacteristics) -> proc_macro::TokenStream {
     let DecimalCharacteristics {
         struct_name,

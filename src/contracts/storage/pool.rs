@@ -4,10 +4,11 @@ use crate::math::{
     fee_growth::FeeGrowth,
     is_enough_amount_to_change_price,
     liquidity::Liquidity,
+    log::get_tick_at_sqrt_price,
     percentage::Percentage,
     seconds_per_liquidity::{calculate_seconds_per_liquidity_inside, SecondsPerLiquidity},
+    sqrt_price::calculate_sqrt_price,
     sqrt_price::SqrtPrice,
-    sqrt_price::{calculate_sqrt_price, get_tick_at_sqrt_price},
     token_amount::TokenAmount,
 };
 use crate::SwapResult;
@@ -81,10 +82,10 @@ impl Pool {
 
         if in_x {
             self.fee_growth_global_x = self.fee_growth_global_x.unchecked_add(fee_growth);
-            self.fee_protocol_token_x = self.fee_protocol_token_x + protocol_fee;
+            self.fee_protocol_token_x += protocol_fee;
         } else {
             self.fee_growth_global_y = self.fee_growth_global_y.unchecked_add(fee_growth);
-            self.fee_protocol_token_y = self.fee_protocol_token_y + protocol_fee;
+            self.fee_protocol_token_y += protocol_fee;
         }
         Ok(())
     }
@@ -176,6 +177,7 @@ impl Pool {
         (fee_protocol_token_x, fee_protocol_token_y)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn cross_tick(
         &mut self,
         result: SwapResult,
@@ -189,38 +191,40 @@ impl Pool {
         protocol_fee: Percentage,
         fee_tier: FeeTier,
     ) {
-        if result.next_sqrt_price == swap_limit && limiting_tick.is_some() {
-            let (tick_index, tick) = limiting_tick.unwrap();
+        if let Some(limiting_tick) = limiting_tick {
+            if result.next_sqrt_price == swap_limit {
+                let (tick_index, tick) = limiting_tick;
 
-            let is_enough_amount_to_cross = unwrap!(is_enough_amount_to_change_price(
-                *remaining_amount,
-                result.next_sqrt_price,
-                self.liquidity,
-                fee_tier.fee,
-                by_amount_in,
-                x_to_y,
-            ));
+                let is_enough_amount_to_cross = unwrap!(is_enough_amount_to_change_price(
+                    *remaining_amount,
+                    result.next_sqrt_price,
+                    self.liquidity,
+                    fee_tier.fee,
+                    by_amount_in,
+                    x_to_y,
+                ));
 
-            // crossing tick
-            if tick.is_some() {
-                if !x_to_y || is_enough_amount_to_cross {
-                    let _ = tick.unwrap().cross(self, current_timestamp);
-                } else if !remaining_amount.is_zero() {
-                    if by_amount_in {
-                        self.add_fee(*remaining_amount, x_to_y, protocol_fee)
-                            .unwrap();
-                        *total_amount_in += *remaining_amount
+                // crossing tick
+                if let Some(tick) = tick {
+                    if !x_to_y || is_enough_amount_to_cross {
+                        let _ = tick.cross(self, current_timestamp);
+                    } else if !remaining_amount.is_zero() {
+                        if by_amount_in {
+                            self.add_fee(*remaining_amount, x_to_y, protocol_fee)
+                                .unwrap();
+                            *total_amount_in += *remaining_amount
+                        }
+                        *remaining_amount = TokenAmount::default();
                     }
-                    *remaining_amount = TokenAmount::default();
                 }
-            }
 
-            // set tick to limit (below if price is going down, because current tick should always be below price)
-            self.current_tick_index = if x_to_y && is_enough_amount_to_cross {
-                tick_index - fee_tier.tick_spacing as i32
-            } else {
-                tick_index
-            };
+                // set tick to limit (below if price is going down, because current tick should always be below price)
+                self.current_tick_index = if x_to_y && is_enough_amount_to_cross {
+                    tick_index - fee_tier.tick_spacing as i32
+                } else {
+                    tick_index
+                };
+            }
         } else {
             self.current_tick_index = unwrap!(get_tick_at_sqrt_price(
                 result.next_sqrt_price,
@@ -259,7 +263,7 @@ mod tests {
         };
         // in_x
         {
-            let mut pool = pool.clone();
+            let mut pool = pool;
             let amount = TokenAmount::from_integer(6);
             pool.add_fee(amount, true, protocol_fee).unwrap();
             assert_eq!({ pool.fee_growth_global_x }, FeeGrowth::from_scale(4, 1));
@@ -275,7 +279,7 @@ mod tests {
         }
         // in_y
         {
-            let mut pool = pool.clone();
+            let mut pool = pool;
             let amount = TokenAmount::from_integer(200);
             pool.add_fee(amount, false, protocol_fee).unwrap();
             assert_eq!({ pool.fee_growth_global_x }, FeeGrowth::from_integer(0));
@@ -291,7 +295,7 @@ mod tests {
         }
         // some new comment
         {
-            let mut pool = pool.clone();
+            let mut pool = pool;
             let amount = TokenAmount::new(U256::from(1));
             pool.add_fee(amount, true, protocol_fee).unwrap();
             assert_eq!({ pool.fee_growth_global_x }, FeeGrowth::new(U128::from(0)));
@@ -378,7 +382,7 @@ mod tests {
         {
             let mut pool = Pool {
                 liquidity: Liquidity::from_integer(0),
-                sqrt_price: SqrtPrice::new(U128::from(1000140000000_000000000000u128)),
+                sqrt_price: SqrtPrice::new(U128::from(1_000_140_000_000_000_000_000_000u128)),
                 current_tick_index: 2,
                 ..Default::default()
             };
@@ -400,7 +404,7 @@ mod tests {
         {
             let mut pool = Pool {
                 liquidity: Liquidity::from_integer(0),
-                sqrt_price: SqrtPrice::new(U128::from(1000140000000_000000000000u128)),
+                sqrt_price: SqrtPrice::new(U128::from(1_000_140_000_000_000_000_000_000_u128)),
                 current_tick_index: 2,
                 ..Default::default()
             };
@@ -424,7 +428,7 @@ mod tests {
             {
                 let mut pool = Pool {
                     liquidity: Liquidity::from_integer(1),
-                    sqrt_price: SqrtPrice::new(U128::from(1000140000000_000000000000u128)),
+                    sqrt_price: SqrtPrice::new(U128::from(1_000_140_000_000_000_000_000_000_u128)),
                     current_tick_index: 6,
                     ..Default::default()
                 };
@@ -445,7 +449,7 @@ mod tests {
             {
                 let mut pool = Pool {
                     liquidity: Liquidity::from_integer(1),
-                    sqrt_price: SqrtPrice::new(U128::from(1000140000000_000000000000u128)),
+                    sqrt_price: SqrtPrice::new(U128::from(1_000_140_000_000_000_000_000_000_u128)),
                     current_tick_index: -2,
                     ..Default::default()
                 };

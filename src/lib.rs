@@ -48,12 +48,12 @@ pub struct SwapResult {
 
 #[odra::module]
 pub struct Invariant {
-    positions: Positions,
-    pools: Pools,
-    tickmap: Tickmap,
-    ticks: Ticks,
+    _positions: Positions,
+    _pools: Pools,
+    _tickmap: Tickmap,
+    _ticks: Ticks,
     fee_tiers: Variable<FeeTiers>,
-    pool_keys: Variable<PoolKeys>,
+    _pool_keys: Variable<PoolKeys>,
     state: Variable<State>,
 }
 
