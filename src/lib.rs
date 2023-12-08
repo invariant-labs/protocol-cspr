@@ -8,7 +8,6 @@ pub mod math;
 #[cfg(test)]
 pub mod e2e;
 
-// use crate::contracts::Entrypoints;
 use crate::math::{percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
