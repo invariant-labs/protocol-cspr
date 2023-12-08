@@ -7,7 +7,6 @@ use odra::test_env;
 use odra::types::U128;
 
 #[test]
-
 fn test_add_multiple_fee_tiers() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);

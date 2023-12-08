@@ -12,7 +12,7 @@ pub mod e2e;
 use crate::math::{percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{FeeTier, FeeTiers, PoolKeys, Pools, Positions, State, Tickmap, Ticks};
 use odra::prelude::vec::Vec;
-use odra::{contract_env, OdraType, Variable};
+use odra::{contract_env, OdraType, UnwrapOrRevert, Variable};
 
 #[derive(OdraType, Debug, PartialEq)]
 pub enum InvariantError {
@@ -53,16 +53,18 @@ pub struct Invariant {
     _tickmap: Tickmap,
     _ticks: Ticks,
     fee_tiers: Variable<FeeTiers>,
-    _pool_keys: Variable<PoolKeys>,
+    pool_keys: Variable<PoolKeys>,
     state: Variable<State>,
 }
 
 #[odra::module]
-impl Invariant {
+impl Entrypoints for Invariant {
     #[odra(init)]
     pub fn init(&mut self, protocol_fee: Percentage) {
         let caller = contract_env::caller();
 
+        self.pool_keys.set(PoolKeys::default());
+        self.fee_tiers.set(FeeTiers::default());
         self.state.set(State {
             admin: caller,
             protocol_fee,
@@ -70,8 +72,8 @@ impl Invariant {
     }
     pub fn add_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
-        let state = self.state.get().unwrap();
-        let mut fee_tiers = self.fee_tiers.get_or_default();
+        let state = self.state.get().unwrap_or_revert();
+        let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
 
         if caller != state.admin {
             return Err(InvariantError::NotAdmin);
@@ -84,14 +86,14 @@ impl Invariant {
     }
 
     pub fn fee_tier_exist(&self, fee_tier: FeeTier) -> bool {
-        let fee_tiers = self.fee_tiers.get_or_default();
+        let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
         fee_tiers.contains(fee_tier)
     }
 
     pub fn remove_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
-        let state = self.state.get().unwrap();
-        let mut fee_tiers = self.fee_tiers.get_or_default();
+        let state = self.state.get().unwrap_or_revert();
+        let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
 
         if caller != state.admin {
             return Err(InvariantError::NotAdmin);
@@ -105,9 +107,7 @@ impl Invariant {
     }
 
     pub fn get_fee_tiers(&self) -> Vec<FeeTier> {
-        let fee_tiers = self.fee_tiers.get_or_default();
+        let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
         fee_tiers.get_all()
     }
 }
-
-// impl Entrypoints for Invariant {}
