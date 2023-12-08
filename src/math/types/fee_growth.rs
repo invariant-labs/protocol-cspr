@@ -37,7 +37,7 @@ impl FeeGrowth {
     pub fn from_fee(liquidity: Liquidity, fee: TokenAmount) -> TrackableResult<Self> {
         Ok(Self::new(
             Self::checked_from_value(
-                U384T::from(fee.cast::<U384T>())
+                fee.cast::<U384T>()
                     .checked_mul(FeeGrowth::one().cast())
                     .ok_or_else(|| err!(TrackableError::MUL))?
                     .checked_mul(Liquidity::one().cast())
@@ -52,7 +52,7 @@ impl FeeGrowth {
     pub fn to_fee(self, liquidity: Liquidity) -> TrackableResult<TokenAmount> {
         Ok(TokenAmount::new(
             TokenAmount::checked_from_value(
-                U384T::from(self.cast::<U384T>())
+                self.cast::<U384T>()
                     .checked_mul(liquidity.cast())
                     .ok_or_else(|| err!(TrackableError::MUL))?
                     .checked_div(Liquidity::one().cast())
@@ -65,6 +65,7 @@ impl FeeGrowth {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn calculate_fee_growth_inside(
     tick_lower: i32,
     tick_lower_fee_growth_outside_x: FeeGrowth,
@@ -251,12 +252,11 @@ mod tests {
             // token < L * delta_price
             // token_max = L_max * delta_price_max
             let max_token: U256 = TokenAmount::from_value(
-                U384T::from(max_l.cast::<U384T>()) * U384T::from(max_p_delta.cast::<U384T>())
-                    / U384T::from(Liquidity::from_integer(1).cast::<U384T>())
-                    / U384T::from(SqrtPrice::from_integer(1).cast::<U384T>()),
+                max_l.cast::<U384T>() * max_p_delta.cast::<U384T>()
+                    / Liquidity::from_integer(1).cast::<U384T>()
+                    / SqrtPrice::from_integer(1).cast::<U384T>(),
             );
-            let fee_growth =
-                FeeGrowth::from_fee(max_l, TokenAmount::new(U256::from(max_token))).unwrap();
+            let fee_growth = FeeGrowth::from_fee(max_l, TokenAmount::new(max_token)).unwrap();
 
             assert_eq!(
                 fee_growth,
@@ -281,8 +281,8 @@ mod tests {
                 * U256::from(basis_point);
 
             let fee_growth = FeeGrowth::from_fee(
-                Liquidity::new(U256::from(max_l)),
-                TokenAmount::new(U256::from(min_token.get() * basis_point)),
+                Liquidity::new(max_l),
+                TokenAmount::new(min_token.get() * basis_point),
             )
             .unwrap();
 
@@ -336,7 +336,7 @@ mod tests {
         }
         // huge liquidity
         {
-            let amount = TokenAmount::new(U256::from(100_000_000__000000u128));
+            let amount = TokenAmount::new(U256::from(100_000_000_000_000_u128));
             let liquidity = Liquidity::from_integer(2u128.pow(77));
 
             let fee_growth = FeeGrowth::from_fee(liquidity, amount).unwrap();
@@ -350,7 +350,7 @@ mod tests {
             let out = fee_growth.to_fee(liquidity).unwrap();
             // real    9.99999999999999999853225897430980027744256 × 10^13
             // expected 99999999999999
-            assert_eq!(out, TokenAmount::new(U256::from(99_999_999__999999u128)))
+            assert_eq!(out, TokenAmount::new(U256::from(99_999_999_999_999_u128)))
         }
     }
 

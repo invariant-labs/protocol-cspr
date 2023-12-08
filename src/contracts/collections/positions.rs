@@ -81,11 +81,10 @@ impl Positions {
     pub fn get_all(&self, account_id: Address) -> Vec<Position> {
         (0..self.get_length(account_id))
             .flat_map(|index| {
-                self.positions
-                    .get(&(account_id, index))
-                    .map(|opt_position| opt_position)
+                self.positions.get(&(account_id, index))
+                // .map(|opt_position| opt_position)
             })
-            .filter_map(|position| position)
+            .flatten()
             .collect()
     }
 

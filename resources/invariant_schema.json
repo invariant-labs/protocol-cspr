@@ -4,8 +4,64 @@
     {
       "name": "init",
       "is_mutable": true,
-      "args": [],
+      "args": [
+        {
+          "name": "protocol_fee",
+          "ty": "Any"
+        }
+      ],
       "return_ty": "Unit"
+    },
+    {
+      "name": "add_fee_tier",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "fee_tier",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "fee_tier_exist",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "fee_tier",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": "Bool"
+    },
+    {
+      "name": "remove_fee_tier",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "fee_tier",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_fee_tiers",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": {
+        "List": "Any"
+      }
     }
   ],
   "events": []

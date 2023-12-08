@@ -54,7 +54,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                 let big_self: #big_type = self.cast::<#big_type>();
                 let big_rhs: #big_type = rhs.cast::<#big_type>();
                 let big_one: #big_type = T::one().cast::<#big_type>();
-                
+
                 Self::new(#struct_name::from_value(big_self
                     .checked_mul(big_one)
                     .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::big_div()", #big_str, #name_str))
@@ -67,7 +67,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                 let big_self: #big_type = self.cast::<#big_type>();
                 let big_rhs: #big_type = rhs.cast::<#big_type>();
                 let big_one: #big_type = T::one().cast::<#big_type>();
-                
+
                 Ok(Self::new(
                     #struct_name::checked_from_value(
                         big_self
@@ -82,7 +82,7 @@ pub fn generate_big_ops(characteristics: DecimalCharacteristics) -> proc_macro::
                 let big_self: #big_type = self.cast::<#big_type>();
                 let big_rhs: #big_type = rhs.cast::<#big_type>();
                 let big_one: #big_type = T::one().cast::<#big_type>();
-            
+
                 Self::new(#struct_name::from_value(big_self
                     .checked_mul(big_one)
                     .unwrap_or_else(|| core::panic!("decimal: lhs value can't fit into `{}` type in {}::big_div_up()", #big_str, #name_str))

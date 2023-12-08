@@ -11,7 +11,7 @@ pub struct Tickmap {
 
 pub fn tick_to_position(tick: i32, tick_spacing: u32) -> (u16, u8) {
     assert!(
-        tick >= -MAX_TICK && tick <= MAX_TICK,
+        (-MAX_TICK..=MAX_TICK).contains(&tick),
         "tick not in range of <{}, {}>",
         -MAX_TICK,
         MAX_TICK
@@ -76,7 +76,7 @@ impl Tickmap {
         let (limiting_chunk, limiting_bit) = tick_to_position(limit, tick_spacing);
 
         while chunk < limiting_chunk || (chunk == limiting_chunk && bit <= limiting_bit) {
-            let mut shifted = self.bitmap.get(&(chunk, pool_key.clone())).unwrap_or(0) >> bit;
+            let mut shifted = self.bitmap.get(&(chunk, pool_key)).unwrap_or(0) >> bit;
 
             if shifted != 0 {
                 while shifted.checked_rem(2)? == 0 {
@@ -116,13 +116,13 @@ impl Tickmap {
     pub fn prev_initialized(&self, tick: i32, tick_spacing: u32, pool_key: PoolKey) -> Option<i32> {
         // don't subtract 1 to check the current tick
         let limit = get_search_limit(tick, tick_spacing, false); // limit scaled by tick_spacing
-        let (mut chunk, mut bit) = tick_to_position(tick as i32, tick_spacing);
+        let (mut chunk, mut bit) = tick_to_position(tick, tick_spacing);
         let (limiting_chunk, limiting_bit) = tick_to_position(limit, tick_spacing);
 
         while chunk > limiting_chunk || (chunk == limiting_chunk && bit >= limiting_bit) {
             // always safe due to limitated domain of bit variable
             let mut mask = 1u128 << bit; // left = MSB direction (increase value)
-            let value = self.bitmap.get(&(chunk, pool_key.clone())).unwrap_or(0) as u128;
+            let value = self.bitmap.get(&(chunk, pool_key)).unwrap_or(0) as u128;
 
             // enter if some of previous bits are initialized in current chunk
             if value.checked_rem(mask.checked_shl(1)?)? > 0 {
@@ -180,9 +180,10 @@ impl Tickmap {
         match closes_tick_index {
             Some(index) => {
                 let sqrt_price = calculate_sqrt_price(index).unwrap();
-                if x_to_y && sqrt_price > sqrt_price_limit {
-                    (sqrt_price, Some((index, true)))
-                } else if !x_to_y && sqrt_price < sqrt_price_limit {
+
+                if (x_to_y && sqrt_price > sqrt_price_limit)
+                    || (!x_to_y && sqrt_price < sqrt_price_limit)
+                {
                     (sqrt_price, Some((index, true)))
                 } else {
                     (sqrt_price_limit, None)
@@ -194,9 +195,9 @@ impl Tickmap {
 
                 assert!(current_tick != index, "LimitReached");
 
-                if x_to_y && sqrt_price > sqrt_price_limit {
-                    (sqrt_price, Some((index, false)))
-                } else if !x_to_y && sqrt_price < sqrt_price_limit {
+                if (x_to_y && sqrt_price > sqrt_price_limit)
+                    || (!x_to_y && sqrt_price < sqrt_price_limit)
+                {
                     (sqrt_price, Some((index, false)))
                 } else {
                     (sqrt_price_limit, None)
@@ -213,7 +214,7 @@ impl Tickmap {
 
     pub fn flip(&mut self, value: bool, tick: i32, tick_spacing: u32, pool_key: PoolKey) {
         let (chunk, bit) = tick_to_position(tick, tick_spacing);
-        let returned_chunk = self.bitmap.get(&(chunk, pool_key.clone())).unwrap_or(0);
+        let returned_chunk = self.bitmap.get(&(chunk, pool_key)).unwrap_or(0);
 
         assert_eq!(
             get_bit_at_position(returned_chunk, bit) == 0,
@@ -246,18 +247,13 @@ mod tests {
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
 
         let tickmap = &mut TickmapDeployer::default();
-        tickmap.flip(true, 0, 1, pool_key.clone());
+        tickmap.flip(true, 0, 1, pool_key);
         // tick limit closer
         {
             // let (result, from_tick) =
             // let result = tickmap::Tickmap::get_closer_limit(
-            let _result = tickmap.get_closer_limit(
-                SqrtPrice::from_integer(5),
-                true,
-                100,
-                1,
-                pool_key.clone(),
-            );
+            let _result =
+                tickmap.get_closer_limit(SqrtPrice::from_integer(5), true, 100, 1, pool_key);
             // println!("Result: {:?}", result);
 
             // let expected = Price::from_integer(5);
@@ -267,26 +263,16 @@ mod tests {
         }
         // trade limit closer
         {
-            let (result, from_tick) = tickmap.get_closer_limit(
-                SqrtPrice::from_scale(1, 1),
-                true,
-                100,
-                1,
-                pool_key.clone(),
-            );
+            let (result, from_tick) =
+                tickmap.get_closer_limit(SqrtPrice::from_scale(1, 1), true, 100, 1, pool_key);
             let expected = SqrtPrice::from_integer(1);
             assert_eq!(result, expected);
             assert_eq!(from_tick, Some((0, true)));
         }
         // other direction
         {
-            let (result, from_tick) = tickmap.get_closer_limit(
-                SqrtPrice::from_integer(2),
-                false,
-                -5,
-                1,
-                pool_key.clone(),
-            );
+            let (result, from_tick) =
+                tickmap.get_closer_limit(SqrtPrice::from_integer(2), false, -5, 1, pool_key);
             let expected = SqrtPrice::from_integer(1);
             assert_eq!(result, expected);
             assert_eq!(from_tick, Some((0, true)));
@@ -316,52 +302,52 @@ mod tests {
         {
             let index = 0;
 
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
-            tickmap.flip(true, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), true);
-            tickmap.flip(false, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
+            assert!(!tickmap.get(index, 1, pool_key));
+            tickmap.flip(true, index, 1, pool_key);
+            assert!(tickmap.get(index, 1, pool_key));
+            tickmap.flip(false, index, 1, pool_key);
+            assert!(!tickmap.get(index, 1, pool_key));
         }
         // small
         {
             let index = 7;
 
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
-            tickmap.flip(true, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), true);
-            tickmap.flip(false, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
+            assert!(!tickmap.get(index, 1, pool_key));
+            tickmap.flip(true, index, 1, pool_key);
+            assert!(tickmap.get(index, 1, pool_key));
+            tickmap.flip(false, index, 1, pool_key);
+            assert!(!tickmap.get(index, 1, pool_key));
         }
         // big
         {
             let index = MAX_TICK - 1;
 
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
-            tickmap.flip(true, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), true);
-            tickmap.flip(false, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
+            assert!(!tickmap.get(index, 1, pool_key));
+            tickmap.flip(true, index, 1, pool_key);
+            assert!(tickmap.get(index, 1, pool_key));
+            tickmap.flip(false, index, 1, pool_key);
+            assert!(!tickmap.get(index, 1, pool_key));
         }
         // negative
         {
             let index = MAX_TICK - 40;
 
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
-            tickmap.flip(true, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), true);
-            tickmap.flip(false, index, 1, pool_key.clone());
-            assert_eq!(tickmap.get(index, 1, pool_key.clone()), false);
+            assert!(!tickmap.get(index, 1, pool_key));
+            tickmap.flip(true, index, 1, pool_key);
+            assert!(tickmap.get(index, 1, pool_key));
+            tickmap.flip(false, index, 1, pool_key);
+            assert!(!tickmap.get(index, 1, pool_key));
         }
         // tick spacing
         {
             let index = 20000;
             let tick_spacing = 1000;
 
-            assert_eq!(tickmap.get(index, tick_spacing, pool_key.clone()), false);
-            tickmap.flip(true, index, tick_spacing, pool_key.clone());
-            assert_eq!(tickmap.get(index, tick_spacing, pool_key.clone()), true);
-            tickmap.flip(false, index, tick_spacing, pool_key.clone());
-            assert_eq!(tickmap.get(index, tick_spacing, pool_key), false);
+            assert!(!tickmap.get(index, tick_spacing, pool_key));
+            tickmap.flip(true, index, tick_spacing, pool_key);
+            assert!(tickmap.get(index, tick_spacing, pool_key));
+            tickmap.flip(false, index, tick_spacing, pool_key);
+            assert!(!tickmap.get(index, tick_spacing, pool_key));
         }
     }
 
@@ -376,7 +362,7 @@ mod tests {
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
 
         let tickmap = &mut TickmapDeployer::default();
-        tickmap.flip(true, 5, 1, pool_key.clone());
+        tickmap.flip(true, 5, 1, pool_key);
         assert_eq!(tickmap.next_initialized(0, 1, pool_key), Some(5));
     }
 
@@ -391,9 +377,9 @@ mod tests {
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
 
         let tickmap = &mut TickmapDeployer::default();
-        tickmap.flip(true, 50, 10, pool_key.clone());
-        tickmap.flip(true, 100, 10, pool_key.clone());
-        assert_eq!(tickmap.next_initialized(0, 10, pool_key.clone()), Some(50));
+        tickmap.flip(true, 50, 10, pool_key);
+        tickmap.flip(true, 100, 10, pool_key);
+        assert_eq!(tickmap.next_initialized(0, 10, pool_key), Some(50));
         assert_eq!(tickmap.next_initialized(50, 10, pool_key), Some(100));
     }
 
@@ -408,7 +394,7 @@ mod tests {
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
 
         let tickmap = &mut TickmapDeployer::default();
-        tickmap.flip(true, 0, 10, pool_key.clone());
+        tickmap.flip(true, 0, 10, pool_key);
         assert_eq!(tickmap.next_initialized(0, 10, pool_key), None);
     }
 
@@ -424,7 +410,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, 0, 1, pool_key.clone());
+        tickmap.flip(true, 0, 1, pool_key);
         assert_eq!(
             tickmap.next_initialized(-TICK_SEARCH_RANGE, 1, pool_key),
             Some(0)
@@ -443,7 +429,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, 0, 1, pool_key.clone());
+        tickmap.flip(true, 0, 1, pool_key);
         assert_eq!(
             tickmap.next_initialized(-TICK_SEARCH_RANGE - 1, 1, pool_key),
             None
@@ -462,7 +448,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, MAX_TICK - 10, 1, pool_key.clone());
+        tickmap.flip(true, MAX_TICK - 10, 1, pool_key);
         assert_eq!(tickmap.next_initialized(-MAX_TICK + 1, 1, pool_key), None);
     }
 
@@ -508,7 +494,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, MAX_TICK - 63, 1, pool_key.clone());
+        tickmap.flip(true, MAX_TICK - 63, 1, pool_key);
         assert_eq!(
             tickmap.next_initialized(MAX_TICK - 128, 1, pool_key),
             Some(MAX_TICK - 63)
@@ -527,7 +513,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, -5, 1, pool_key.clone());
+        tickmap.flip(true, -5, 1, pool_key);
         assert_eq!(tickmap.prev_initialized(0, 1, pool_key), Some(-5));
     }
 
@@ -543,13 +529,10 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, -50, 10, pool_key.clone());
-        tickmap.flip(true, -100, 10, pool_key.clone());
-        assert_eq!(tickmap.prev_initialized(0, 10, pool_key.clone()), Some(-50));
-        assert_eq!(
-            tickmap.prev_initialized(-50, 10, pool_key.clone()),
-            Some(-50)
-        );
+        tickmap.flip(true, -50, 10, pool_key);
+        tickmap.flip(true, -100, 10, pool_key);
+        assert_eq!(tickmap.prev_initialized(0, 10, pool_key), Some(-50));
+        assert_eq!(tickmap.prev_initialized(-50, 10, pool_key), Some(-50));
     }
 
     #[test]
@@ -564,7 +547,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, 0, 10, pool_key.clone());
+        tickmap.flip(true, 0, 10, pool_key);
         assert_eq!(tickmap.prev_initialized(0, 10, pool_key), Some(0));
     }
 
@@ -580,7 +563,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, 10, 10, pool_key.clone());
+        tickmap.flip(true, 10, 10, pool_key);
         assert_eq!(tickmap.prev_initialized(0, 10, pool_key), None);
     }
 
@@ -595,9 +578,8 @@ mod tests {
         let pool_key: PoolKey = PoolKey::new(token_0, token_1, fee_tier).unwrap();
 
         let tickmap = &mut TickmapDeployer::default();
-        ();
 
-        tickmap.flip(true, 0, 1, pool_key.clone());
+        tickmap.flip(true, 0, 1, pool_key);
         assert_eq!(
             tickmap.prev_initialized(TICK_SEARCH_RANGE, 1, pool_key),
             Some(0)
@@ -616,7 +598,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, 0, 1, pool_key.clone());
+        tickmap.flip(true, 0, 1, pool_key);
         assert_eq!(
             tickmap.prev_initialized(TICK_SEARCH_RANGE + 1, 1, pool_key),
             None
@@ -635,7 +617,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, -MAX_TICK + 1, 1, pool_key.clone());
+        tickmap.flip(true, -MAX_TICK + 1, 1, pool_key);
         assert_eq!(tickmap.prev_initialized(MAX_TICK - 1, 1, pool_key), None);
     }
 
@@ -651,7 +633,7 @@ mod tests {
 
         let tickmap = &mut TickmapDeployer::default();
 
-        tickmap.flip(true, -MAX_TICK + 63, 1, pool_key.clone());
+        tickmap.flip(true, -MAX_TICK + 63, 1, pool_key);
         assert_eq!(
             tickmap.prev_initialized(-MAX_TICK + 128, 1, pool_key),
             Some(-MAX_TICK + 63)
@@ -723,21 +705,15 @@ mod tests {
                 //println!("max_index = {}", max_index);
                 //println!("min_index = {}", min_index);
 
-                tickmap.flip(true, max_index, spacing as u32, pool_key.clone());
-                tickmap.flip(true, min_index, spacing as u32, pool_key.clone());
+                tickmap.flip(true, max_index, spacing as u32, pool_key);
+                tickmap.flip(true, min_index, spacing as u32, pool_key);
 
                 let tick_edge_diff = TICK_SEARCH_RANGE / spacing * spacing;
 
-                let prev = tickmap.prev_initialized(
-                    min_index + tick_edge_diff,
-                    spacing as u32,
-                    pool_key.clone(),
-                );
-                let next = tickmap.next_initialized(
-                    max_index - tick_edge_diff,
-                    spacing as u32,
-                    pool_key.clone(),
-                );
+                let prev =
+                    tickmap.prev_initialized(min_index + tick_edge_diff, spacing as u32, pool_key);
+                let next =
+                    tickmap.next_initialized(max_index - tick_edge_diff, spacing as u32, pool_key);
 
                 if prev.is_some() {
                     //println!("found prev = {}", prev.unwrap());
@@ -748,8 +724,8 @@ mod tests {
 
                 // cleanup
                 {
-                    tickmap.flip(false, max_index, spacing as u32, pool_key.clone());
-                    tickmap.flip(false, min_index, spacing as u32, pool_key.clone());
+                    tickmap.flip(false, max_index, spacing as u32, pool_key);
+                    tickmap.flip(false, min_index, spacing as u32, pool_key);
                 }
             }
         }
@@ -761,16 +737,10 @@ mod tests {
             let min_index = -max_index;
             let tick_edge_diff = TICK_SEARCH_RANGE / spacing * spacing;
 
-            let prev = tickmap.prev_initialized(
-                min_index + tick_edge_diff,
-                spacing as u32,
-                pool_key.clone(),
-            );
-            let next = tickmap.next_initialized(
-                max_index - tick_edge_diff,
-                spacing as u32,
-                pool_key.clone(),
-            );
+            let prev =
+                tickmap.prev_initialized(min_index + tick_edge_diff, spacing as u32, pool_key);
+            let next =
+                tickmap.next_initialized(max_index - tick_edge_diff, spacing as u32, pool_key);
 
             if prev.is_some() {
                 //println!("found prev = {}", prev.unwrap());

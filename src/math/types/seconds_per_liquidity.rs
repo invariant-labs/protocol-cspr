@@ -219,7 +219,7 @@ mod tests {
 
         let one_liquidity = Liquidity::new(U256::from(1));
         let max_liquidity = Liquidity::max_instance();
-        let max_delta_time = 315360000 as u64;
+        let max_delta_time = 315360000_u64;
         // max time, one liq
         {
             let result = SecondsPerLiquidity::calculate_seconds_per_liquidity_global(
