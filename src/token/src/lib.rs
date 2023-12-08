@@ -1,3 +1,4 @@
+#![no_std]
 use odra::{
     contract_env,
     prelude::string::String,
@@ -7,13 +8,13 @@ use odra_modules::access::Ownable;
 use odra_modules::erc20::Erc20;
 
 #[odra::module]
-pub struct OwnedToken {
+pub struct Token {
     ownable: Ownable,
     erc20: Erc20,
 }
 
 #[odra::module]
-impl OwnedToken {
+impl Token {
     #[odra(init)]
     pub fn init(&mut self, name: String, symbol: String, decimals: u8, initial_supply: &U256) {
         self.ownable.init();
@@ -52,13 +53,13 @@ pub mod tests {
     use odra::{assert_events, test_env, types::casper_types::U256};
     use odra_modules::access::errors::Error;
 
-    pub const NAME: &str = "Plascoin";
-    pub const SYMBOL: &str = "PLS";
+    pub const NAME: &str = "Invariant";
+    pub const SYMBOL: &str = "INVT";
     pub const DECIMALS: u8 = 10;
     pub const INITIAL_SUPPLY: u32 = 10_000;
 
-    pub fn setup() -> OwnedTokenRef {
-        OwnedTokenDeployer::init(
+    pub fn setup() -> TokenRef {
+        TokenDeployer::init(
             String::from(NAME),
             String::from(SYMBOL),
             DECIMALS,
