@@ -8,7 +8,7 @@ pub mod math;
 #[cfg(test)]
 pub mod e2e;
 
-use crate::math::{percentage::Percentage, sqrt_price::SqrtPrice};
+use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
 };
@@ -43,6 +43,7 @@ pub enum InvariantError {
     AmountUnderMinimumAmountOut,
     InvalidFee,
     NotEmptyTickDeinitialization,
+    InvalidInitTick,
 }
 
 pub struct SwapResult {
@@ -129,6 +130,9 @@ impl Entrypoints for Invariant {
         if !fee_tiers.contains(fee_tier) {
             return Err(InvariantError::FeeTierNotFound);
         };
+
+        check_tick(init_tick, fee_tier.tick_spacing)
+            .map_err(|_| InvariantError::InvalidInitTick)?;
 
         let pool_key = PoolKey::new(token_0, token_1, fee_tier)?;
 
