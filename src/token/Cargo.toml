@@ -1,0 +1,15 @@
+[package]
+name = "token"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+odra = { version = "0.7.0", features = [], default-features = false }
+odra-modules = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.0", default-features = false }
+
+[features]
+default = ["mock-vm"]
+mock-vm = ["odra/mock-vm", "odra-modules/mock-vm"]
+casper = ["odra/casper", "odra-modules/casper"]
+odra = []
+odra-modules = []
