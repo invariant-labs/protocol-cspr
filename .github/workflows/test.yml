@@ -18,11 +18,11 @@ jobs:
   
         - name: Test decimal
           run: |
-            cd src/decimal && cargo test
+            cargo test -p src/decimal
 
         - name: Test decimal core
           run: |
-            cd src/decimal/decimal_core && cargo test
+            cargo test -p src/decimal/decimal_core
     
         # TODO fix fmt and clippy
         # - name: Add rustfmt clippy components
