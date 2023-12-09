@@ -9,7 +9,22 @@ on:
       - master
 
 jobs:
-  checks:
+  decimal:
+    name: Test decimal dependency
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout source code
+          uses: actions/checkout@v3
+  
+        - name: Test decimal
+          run: |
+            cd src/decimal && cargo test
+
+        - name: Test decimal core
+          run: |
+            cd src/decimal/decimal_core && cargo test
+
+  linting:
     name: Linting (fmt + clippy)
     runs-on: ubuntu-latest
 
