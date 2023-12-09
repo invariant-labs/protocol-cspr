@@ -29,7 +29,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
             command: install
-            args: cargo-odra
+            args: cargo-odra --locked
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
@@ -56,7 +56,8 @@ jobs:
       - name: Install cargo odra
         uses: actions-rs/cargo@v1
         with:
-            command: install cargo-odra
+            command: install
+            args: cargo-odra --locked
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
