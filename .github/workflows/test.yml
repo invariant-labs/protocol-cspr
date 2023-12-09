@@ -25,6 +25,12 @@ jobs:
         run: |
             rustup target add wasm32-unknown-unknown   
 
+      - name: Install cargo odra
+        uses: actions-rs/cargo@v1
+        with:
+            command: install
+            args: cargo-odra
+
       - name: Run unit tests
         uses: actions-rs/cargo@v1
         with:
@@ -46,6 +52,11 @@ jobs:
       - name: Install Rust toolchain
         run: |
             rustup target add wasm32-unknown-unknown
+
+      - name: Install cargo odra
+        uses: actions-rs/cargo@v1
+        with:
+            command: install cargo-odra
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
