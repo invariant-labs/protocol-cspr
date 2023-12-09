@@ -10,20 +10,20 @@ on:
 
 jobs:
   decimal:
-    name: test decimal dependency
+    name: Test decimal dependency
     runs-on: ubuntu-latest
     steps:
         - name: Checkout source code
           uses: actions/checkout@v3
   
-        - name: test decimal
+        - name: Test decimal
           run: |
             cd src/decimal 
             cargo test
 
-        - name: test decimal core
+        - name: Test decimal core
           run: |
-            cd decimal-core
+            cd decimal_core
             cargo test
     
         # TODO fix fmt and clippy
