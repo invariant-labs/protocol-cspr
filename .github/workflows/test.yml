@@ -1,4 +1,4 @@
-name: Test + build + lint
+name: test
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
           command: clippy
           args: --all-targets -- --no-deps -D warnings
   tests:
-    name: Tests (Uint + e2e)
+    name: Tests (uint + e2e)
     runs-on: ubuntu-latest
 
     steps:
@@ -61,7 +61,7 @@ jobs:
           args: test
 
   build:
-    name: build contract
+    name: Build contract
     runs-on: ubuntu-latest
 
     steps:
@@ -99,6 +99,10 @@ jobs:
       - name: Install Rust toolchain
         run: |
             rustup target add wasm32-unknown-unknown
+
+      - name: Add rustfmt component
+        run: |
+            rustup component add rustfmt
 
       - name: Install cargo odra
         uses: actions-rs/cargo@v1
