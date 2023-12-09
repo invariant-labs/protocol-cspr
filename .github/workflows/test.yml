@@ -1,0 +1,66 @@
+name: Unit and e2e tests + build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  checks:
+    name: Uint and e2e tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Install WABT
+        run: |
+            sudo apt install wabt
+
+      - name: Install Rust toolchain
+        run: |
+            rustup target add wasm32-unknown-unknown   
+
+      - name: Run unit tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: odra
+          args: test
+
+  build:
+    name: build the contract with casper backend + lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Install WABT
+        run: |
+            sudo apt install wabt
+
+      - name: Install Rust toolchain
+        run: |
+            rustup target add wasm32-unknown-unknown
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-targets -- --no-deps -D warnings
+
+      - name: Build contract with casper backend
+        uses: actions-rs/cargo@v1
+        with:
+          command: odra
+          args: build -b casper
