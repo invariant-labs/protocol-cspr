@@ -73,9 +73,9 @@ jobs:
         run: |
             sudo apt install wabt
 
-    #   - name: Install Rust toolchain
-    #     run: |
-    #         rustup target add wasm32-unknown-unknown
+      - name: Install Rust toolchain
+        run: |
+            rustup target add wasm32-unknown-unknown
 
       - name: Install cargo odra
         uses: actions-rs/cargo@v1
