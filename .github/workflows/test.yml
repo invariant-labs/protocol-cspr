@@ -45,6 +45,18 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-targets -- --no-deps -D warnings
+
       - name: Install WABT
         run: |
             sudo apt install wabt
@@ -58,18 +70,6 @@ jobs:
         with:
             command: install
             args: cargo-odra --locked
-
-      - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-
-      - name: Run clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-targets -- --no-deps -D warnings
 
       - name: Build contract with casper backend
         uses: actions-rs/cargo@v1
