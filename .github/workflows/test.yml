@@ -47,11 +47,6 @@ jobs:
           key: |
             ${{ runner.os }}-cargo-odra-${{ hashFiles('rust-toolchain.toml') }}
 
-        # TODO validate is it requried
-    #   - name: Install WABT
-    #     run: |
-    #         sudo apt install wabt
-
       - name: Install Rust toolchain
         run: |
             rustup target add wasm32-unknown-unknown   
@@ -83,10 +78,9 @@ jobs:
           key: |
             ${{ runner.os }}-cargo-odra-${{ hashFiles('rust-toolchain.toml') }}
 
-        # TODO validate is it requried
-    #   - name: Install WABT
-    #     run: |
-    #         sudo apt install wabt
+      - name: Install WABT
+        run: |
+            sudo apt install wabt
 
       - name: Install Rust toolchain
         run: |
