@@ -51,7 +51,7 @@ jobs:
 
       - name: Install rust toolchain
         run: |
-            rustup component add rustfmt
+            rustup component add rustfmt clippy
 
       - name: Install rust toolchain
         run: |
