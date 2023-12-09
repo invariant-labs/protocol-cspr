@@ -18,28 +18,11 @@ jobs:
   
         - name: Test decimal
           run: |
-            cargo test -p src/decimal
+            cd src/decimal && cargo test
 
         - name: Test decimal core
           run: |
-            cargo test -p src/decimal/decimal_core
-    
-        # TODO fix fmt and clippy
-        # - name: Add rustfmt clippy components
-        #   run: |
-        #       rustup component add rustfmt clippy
-  
-        # - name: Run cargo fmt
-        #   uses: actions-rs/cargo@v1
-        #   with:
-        #     command: fmt
-        #     args: --all -- --check
-  
-        # - name: Run clippy
-        #   uses: actions-rs/cargo@v1
-        #   with:
-        #     command: clippy
-        #     args: --all-targets -- --no-deps -D warnings
+            cd src/decimal/decimal_core && cargo test
 
   linting:
     name: Linting (fmt + clippy)
