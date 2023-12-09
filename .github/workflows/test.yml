@@ -9,7 +9,41 @@ on:
       - master
 
 jobs:
-  checks:
+  decimal:
+    name: test decimal dependency
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout source code
+          uses: actions/checkout@v3
+  
+        - name: test decimal
+          run: |
+            cd decimal 
+            cargo test
+
+        - name: test decimal core
+          run: |
+            cd decimal-core
+            cargo test
+    
+        # TODO fix fmt and clippy
+        # - name: Add rustfmt clippy components
+        #   run: |
+        #       rustup component add rustfmt clippy
+  
+        # - name: Run cargo fmt
+        #   uses: actions-rs/cargo@v1
+        #   with:
+        #     command: fmt
+        #     args: --all -- --check
+  
+        # - name: Run clippy
+        #   uses: actions-rs/cargo@v1
+        #   with:
+        #     command: clippy
+        #     args: --all-targets -- --no-deps -D warnings
+
+  linting:
     name: Linting (fmt + clippy)
     runs-on: ubuntu-latest
 
