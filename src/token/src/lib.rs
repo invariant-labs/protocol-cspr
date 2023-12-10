@@ -97,6 +97,14 @@ pub mod tests {
         token.mint(&recipient, &amount);
         assert_eq!(token.total_supply(), U256::from(INITIAL_SUPPLY) + amount);
         assert_eq!(token.balance_of(&recipient), amount);
+        assert_events!(
+            token,
+            odra_modules::erc20::events::Transfer {
+                from: None,
+                to: Some(recipient),
+                amount: amount.into()
+            }
+        );
     }
 
     #[test]
@@ -111,9 +119,17 @@ pub mod tests {
     #[test]
     fn change_ownership_works() {
         let mut token = setup();
+        let previous_owner = test_env::get_account(0);
         let new_owner = test_env::get_account(1);
         token.transfer_ownership(&new_owner);
         assert_eq!(token.get_owner(), new_owner);
+        assert_events!(
+            token,
+            odra_modules::access::events::OwnershipTransferred {
+                previous_owner: Some(previous_owner),
+                new_owner: Some(new_owner)
+            }
+        );
     }
 
     #[test]
