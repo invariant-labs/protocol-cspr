@@ -62,6 +62,66 @@
       "return_ty": {
         "List": "Any"
       }
+    },
+    {
+      "name": "create_pool",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee_tier",
+          "ty": "Any"
+        },
+        {
+          "name": "init_tick",
+          "ty": "I32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_pool",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee_tier",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_pools",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": {
+        "List": "Any"
+      }
     }
   ],
   "events": []
