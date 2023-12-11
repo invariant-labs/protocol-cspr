@@ -10,7 +10,7 @@ pub mod e2e;
 
 use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{
-    FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
+    pool_key, FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
 };
 use odra::contract_env;
 use odra::prelude::vec::Vec;
@@ -168,5 +168,57 @@ impl Entrypoints for Invariant {
     pub fn get_protocol_fee(&self) -> Percentage {
         let state = self.state.get().unwrap_or_revert();
         state.protocol_fee
+    }
+
+    pub fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let mut pool = self.pools.get(pool_key)?;
+
+        if caller != pool.fee_receiver {
+            return Err(InvariantError::NotFeeReceiver);
+        }
+
+        let (_fee_protocol_token_x, _fee_protocol_token_y) = pool.withdraw_protocol_fee(pool_key);
+
+        self.pools.update(pool_key, &pool)?;
+
+        // TODO
+        // Transfer tokens
+
+        Ok(())
+    }
+
+    pub fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let mut state = self.state.get().unwrap_or_revert();
+
+        if caller != state.admin {
+            return Err(InvariantError::NotAdmin);
+        }
+
+        state.protocol_fee = protocol_fee;
+
+        self.state.set(state);
+
+        Ok(())
+    }
+
+    pub fn change_fee_receiver(
+        &mut self,
+        pool_key: PoolKey,
+        fee_receiver: Address,
+    ) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let state = self.state.get().unwrap_or_revert();
+        let mut pool = self.pools.get(pool_key)?;
+
+        if caller != state.admin {
+            return Err(InvariantError::NotAdmin);
+        }
+
+        pool.fee_receiver = fee_receiver;
+        self.pools.update(pool_key, &pool)?;
+
+        Ok(())
     }
 }

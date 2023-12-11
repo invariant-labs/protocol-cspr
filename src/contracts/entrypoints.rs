@@ -24,4 +24,11 @@ pub trait Entrypoints {
     fn get_pools(&self) -> Vec<PoolKey>;
 
     fn get_protocol_fee(&self) -> Percentage;
+    fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError>;
+    fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError>;
+    fn change_fee_receiver(
+        &mut self,
+        pool_key: PoolKey,
+        fee_receiver: Address,
+    ) -> Result<(), InvariantError>;
 }
