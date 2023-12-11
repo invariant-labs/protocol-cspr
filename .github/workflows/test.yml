@@ -32,9 +32,13 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v3
 
+      - name: Install rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
       - name: Add rustfmt clippy components
         run: |
-            rustup component add rust-src rustfmt clippy
+            rustup component add rustfmt clippy
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
