@@ -1,5 +1,8 @@
-use super::{FeeTier, Pool, PoolKey, Tick};
-use crate::InvariantError;
+use super::{FeeTier, Pool, PoolKey, Position, Tick};
+use crate::{
+    math::{liquidity::Liquidity, sqrt_price::SqrtPrice},
+    InvariantError,
+};
 use odra::{prelude::vec::Vec, types::Address};
 
 pub trait Entrypoints {
@@ -26,4 +29,14 @@ pub trait Entrypoints {
     fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool;
 
     fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError>;
+
+    fn create_position(
+        &mut self,
+        pool_key: PoolKey,
+        lower_tick: i32,
+        upper_tick: i32,
+        liquidity_delta: Liquidity,
+        slippage_limit_lower: SqrtPrice,
+        slippage_limit_upper: SqrtPrice,
+    ) -> Result<Position, InvariantError>;
 }
