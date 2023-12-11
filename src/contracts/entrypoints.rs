@@ -1,5 +1,5 @@
 use super::{FeeTier, Pool, PoolKey};
-use crate::InvariantError;
+use crate::{math::percentage::Percentage, InvariantError};
 use odra::{prelude::vec::Vec, types::Address};
 
 pub trait Entrypoints {
@@ -22,4 +22,6 @@ pub trait Entrypoints {
         fee_tier: FeeTier,
     ) -> Result<Pool, InvariantError>;
     fn get_pools(&self) -> Vec<PoolKey>;
+
+    fn get_protocol_fee(&self) -> Percentage;
 }

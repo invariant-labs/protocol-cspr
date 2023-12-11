@@ -164,4 +164,9 @@ impl Entrypoints for Invariant {
     pub fn get_pools(&self) -> Vec<PoolKey> {
         self.pool_keys.get().unwrap_or_revert().get_all()
     }
+
+    pub fn get_protocol_fee(&self) -> Percentage {
+        let state = self.state.get().unwrap_or_revert();
+        state.protocol_fee
+    }
 }
