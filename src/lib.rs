@@ -10,7 +10,7 @@ pub mod e2e;
 
 use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{
-    pool_key, FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
+    FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
 };
 use odra::contract_env;
 use odra::prelude::vec::Vec;

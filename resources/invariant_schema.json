@@ -128,6 +128,58 @@
       "is_mutable": false,
       "args": [],
       "return_ty": "Any"
+    },
+    {
+      "name": "withdraw_protocol_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "pool_key",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "change_protocol_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "protocol_fee",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "change_fee_receiver",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "pool_key",
+          "ty": "Any"
+        },
+        {
+          "name": "fee_receiver",
+          "ty": "Key"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
     }
   ],
   "events": []
