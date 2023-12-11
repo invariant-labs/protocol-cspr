@@ -342,13 +342,13 @@ pub fn is_enough_amount_to_change_price(
     Ok(starting_sqrt_price.ne(&next_sqrt_price))
 }
 
-pub fn calculate_max_liquidity_per_tick(tick_spacing: u16) -> Liquidity {
+pub fn calculate_max_liquidity_per_tick(tick_spacing: u32) -> Liquidity {
     const MAX_TICKS_AMOUNT_SQRT_PRICE_LIMITED: u128 = 2 * MAX_TICK as u128 + 1;
     let ticks_amount_spacing_limited = MAX_TICKS_AMOUNT_SQRT_PRICE_LIMITED / tick_spacing as u128;
     Liquidity::new(Liquidity::max_instance().get() / ticks_amount_spacing_limited)
 }
 
-pub fn check_ticks(tick_lower: i32, tick_upper: i32, tick_spacing: u16) -> TrackableResult<()> {
+pub fn check_ticks(tick_lower: i32, tick_upper: i32, tick_spacing: u32) -> TrackableResult<()> {
     if tick_lower > tick_upper {
         return Err(err!("tick_lower > tick_upper"));
     }
@@ -358,7 +358,7 @@ pub fn check_ticks(tick_lower: i32, tick_upper: i32, tick_spacing: u16) -> Track
     Ok(())
 }
 
-pub fn check_tick(tick_index: i32, tick_spacing: u16) -> TrackableResult<()> {
+pub fn check_tick(tick_index: i32, tick_spacing: u32) -> TrackableResult<()> {
     let (min_tick, max_tick) = (get_min_tick(tick_spacing), get_max_tick(tick_spacing));
     let tick_spacing = tick_spacing as i32;
     if tick_index % tick_spacing != 0 {

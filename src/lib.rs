@@ -165,6 +165,10 @@ impl Entrypoints for Invariant {
         self.pool_keys.get().unwrap_or_revert().get_all()
     }
 
+    pub fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool {
+        self._tickmap.get(index, key.fee_tier.tick_spacing, key)
+    }
+
     pub fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError> {
         self._ticks.get(key, index)
     }
