@@ -122,6 +122,21 @@
       "return_ty": {
         "List": "Any"
       }
+    },
+    {
+      "name": "is_tick_initialized",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "key",
+          "ty": "Any"
+        },
+        {
+          "name": "index",
+          "ty": "I32"
+        }
+      ],
+      "return_ty": "Bool"
     }
   ],
   "events": []

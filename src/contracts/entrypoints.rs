@@ -22,4 +22,6 @@ pub trait Entrypoints {
         fee_tier: FeeTier,
     ) -> Result<Pool, InvariantError>;
     fn get_pools(&self) -> Vec<PoolKey>;
+
+    fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool;
 }

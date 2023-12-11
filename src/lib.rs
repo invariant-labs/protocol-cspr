@@ -164,4 +164,8 @@ impl Entrypoints for Invariant {
     pub fn get_pools(&self) -> Vec<PoolKey> {
         self.pool_keys.get().unwrap_or_revert().get_all()
     }
+
+    pub fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool {
+        self._tickmap.get(index, key.fee_tier.tick_spacing, key)
+    }
 }

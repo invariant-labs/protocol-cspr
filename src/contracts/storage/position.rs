@@ -38,7 +38,7 @@ impl Position {
         liquidity_delta: Liquidity,
         add: bool,
         current_timestamp: u64,
-        tick_spacing: u16,
+        tick_spacing: u32,
     ) -> TrackableResult<(TokenAmount, TokenAmount)> {
         if !pool.liquidity.is_zero() {
             ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
@@ -170,7 +170,7 @@ impl Position {
         slippage_limit_lower: SqrtPrice,
         slippage_limit_upper: SqrtPrice,
         block_number: u64,
-        tick_spacing: u16,
+        tick_spacing: u32,
     ) -> Result<(Self, TokenAmount, TokenAmount), alloc::string::String> {
         if pool.sqrt_price < slippage_limit_lower || pool.sqrt_price > slippage_limit_upper {
             return Err("Price limit reached".to_string());
@@ -209,7 +209,7 @@ impl Position {
         current_timestamp: u64,
         lower_tick: &mut Tick,
         upper_tick: &mut Tick,
-        tick_spacing: u16,
+        tick_spacing: u32,
     ) -> (TokenAmount, TokenAmount, bool, bool) {
         let liquidity_delta = self.liquidity;
         let (mut amount_x, mut amount_y) = unwrap!(self.modify(
