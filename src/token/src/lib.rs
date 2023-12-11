@@ -102,7 +102,7 @@ pub mod tests {
             odra_modules::erc20::events::Transfer {
                 from: None,
                 to: Some(recipient),
-                amount: amount.into()
+                amount
             }
         );
     }
