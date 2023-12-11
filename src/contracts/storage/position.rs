@@ -9,7 +9,7 @@ use crate::math::{
     sqrt_price::SqrtPrice,
     token_amount::TokenAmount,
 };
-use alloc::string::ToString;
+use crate::InvariantError;
 use decimal::*;
 use odra::types::{U128, U256};
 use odra::OdraType;
@@ -171,9 +171,9 @@ impl Position {
         slippage_limit_upper: SqrtPrice,
         block_number: u64,
         tick_spacing: u32,
-    ) -> Result<(Self, TokenAmount, TokenAmount), alloc::string::String> {
+    ) -> Result<(Self, TokenAmount, TokenAmount), InvariantError> {
         if pool.sqrt_price < slippage_limit_lower || pool.sqrt_price > slippage_limit_upper {
-            return Err("Price limit reached".to_string());
+            return Err(InvariantError::PriceLimitReached);
         }
 
         // init position
