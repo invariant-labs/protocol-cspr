@@ -1,4 +1,3 @@
-#![no_std]
 use odra::{
     contract_env,
     prelude::string::String,

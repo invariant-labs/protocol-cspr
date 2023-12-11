@@ -4,6 +4,7 @@ extern crate alloc;
 
 pub mod contracts;
 pub mod math;
+pub mod token;
 
 #[cfg(test)]
 pub mod e2e;

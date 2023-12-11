@@ -10,7 +10,6 @@ decimal = { path = "src/decimal" }
 traceable_result = { path = "src/traceable_result" }
 uint = { version = "0.9", default-features = false }
 borsh = { version = "0.9.3", default-features = false }
-token = { path = "src/token" ,default-features = false, features = ["odra", "odra-modules"] }
 
 [features]
 default = ["mock-vm"]
