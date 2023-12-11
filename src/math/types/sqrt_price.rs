@@ -207,22 +207,22 @@ pub fn calculate_sqrt_price(tick_index: i32) -> TrackableResult<SqrtPrice> {
     })
 }
 
-pub fn get_max_tick(tick_spacing: u16) -> i32 {
+pub fn get_max_tick(tick_spacing: u32) -> i32 {
     let tick_spacing = tick_spacing as i32;
     MAX_TICK / tick_spacing * tick_spacing
 }
 
-pub fn get_min_tick(tick_spacing: u16) -> i32 {
+pub fn get_min_tick(tick_spacing: u32) -> i32 {
     let tick_spacing = tick_spacing as i32;
     MIN_TICK / tick_spacing * tick_spacing
 }
 
-pub fn get_max_sqrt_price(tick_spacing: u16) -> SqrtPrice {
+pub fn get_max_sqrt_price(tick_spacing: u32) -> SqrtPrice {
     let max_tick = get_max_tick(tick_spacing);
     SqrtPrice::from_tick(max_tick).unwrap()
 }
 
-pub fn get_min_sqrt_price(tick_spacing: u16) -> SqrtPrice {
+pub fn get_min_sqrt_price(tick_spacing: u32) -> SqrtPrice {
     let min_tick = get_min_tick(tick_spacing);
     SqrtPrice::from_tick(min_tick).unwrap()
 }

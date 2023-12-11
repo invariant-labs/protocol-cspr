@@ -7,7 +7,7 @@ use odra::OdraType;
 #[derive(OdraType, PartialEq, Copy, Debug)]
 pub struct FeeTier {
     pub fee: Percentage,
-    pub tick_spacing: u16,
+    pub tick_spacing: u32,
 }
 
 impl Default for FeeTier {
@@ -20,7 +20,7 @@ impl Default for FeeTier {
 }
 
 impl FeeTier {
-    pub fn new(fee: Percentage, tick_spacing: u16) -> Result<Self, InvariantError> {
+    pub fn new(fee: Percentage, tick_spacing: u32) -> Result<Self, InvariantError> {
         if tick_spacing == 0 || tick_spacing > 100 {
             return Err(InvariantError::InvalidTickSpacing);
         }

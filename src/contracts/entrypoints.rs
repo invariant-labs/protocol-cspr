@@ -32,5 +32,6 @@ pub trait Entrypoints {
         fee_receiver: Address,
     ) -> Result<(), InvariantError>;
 
+    fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool;
     fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError>;
 }
