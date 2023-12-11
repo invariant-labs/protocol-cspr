@@ -277,7 +277,7 @@ impl Entrypoints for Invariant {
         Ok(())
     }
 
-    fn remove_position(
+    pub fn remove_position(
         &mut self,
         index: u32,
     ) -> Result<(TokenAmount, TokenAmount), InvariantError> {
@@ -327,5 +327,11 @@ impl Entrypoints for Invariant {
         Erc20Ref::at(&position.pool_key.token_y).transfer(&caller, &amount_y.get());
 
         Ok((amount_x, amount_y))
+    }
+
+    pub fn get_position(&mut self, index: u32) -> Result<Position, InvariantError> {
+        let caller = contract_env::caller();
+
+        self.positions.get(caller, index)
     }
 }

@@ -44,4 +44,6 @@ pub trait Entrypoints {
 
     fn remove_position(&mut self, index: u32)
         -> Result<(TokenAmount, TokenAmount), InvariantError>;
+
+    fn get_position(&mut self, index: u32) -> Result<Position, InvariantError>;
 }
