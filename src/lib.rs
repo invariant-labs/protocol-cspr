@@ -8,11 +8,14 @@ pub mod math;
 #[cfg(test)]
 pub mod e2e;
 
-// use crate::contracts::Entrypoints;
-use crate::math::{percentage::Percentage, sqrt_price::SqrtPrice};
-use contracts::{FeeTier, FeeTiers, PoolKeys, Pools, Positions, State, Tickmap, Ticks};
+use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
+use contracts::{
+    FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
+};
+use odra::contract_env;
 use odra::prelude::vec::Vec;
-use odra::{contract_env, OdraType, UnwrapOrRevert, Variable};
+use odra::types::Address;
+use odra::{OdraType, UnwrapOrRevert, Variable};
 
 #[derive(OdraType, Debug, PartialEq)]
 pub enum InvariantError {
@@ -36,10 +39,11 @@ pub enum InvariantError {
     UnauthorizedFeeReceiver,
     ZeroLiquidity,
     TransferError,
-    TokensAreTheSame,
+    TokensAreSame,
     AmountUnderMinimumAmountOut,
     InvalidFee,
     NotEmptyTickDeinitialization,
+    InvalidInitTick,
 }
 
 pub struct SwapResult {
@@ -49,7 +53,7 @@ pub struct SwapResult {
 #[odra::module]
 pub struct Invariant {
     _positions: Positions,
-    _pools: Pools,
+    pools: Pools,
     _tickmap: Tickmap,
     _ticks: Ticks,
     fee_tiers: Variable<FeeTiers>,
@@ -109,5 +113,55 @@ impl Entrypoints for Invariant {
     pub fn get_fee_tiers(&self) -> Vec<FeeTier> {
         let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
         fee_tiers.get_all()
+    }
+
+    pub fn create_pool(
+        &mut self,
+        token_0: Address,
+        token_1: Address,
+        fee_tier: FeeTier,
+        init_tick: i32,
+    ) -> Result<(), InvariantError> {
+        let current_timestamp = odra::contract_env::get_block_time();
+        let mut pool_keys = self.pool_keys.get().unwrap_or_revert();
+        let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
+        let state = self.state.get().unwrap_or_revert();
+
+        if !fee_tiers.contains(fee_tier) {
+            return Err(InvariantError::FeeTierNotFound);
+        };
+
+        check_tick(init_tick, fee_tier.tick_spacing)
+            .map_err(|_| InvariantError::InvalidInitTick)?;
+
+        let pool_key = PoolKey::new(token_0, token_1, fee_tier)?;
+
+        if self.pools.get(pool_key).is_ok() {
+            return Err(InvariantError::PoolAlreadyExist);
+        };
+
+        let pool = Pool::create(init_tick, current_timestamp, state.admin);
+
+        self.pools.add(pool_key, &pool)?;
+        pool_keys.add(pool_key)?;
+
+        self.pool_keys.set(pool_keys);
+        Ok(())
+    }
+
+    pub fn get_pool(
+        &self,
+        token_0: Address,
+        token_1: Address,
+        fee_tier: FeeTier,
+    ) -> Result<Pool, InvariantError> {
+        let key: PoolKey = PoolKey::new(token_0, token_1, fee_tier)?;
+        let pool = self.pools.get(key)?;
+
+        Ok(pool)
+    }
+
+    pub fn get_pools(&self) -> Vec<PoolKey> {
+        self.pool_keys.get().unwrap_or_revert().get_all()
     }
 }
