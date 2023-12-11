@@ -180,6 +180,26 @@
           "err": "U32"
         }
       }
+    },
+    {
+      "name": "get_tick",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "key",
+          "ty": "Any"
+        },
+        {
+          "name": "index",
+          "ty": "I32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
     }
   ],
   "events": []
