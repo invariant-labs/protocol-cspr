@@ -34,7 +34,7 @@ jobs:
 
       - name: Add rustfmt clippy components
         run: |
-            rustup component add rustfmt clippy
+            rustup component add rust-src rustfmt clippy
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
