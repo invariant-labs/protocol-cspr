@@ -1,6 +1,6 @@
 use super::{FeeTier, Pool, PoolKey, Position, Tick};
 use crate::{
-    math::{liquidity::Liquidity, sqrt_price::SqrtPrice},
+    math::{liquidity::Liquidity, sqrt_price::SqrtPrice, token_amount::TokenAmount},
     InvariantError,
 };
 use odra::{prelude::vec::Vec, types::Address};
@@ -41,4 +41,7 @@ pub trait Entrypoints {
     ) -> Result<Position, InvariantError>;
 
     fn transfer_position(&mut self, index: u32, receiver: Address) -> Result<(), InvariantError>;
+
+    fn remove_position(&mut self, index: u32)
+        -> Result<(TokenAmount, TokenAmount), InvariantError>;
 }

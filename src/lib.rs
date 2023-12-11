@@ -15,6 +15,7 @@ use contracts::{
 };
 use decimal::Decimal;
 use math::liquidity::Liquidity;
+use math::token_amount::TokenAmount;
 use odra::contract_env;
 use odra::prelude::vec::Vec;
 use odra::types::{Address, U256};
@@ -56,10 +57,10 @@ pub struct SwapResult {
 
 #[odra::module]
 pub struct Invariant {
-    _positions: Positions,
+    positions: Positions,
     pools: Pools,
-    _tickmap: Tickmap,
-    _ticks: Ticks,
+    tickmap: Tickmap,
+    ticks: Ticks,
     fee_tiers: Variable<FeeTiers>,
     pool_keys: Variable<PoolKeys>,
     state: Variable<State>,
@@ -75,12 +76,23 @@ impl Invariant {
         let pool = self.pools.get(pool_key)?;
 
         let tick = Tick::create(index, &pool, current_timestamp);
-        self._ticks.add(pool_key, index, &tick)?;
+        self.ticks.add(pool_key, index, &tick)?;
 
-        self._tickmap
+        self.tickmap
             .flip(true, index, pool_key.fee_tier.tick_spacing, pool_key);
 
         Ok(tick)
+    }
+
+    fn remove_tick(&mut self, key: PoolKey, tick: Tick) -> Result<(), InvariantError> {
+        if !tick.liquidity_gross.is_zero() {
+            return Err(InvariantError::NotEmptyTickDeinitialization);
+        }
+
+        self.tickmap
+            .flip(false, tick.index, key.fee_tier.tick_spacing, key);
+        self.ticks.remove(key, tick.index)?;
+        Ok(())
     }
 }
 
@@ -189,11 +201,11 @@ impl Entrypoints for Invariant {
     }
 
     pub fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool {
-        self._tickmap.get(index, key.fee_tier.tick_spacing, key)
+        self.tickmap.get(index, key.fee_tier.tick_spacing, key)
     }
 
     pub fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError> {
-        self._ticks.get(key, index)
+        self.ticks.get(key, index)
     }
 
     pub fn create_position(
@@ -218,12 +230,12 @@ impl Entrypoints for Invariant {
         let mut pool = self.pools.get(pool_key)?;
 
         let mut lower_tick = self
-            ._ticks
+            .ticks
             .get(pool_key, lower_tick)
             .unwrap_or_else(|_| Self::create_tick(self, pool_key, lower_tick).unwrap());
 
         let mut upper_tick = self
-            ._ticks
+            .ticks
             .get(pool_key, upper_tick)
             .unwrap_or_else(|_| Self::create_tick(self, pool_key, upper_tick).unwrap());
 
@@ -242,12 +254,10 @@ impl Entrypoints for Invariant {
 
         self.pools.update(pool_key, &pool)?;
 
-        self._positions.add(caller, &position);
+        self.positions.add(caller, &position);
 
-        self._ticks
-            .update(pool_key, lower_tick.index, &lower_tick)?;
-        self._ticks
-            .update(pool_key, upper_tick.index, &upper_tick)?;
+        self.ticks.update(pool_key, lower_tick.index, &lower_tick)?;
+        self.ticks.update(pool_key, upper_tick.index, &upper_tick)?;
 
         Erc20Ref::at(&pool_key.token_x).transfer_from(&caller, &contract, &x.get());
         Erc20Ref::at(&pool_key.token_y).transfer_from(&caller, &contract, &y.get());
@@ -262,8 +272,60 @@ impl Entrypoints for Invariant {
     ) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
 
-        self._positions.transfer(caller, index, receiver)?;
+        self.positions.transfer(caller, index, receiver)?;
 
         Ok(())
+    }
+
+    fn remove_position(
+        &mut self,
+        index: u32,
+    ) -> Result<(TokenAmount, TokenAmount), InvariantError> {
+        let caller = contract_env::caller();
+        let current_timestamp = contract_env::get_block_time();
+
+        let mut position = self.positions.get(caller, index)?;
+
+        let mut lower_tick = self
+            .ticks
+            .get(position.pool_key, position.lower_tick_index)?;
+
+        let mut upper_tick = self
+            .ticks
+            .get(position.pool_key, position.upper_tick_index)?;
+
+        let pool = &mut self.pools.get(position.pool_key)?;
+
+        let (amount_x, amount_y, deinitialize_lower_tick, deinitialize_upper_tick) = position
+            .remove(
+                pool,
+                current_timestamp,
+                &mut lower_tick,
+                &mut upper_tick,
+                position.pool_key.fee_tier.tick_spacing,
+            );
+
+        self.pools.update(position.pool_key, pool)?;
+
+        if deinitialize_lower_tick {
+            self.remove_tick(position.pool_key, lower_tick)?;
+        } else {
+            self.ticks
+                .update(position.pool_key, position.lower_tick_index, &lower_tick)?;
+        }
+
+        if deinitialize_upper_tick {
+            self.remove_tick(position.pool_key, upper_tick)?;
+        } else {
+            self.ticks
+                .update(position.pool_key, position.upper_tick_index, &upper_tick)?;
+        }
+
+        self.positions.remove(caller, index)?;
+
+        Erc20Ref::at(&position.pool_key.token_x).transfer(&caller, &amount_x.get());
+        Erc20Ref::at(&position.pool_key.token_y).transfer(&caller, &amount_y.get());
+
+        Ok((amount_x, amount_y))
     }
 }
