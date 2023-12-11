@@ -334,4 +334,10 @@ impl Entrypoints for Invariant {
 
         self.positions.get(caller, index)
     }
+
+    pub fn get_all_positions(&mut self) -> Vec<Position> {
+        let caller = contract_env::caller();
+
+        self.positions.get_all(caller)
+    }
 }

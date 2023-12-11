@@ -46,4 +46,6 @@ pub trait Entrypoints {
         -> Result<(TokenAmount, TokenAmount), InvariantError>;
 
     fn get_position(&mut self, index: u32) -> Result<Position, InvariantError>;
+
+    fn get_all_positions(&mut self) -> Vec<Position>;
 }
