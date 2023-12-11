@@ -254,4 +254,16 @@ impl Entrypoints for Invariant {
 
         Ok(position)
     }
+
+    pub fn transfer_position(
+        &mut self,
+        index: u32,
+        receiver: Address,
+    ) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+
+        self._positions.transfer(caller, index, receiver)?;
+
+        Ok(())
+    }
 }

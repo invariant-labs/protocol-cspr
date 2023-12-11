@@ -39,4 +39,6 @@ pub trait Entrypoints {
         slippage_limit_lower: SqrtPrice,
         slippage_limit_upper: SqrtPrice,
     ) -> Result<Position, InvariantError>;
+
+    fn transfer_position(&mut self, index: u32, receiver: Address) -> Result<(), InvariantError>;
 }
