@@ -5,6 +5,9 @@ extern crate alloc;
 pub mod contracts;
 pub mod math;
 
+use decimal::*;
+use odra_modules::erc20::Erc20Ref;
+
 #[cfg(test)]
 pub mod e2e;
 
@@ -178,12 +181,12 @@ impl Entrypoints for Invariant {
             return Err(InvariantError::NotFeeReceiver);
         }
 
-        let (_fee_protocol_token_x, _fee_protocol_token_y) = pool.withdraw_protocol_fee(pool_key);
+        let (fee_protocol_token_x, fee_protocol_token_y) = pool.withdraw_protocol_fee(pool_key);
+
+        Erc20Ref::at(&pool_key.token_x).transfer(&pool.fee_receiver, &fee_protocol_token_x.get());
+        Erc20Ref::at(&pool_key.token_y).transfer(&pool.fee_receiver, &fee_protocol_token_y.get());
 
         self.pools.update(pool_key, &pool)?;
-
-        // TODO
-        // Transfer tokens
 
         Ok(())
     }
