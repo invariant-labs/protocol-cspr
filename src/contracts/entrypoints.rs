@@ -1,4 +1,4 @@
-use super::{FeeTier, Pool, PoolKey};
+use super::{FeeTier, Pool, PoolKey, Tick};
 use crate::InvariantError;
 use odra::{prelude::vec::Vec, types::Address};
 
@@ -22,4 +22,6 @@ pub trait Entrypoints {
         fee_tier: FeeTier,
     ) -> Result<Pool, InvariantError>;
     fn get_pools(&self) -> Vec<PoolKey>;
+
+    fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError>;
 }
