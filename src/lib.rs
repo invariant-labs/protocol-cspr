@@ -10,7 +10,7 @@ pub mod e2e;
 
 use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{
-    FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tickmap, Ticks,
+    FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tick, Tickmap, Ticks,
 };
 use odra::contract_env;
 use odra::prelude::vec::Vec;
@@ -163,5 +163,9 @@ impl Entrypoints for Invariant {
 
     pub fn get_pools(&self) -> Vec<PoolKey> {
         self.pool_keys.get().unwrap_or_revert().get_all()
+    }
+
+    pub fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError> {
+        self._ticks.get(key, index)
     }
 }
