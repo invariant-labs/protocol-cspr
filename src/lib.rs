@@ -12,11 +12,13 @@ use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Positions, State, Tick, Tickmap, Ticks,
 };
+use math::token_amount::TokenAmount;
 use odra::contract_env;
 use odra::prelude::vec::Vec;
-use odra::types::Address;
+use odra::types::{Address, U256};
 use odra::{OdraType, UnwrapOrRevert, Variable};
-
+use odra_modules::erc20::Erc20Ref;
+use decimal::*;
 #[derive(OdraType, Debug, PartialEq)]
 pub enum InvariantError {
     NotAdmin,
@@ -52,10 +54,10 @@ pub struct SwapResult {
 
 #[odra::module]
 pub struct Invariant {
-    _positions: Positions,
+    positions: Positions,
     pools: Pools,
-    _tickmap: Tickmap,
-    _ticks: Ticks,
+    tickmap: Tickmap,
+    ticks: Ticks,
     fee_tiers: Variable<FeeTiers>,
     pool_keys: Variable<PoolKeys>,
     state: Variable<State>,
@@ -166,10 +168,36 @@ impl Entrypoints for Invariant {
     }
 
     pub fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool {
-        self._tickmap.get(index, key.fee_tier.tick_spacing, key)
+        self.tickmap.get(index, key.fee_tier.tick_spacing, key)
     }
 
     pub fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError> {
-        self._ticks.get(key, index)
+        self.ticks.get(key, index)
+    }
+
+    pub fn claim_fee(&mut self, index: u32) -> Result<(TokenAmount, TokenAmount), InvariantError> {
+        let caller = odra::contract_env::caller();
+        let current_timestamp = odra::contract_env::get_block_time();
+        let mut position = self.positions.get(caller,index)?;
+        let mut lower_tick = self.ticks.get(position.pool_key, position.lower_tick_index)?;
+        let mut upper_tick = self.ticks.get(position.pool_key, position.upper_tick_index)?;
+        let mut pool = self.pools.get(position.pool_key)?;
+
+        let (x,y) = position.claim_fee(&mut pool, &mut upper_tick, &mut lower_tick, current_timestamp);
+
+        self.positions.update(caller, index, &position)?;
+        self.pools.update(position.pool_key, &pool)?;
+        self.ticks.update(position.pool_key, position.lower_tick_index, &lower_tick)?;
+        self.ticks.update(position.pool_key, position.upper_tick_index, &upper_tick)?;
+
+        if x.get() > U256::from(0) {
+            Erc20Ref::at(&position.pool_key.token_x).transfer(&caller, &x.get());
+        }
+
+        if y.get() > U256::from(0) {
+            Erc20Ref::at(&position.pool_key.token_y).transfer(&caller, &y.get());
+        }
+
+        Ok((x,y))
     }
 }
