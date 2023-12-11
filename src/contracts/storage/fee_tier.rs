@@ -4,7 +4,7 @@ use decimal::*;
 use odra::types::U128;
 use odra::OdraType;
 
-#[derive(OdraType, PartialEq, Copy, Debug)]
+#[derive(OdraType, Eq, PartialEq, Copy, Debug)]
 pub struct FeeTier {
     pub fee: Percentage,
     pub tick_spacing: u32,

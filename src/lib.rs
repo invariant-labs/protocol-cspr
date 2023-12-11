@@ -16,9 +16,10 @@ use contracts::{
 use decimal::Decimal;
 use math::liquidity::Liquidity;
 use math::token_amount::TokenAmount;
-use odra::contract_env;
 use odra::prelude::vec::Vec;
+use odra::types::event::OdraEvent;
 use odra::types::{Address, U256};
+use odra::{contract_env, Event};
 use odra::{OdraType, UnwrapOrRevert, Variable};
 use odra_modules::erc20::Erc20Ref;
 
@@ -49,6 +50,28 @@ pub enum InvariantError {
     InvalidFee,
     NotEmptyTickDeinitialization,
     InvalidInitTick,
+}
+
+#[derive(Event, PartialEq, Eq, Debug)]
+pub struct CreatePositionEvent {
+    timestamp: u64,
+    address: Address,
+    pool: PoolKey,
+    liquidity: Liquidity,
+    lower_tick: i32,
+    upper_tick: i32,
+    current_sqrt_price: SqrtPrice,
+}
+
+#[derive(Event, PartialEq, Eq, Debug)]
+pub struct RemovePositionEvent {
+    timestamp: u64,
+    address: Address,
+    pool: PoolKey,
+    liquidity: Liquidity,
+    lower_tick: i32,
+    upper_tick: i32,
+    current_sqrt_price: SqrtPrice,
 }
 
 pub struct SwapResult {
@@ -93,6 +116,50 @@ impl Invariant {
             .flip(false, tick.index, key.fee_tier.tick_spacing, key);
         self.ticks.remove(key, tick.index)?;
         Ok(())
+    }
+
+    fn emit_create_position_event(
+        &self,
+        address: Address,
+        pool: PoolKey,
+        liquidity: Liquidity,
+        lower_tick: i32,
+        upper_tick: i32,
+        current_sqrt_price: SqrtPrice,
+    ) {
+        let timestamp = contract_env::get_block_time();
+        CreatePositionEvent {
+            timestamp,
+            address,
+            pool,
+            liquidity,
+            lower_tick,
+            upper_tick,
+            current_sqrt_price,
+        }
+        .emit();
+    }
+
+    fn emit_remove_position_event(
+        &self,
+        address: Address,
+        pool: PoolKey,
+        liquidity: Liquidity,
+        lower_tick: i32,
+        upper_tick: i32,
+        current_sqrt_price: SqrtPrice,
+    ) {
+        let timestamp = contract_env::get_block_time();
+        RemovePositionEvent {
+            timestamp,
+            address,
+            pool,
+            liquidity,
+            lower_tick,
+            upper_tick,
+            current_sqrt_price,
+        }
+        .emit();
     }
 }
 
@@ -262,6 +329,15 @@ impl Entrypoints for Invariant {
         Erc20Ref::at(&pool_key.token_x).transfer_from(&caller, &contract, &x.get());
         Erc20Ref::at(&pool_key.token_y).transfer_from(&caller, &contract, &y.get());
 
+        self.emit_create_position_event(
+            caller,
+            pool_key,
+            liquidity_delta,
+            lower_tick.index,
+            upper_tick.index,
+            pool.sqrt_price,
+        );
+
         Ok(position)
     }
 
@@ -325,6 +401,15 @@ impl Entrypoints for Invariant {
 
         Erc20Ref::at(&position.pool_key.token_x).transfer(&caller, &amount_x.get());
         Erc20Ref::at(&position.pool_key.token_y).transfer(&caller, &amount_y.get());
+
+        self.emit_remove_position_event(
+            caller,
+            position.pool_key,
+            position.liquidity,
+            lower_tick.index,
+            upper_tick.index,
+            pool.sqrt_price,
+        );
 
         Ok((amount_x, amount_y))
     }
