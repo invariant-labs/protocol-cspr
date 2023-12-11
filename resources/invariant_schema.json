@@ -122,6 +122,12 @@
       "return_ty": {
         "List": "Any"
       }
+    },
+    {
+      "name": "get_protocol_fee",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": "Any"
     }
   ],
   "events": []
