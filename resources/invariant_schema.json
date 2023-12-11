@@ -157,6 +157,27 @@
           "err": "U32"
         }
       }
+    },
+    {
+      "name": "claim_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "index",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": {
+            "Tuple2": [
+              "Any",
+              "Any"
+            ]
+          },
+          "err": "U32"
+        }
+      }
     }
   ],
   "events": []
