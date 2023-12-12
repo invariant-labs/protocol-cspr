@@ -1,4 +1,4 @@
-use crate::contracts::PoolKey;
+use crate::contracts::{InvariantError, PoolKey};
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::sqrt_price::SqrtPrice;
@@ -52,7 +52,7 @@ fn test_remove_position() {
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
 
     let init_tick = 0;
-    // let remove_position_index = 0;
+    let remove_position_index = 0;
 
     let initial_mint = 10u128.pow(10);
 
@@ -105,31 +105,30 @@ fn test_remove_position() {
         .unwrap();
 
     assert_eq!(pool_state.liquidity, liquidity_delta);
-    // TODO: fix timestamp
-    // let liquidity_delta = Liquidity::new(liquidity_delta.get() * 1_000_000);
-    // {
-    // let incorrect_lower_tick_index = lower_tick_index - 50;
-    // let incorrect_upper_tick_index = upper_tick_index + 50;
+    let liquidity_delta = Liquidity::new(liquidity_delta.get() * 1_000_000);
+    {
+        let incorrect_lower_tick_index = lower_tick_index - 50;
+        let incorrect_upper_tick_index = upper_tick_index + 50;
 
-    // token_x.approve(invariant.address(), &liquidity_delta.get());
-    // token_y.approve(invariant.address(), &liquidity_delta.get());
+        token_x.approve(invariant.address(), &liquidity_delta.get());
+        token_y.approve(invariant.address(), &liquidity_delta.get());
 
-    // invariant
-    //     .create_position(
-    //         pool_key,
-    //         incorrect_lower_tick_index,
-    //         incorrect_upper_tick_index,
-    //         liquidity_delta,
-    //         pool_state.sqrt_price,
-    //         pool_state.sqrt_price,
-    //     )
-    //     .unwrap();
+        invariant
+            .create_position(
+                pool_key,
+                incorrect_lower_tick_index,
+                incorrect_upper_tick_index,
+                liquidity_delta,
+                pool_state.sqrt_price,
+                pool_state.sqrt_price,
+            )
+            .unwrap();
 
-    // let position_state = invariant.get_position(1).unwrap();
-    // // Check position
-    // assert!(position_state.lower_tick_index == incorrect_lower_tick_index);
-    // assert!(position_state.upper_tick_index == incorrect_upper_tick_index);
-    // }
+        let position_state = invariant.get_position(1).unwrap();
+        // Check position
+        assert!(position_state.lower_tick_index == incorrect_lower_tick_index);
+        assert!(position_state.upper_tick_index == incorrect_upper_tick_index);
+    }
 
     let amount = 1000;
     token_x.mint(&bob, &U256::from(amount));
@@ -152,11 +151,11 @@ fn test_remove_position() {
     let pool_state_after = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
-    // TODO: fix timestamp
-    // assert_eq!(
-    //     pool_state_after.fee_growth_global_x,
-    //     FeeGrowth::new(U128::from(49999950000049999u64))
-    // );
+
+    assert_eq!(
+        pool_state_after.fee_growth_global_x,
+        FeeGrowth::new(U128::from(49999950000049999u64))
+    );
     assert_eq!(
         pool_state_after.fee_protocol_token_x,
         TokenAmount::new(U256::from(1))
@@ -171,58 +170,56 @@ fn test_remove_position() {
         .lt(&pool_state_before.sqrt_price));
 
     assert_eq!(pool_state_after.liquidity, pool_state_before.liquidity);
-    // TODO: fix timestamp
-    // assert_eq!(pool_state_after.current_tick_index, -10);
-    // assert_ne!(pool_state_after.sqrt_price, pool_state_before.sqrt_price);
+    assert_eq!(pool_state_after.current_tick_index, -10);
+    assert_ne!(pool_state_after.sqrt_price, pool_state_before.sqrt_price);
 
-    // let amount_x = token_x.balance_of(&bob);
-    // let amount_y = token_y.balance_of(&bob);
-    // assert_eq!(amount_x, U256::from(0));
-    // assert_eq!(amount_y, U256::from(993));
+    let amount_x = token_x.balance_of(&bob);
+    let amount_y = token_y.balance_of(&bob);
+    assert_eq!(amount_x, U256::from(0));
+    assert_eq!(amount_y, U256::from(993));
 
-    // // pre load dex balances
-    // let dex_x_before_remove = token_x.balance_of(invariant.address());
-    // let dex_y_before_remove = token_x.balance_of(invariant.address());
+    // pre load dex balances
+    let dex_x_before_remove = token_x.balance_of(invariant.address());
+    let dex_y_before_remove = token_y.balance_of(invariant.address());
 
-    // // Remove position
-    // test_env::set_caller(alice);
-    // // TODO: fix timestamp
-    // // invariant.remove_position(remove_position_index).unwrap();
+    // Remove position
+    test_env::set_caller(alice);
+    invariant.remove_position(remove_position_index).unwrap();
 
-    // // Load states
-    // let pool_state = invariant
-    //     .get_pool(*token_x.address(), *token_y.address(), fee_tier)
-    //     .unwrap();
-    // let lower_tick = invariant.get_tick(pool_key, lower_tick_index);
-    // let upper_tick = invariant.get_tick(pool_key, upper_tick_index);
-    // let lower_tick_bit = invariant.is_tick_initialized(pool_key, lower_tick_index);
-    // let upper_tick_bit = invariant.is_tick_initialized(pool_key, upper_tick_index);
-    // let dex_x = token_x.balance_of(invariant.address());
-    // let dex_y = token_y.balance_of(invariant.address());
-    // let expected_withdrawn_x = 499;
-    // let expected_withdrawn_y = 999;
-    // let expected_fee_x = 0;
+    // Load states
+    let pool_state = invariant
+        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .unwrap();
+    let lower_tick = invariant.get_tick(pool_key, lower_tick_index);
+    let upper_tick = invariant.get_tick(pool_key, upper_tick_index);
+    let lower_tick_bit = invariant.is_tick_initialized(pool_key, lower_tick_index);
+    let upper_tick_bit = invariant.is_tick_initialized(pool_key, upper_tick_index);
+    let dex_x = token_x.balance_of(invariant.address());
+    let dex_y = token_y.balance_of(invariant.address());
+    let expected_withdrawn_x = 499;
+    let expected_withdrawn_y = 999;
+    let expected_fee_x = 0;
 
-    // assert_eq!(
-    //     dex_x_before_remove - dex_x,
-    //     U256::from(expected_withdrawn_x) + expected_fee_x
-    // );
-    // assert_eq!(
-    //     dex_y_before_remove - dex_y,
-    //     U256::from(expected_withdrawn_y)
-    // );
+    assert_eq!(
+        dex_x_before_remove - dex_x,
+        U256::from(expected_withdrawn_x) + expected_fee_x
+    );
+    assert_eq!(
+        dex_y_before_remove - dex_y,
+        U256::from(expected_withdrawn_y)
+    );
 
-    // // Check ticks
-    // assert_eq!(lower_tick, Err(InvariantError::TickNotFound));
-    // assert_eq!(upper_tick, Err(InvariantError::TickNotFound));
+    // Check ticks
+    assert_eq!(lower_tick, Err(InvariantError::TickNotFound));
+    assert_eq!(upper_tick, Err(InvariantError::TickNotFound));
 
-    // // Check tickmap
-    // assert!(!lower_tick_bit);
-    // assert!(!upper_tick_bit);
+    // Check tickmap
+    assert!(!lower_tick_bit);
+    assert!(!upper_tick_bit);
 
-    // // Check pool
-    // assert!(pool_state.liquidity == liquidity_delta);
-    // assert!(pool_state.current_tick_index == -10);
+    // Check pool
+    assert!(pool_state.liquidity == liquidity_delta);
+    assert!(pool_state.current_tick_index == -10);
 }
 
 #[test]
