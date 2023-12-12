@@ -1,4 +1,4 @@
-use crate::contracts::{FeeTier, InvariantError, PoolKey};
+use crate::contracts::{FeeTier, InvariantError, PoolKey, Position};
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
 use crate::math::sqrt_price::SqrtPrice;
@@ -8,6 +8,44 @@ use decimal::{Decimal, Factories};
 use odra::prelude::string::String;
 use odra::test_env;
 use odra::types::{U128, U256};
+
+fn positions_equals(position_a: Position, position_b: Position) -> bool {
+    let mut equal = true;
+
+    if position_a.fee_growth_inside_x != position_b.fee_growth_inside_x {
+        equal = false;
+    };
+
+    if position_a.fee_growth_inside_y != position_b.fee_growth_inside_y {
+        equal = false;
+    };
+
+    if position_a.liquidity != position_b.liquidity {
+        equal = false;
+    };
+
+    if position_a.lower_tick_index != position_b.lower_tick_index {
+        equal = false;
+    };
+
+    if position_a.upper_tick_index != position_b.upper_tick_index {
+        equal = false;
+    };
+
+    if position_a.pool_key != position_b.pool_key {
+        equal = false;
+    };
+
+    if position_a.tokens_owed_x != position_b.tokens_owed_x {
+        equal = false;
+    };
+
+    if position_a.tokens_owed_y != position_b.tokens_owed_y {
+        equal = false;
+    };
+
+    equal
+}
 
 #[test]
 fn test_remove_position_from_empty_list() {
@@ -369,5 +407,227 @@ fn test_only_owner_can_modify_position_list() {
         test_env::set_caller(unauthorized_user);
         let result = invariant.remove_position(last_position_index_before as u32);
         assert_eq!(result, Err(InvariantError::PositionNotFound));
+    }
+}
+
+#[test]
+fn test_transfer_position_ownership() {
+    let alice = test_env::get_account(0);
+    test_env::set_caller(alice);
+
+    let init_tick = -23028;
+
+    let initial_balance = 10u128.pow(10);
+    let mut token_x = TokenDeployer::init(
+        String::from(""),
+        String::from(""),
+        0,
+        &U256::from(initial_balance),
+    );
+    let mut token_y = TokenDeployer::init(
+        String::from(""),
+        String::from(""),
+        0,
+        &U256::from(initial_balance),
+    );
+    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+
+    let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
+
+    invariant.add_fee_tier(fee_tier).unwrap();
+
+    invariant
+        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .unwrap();
+
+    token_x.approve(invariant.address(), &U256::from(initial_balance));
+    token_y.approve(invariant.address(), &U256::from(initial_balance));
+
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+    let tick_indexes = [-9780, -42, 0, 9, 276, 32343, -50001];
+    let liquidity_delta = Liquidity::from_integer(1_000_000);
+    let pool_state = invariant
+        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .unwrap();
+    {
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[0],
+                tick_indexes[1],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+        let list_length = invariant.get_all_positions().len();
+
+        assert_eq!(list_length, 1)
+    }
+
+    let bob = test_env::get_account(1);
+    // Open  additional positions
+    {
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[0],
+                tick_indexes[1],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[1],
+                tick_indexes[2],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[1],
+                tick_indexes[3],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+    }
+    // Transfer first position
+    {
+        let transferred_index = 0;
+        let owner_list_before = invariant.get_all_positions();
+        test_env::set_caller(bob);
+        let recipient_list_before = invariant.get_all_positions();
+        test_env::set_caller(alice);
+        let removed_position = invariant.get_position(transferred_index).unwrap();
+        let last_position_before = owner_list_before[owner_list_before.len() - 1];
+
+        invariant.transfer_position(transferred_index, bob).unwrap();
+
+        test_env::set_caller(bob);
+        let recipient_position = invariant.get_position(transferred_index).unwrap();
+        let recipient_list_after = invariant.get_all_positions();
+        test_env::set_caller(alice);
+        let owner_first_position_after = invariant.get_position(transferred_index).unwrap();
+        let owner_list_after = invariant.get_all_positions();
+
+        assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
+        assert_eq!(owner_list_before.len() - 1, owner_list_after.len());
+
+        // move last position
+        assert!(positions_equals(
+            owner_first_position_after,
+            last_position_before
+        ));
+
+        // Equals fields od transferred position
+        assert!(positions_equals(recipient_position, removed_position));
+    }
+
+    // Transfer middle position
+    {
+        let transferred_index = 1;
+        let owner_list_before = invariant.get_all_positions();
+        test_env::set_caller(bob);
+        let recipient_list_before = invariant.get_all_positions();
+        let last_position_before = owner_list_before[owner_list_before.len() - 1];
+
+        test_env::set_caller(alice);
+        invariant.transfer_position(transferred_index, bob).unwrap();
+
+        let owner_list_after = invariant.get_all_positions();
+        test_env::set_caller(bob);
+        let recipient_list_after = invariant.get_all_positions();
+        test_env::set_caller(alice);
+        let owner_first_position_after = invariant.get_position(transferred_index).unwrap();
+
+        assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
+        assert_eq!(owner_list_before.len() - 1, owner_list_after.len());
+
+        // move last position
+        assert!(positions_equals(
+            owner_first_position_after,
+            last_position_before
+        ));
+    }
+    // Transfer last position
+    {
+        let owner_list_before = invariant.get_all_positions();
+        let transferred_index = (owner_list_before.len() - 1) as u32;
+        let removed_position = invariant.get_position(transferred_index).unwrap();
+
+        invariant.transfer_position(transferred_index, bob).unwrap();
+
+        test_env::set_caller(bob);
+        let recipient_list_after = invariant.get_all_positions();
+        let recipient_position_index = (recipient_list_after.len() - 1) as u32;
+        let recipient_position = invariant.get_position(recipient_position_index).unwrap();
+
+        assert!(positions_equals(removed_position, recipient_position));
+    }
+
+    // Clear position
+    {
+        let transferred_index = 0;
+        let recipient_list_before = invariant.get_all_positions();
+        test_env::set_caller(alice);
+        let removed_position = invariant.get_position(transferred_index).unwrap();
+
+        invariant.transfer_position(transferred_index, bob).unwrap();
+
+        test_env::set_caller(bob);
+        let recipient_list_after = invariant.get_all_positions();
+        let recipient_position_index = (recipient_list_after.len() - 1) as u32;
+        let recipient_position = invariant.get_position(recipient_position_index).unwrap();
+        test_env::set_caller(alice);
+        let owner_list_after = invariant.get_all_positions();
+
+        assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
+        assert_eq!(0, owner_list_after.len());
+
+        // Equals fields od transferred position
+        assert!(positions_equals(recipient_position, removed_position));
+    }
+
+    // Get back position
+    {
+        let transferred_index = 0;
+        let owner_list_before = invariant.get_all_positions();
+        test_env::set_caller(bob);
+        let recipient_list_before = invariant.get_all_positions();
+        let removed_position = invariant.get_position(transferred_index).unwrap();
+        let last_position_before = recipient_list_before[recipient_list_before.len() - 1];
+
+        invariant
+            .transfer_position(transferred_index, alice)
+            .unwrap();
+
+        test_env::set_caller(alice);
+        let owner_list_after = invariant.get_all_positions();
+        test_env::set_caller(bob);
+        let recipient_list_after = invariant.get_all_positions();
+        let recipient_first_position_after = invariant.get_position(transferred_index).unwrap();
+
+        test_env::set_caller(alice);
+        let owner_new_position = invariant.get_position(transferred_index).unwrap();
+
+        assert_eq!(recipient_list_after.len(), recipient_list_before.len() - 1);
+        assert_eq!(owner_list_before.len() + 1, owner_list_after.len());
+
+        // move last position
+        assert!(positions_equals(
+            last_position_before,
+            recipient_first_position_after
+        ));
+
+        // Equals fields od transferred position
+        assert!(positions_equals(owner_new_position, removed_position));
     }
 }
