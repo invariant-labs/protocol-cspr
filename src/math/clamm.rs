@@ -374,7 +374,7 @@ pub fn calculate_min_amount_out(
     expected_amount_out: TokenAmount,
     slippage: Percentage,
 ) -> TokenAmount {
-    expected_amount_out.big_mul(Percentage::from_integer(1u8) - slippage)
+    expected_amount_out.big_mul_up(Percentage::from_integer(1u8) - slippage)
 }
 
 #[cfg(test)]
@@ -391,6 +391,20 @@ mod tests {
             let slippage = Percentage::from_integer(0);
             let result = calculate_min_amount_out(expected_amount_out, slippage);
             assert_eq!(result, TokenAmount::new(U256::from(100)));
+        }
+        // 0.1% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_scale(1, 3);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(100)));
+        }
+        // 0.9% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(123));
+            let slippage = Percentage::from_scale(9, 3);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(122)));
         }
         // 1% fee
         {
