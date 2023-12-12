@@ -631,3 +631,102 @@ fn test_transfer_position_ownership() {
         assert!(positions_equals(owner_new_position, removed_position));
     }
 }
+
+#[test]
+fn test_only_owner_can_transfer_position() {
+    let alice = test_env::get_account(0);
+    test_env::set_caller(alice);
+
+    let init_tick = -23028;
+
+    let initial_balance = 10u128.pow(10);
+    let mut token_x = TokenDeployer::init(
+        String::from(""),
+        String::from(""),
+        0,
+        &U256::from(initial_balance),
+    );
+    let mut token_y = TokenDeployer::init(
+        String::from(""),
+        String::from(""),
+        0,
+        &U256::from(initial_balance),
+    );
+    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+
+    let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
+
+    invariant.add_fee_tier(fee_tier).unwrap();
+
+    invariant
+        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .unwrap();
+
+    token_x.approve(invariant.address(), &U256::from(initial_balance));
+    token_y.approve(invariant.address(), &U256::from(initial_balance));
+
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+    let tick_indexes = [-9780, -42, 0, 9, 276, 32343, -50001];
+    let liquidity_delta = Liquidity::from_integer(1_000_000);
+    let pool_state = invariant
+        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .unwrap();
+    {
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[0],
+                tick_indexes[1],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+        let list_length = invariant.get_all_positions().len();
+
+        assert_eq!(list_length, 1)
+    }
+
+    let bob = test_env::get_account(1);
+    // Open  additional positions
+    {
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[0],
+                tick_indexes[1],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[1],
+                tick_indexes[2],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+        invariant
+            .create_position(
+                pool_key,
+                tick_indexes[1],
+                tick_indexes[3],
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+    }
+    // Transfer first position
+    {
+        let transferred_index = 0;
+
+        test_env::set_caller(bob);
+        let result = invariant.transfer_position(transferred_index, alice);
+        assert_eq!(result, Err(InvariantError::PositionNotFound));
+    }
+}
