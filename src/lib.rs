@@ -5,6 +5,8 @@ extern crate alloc;
 pub mod contracts;
 pub mod math;
 
+use odra_modules::erc20::Erc20Ref;
+
 #[cfg(test)]
 pub mod e2e;
 
@@ -21,7 +23,6 @@ use odra::types::event::OdraEvent;
 use odra::types::{Address, U256};
 use odra::{contract_env, Event};
 use odra::{OdraType, UnwrapOrRevert, Variable};
-use odra_modules::erc20::Erc20Ref;
 
 #[derive(OdraType, Debug, PartialEq)]
 pub enum InvariantError {
@@ -265,6 +266,63 @@ impl Entrypoints for Invariant {
 
     pub fn get_pools(&self) -> Vec<PoolKey> {
         self.pool_keys.get().unwrap_or_revert().get_all()
+    }
+
+    pub fn get_protocol_fee(&self) -> Percentage {
+        let state = self.state.get().unwrap_or_revert();
+        state.protocol_fee
+    }
+
+    pub fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let mut pool = self.pools.get(pool_key)?;
+
+        if caller != pool.fee_receiver {
+            return Err(InvariantError::NotFeeReceiver);
+        }
+
+        let (fee_protocol_token_x, fee_protocol_token_y) = pool.withdraw_protocol_fee(pool_key);
+
+        Erc20Ref::at(&pool_key.token_x).transfer(&pool.fee_receiver, &fee_protocol_token_x.get());
+        Erc20Ref::at(&pool_key.token_y).transfer(&pool.fee_receiver, &fee_protocol_token_y.get());
+
+        self.pools.update(pool_key, &pool)?;
+
+        Ok(())
+    }
+
+    pub fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let mut state = self.state.get().unwrap_or_revert();
+
+        if caller != state.admin {
+            return Err(InvariantError::NotAdmin);
+        }
+
+        state.protocol_fee = protocol_fee;
+
+        self.state.set(state);
+
+        Ok(())
+    }
+
+    pub fn change_fee_receiver(
+        &mut self,
+        pool_key: PoolKey,
+        fee_receiver: Address,
+    ) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let state = self.state.get().unwrap_or_revert();
+        let mut pool = self.pools.get(pool_key)?;
+
+        if caller != state.admin {
+            return Err(InvariantError::NotAdmin);
+        }
+
+        pool.fee_receiver = fee_receiver;
+        self.pools.update(pool_key, &pool)?;
+
+        Ok(())
     }
 
     pub fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool {
