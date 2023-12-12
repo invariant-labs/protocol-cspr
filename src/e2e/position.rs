@@ -151,7 +151,7 @@ fn test_remove_position() {
     );
 
     assert_eq!(pool_state.liquidity, liquidity_delta);
-    let liquidity_delta = Liquidity::new(liquidity_delta.get() * 1_000_000);
+    let liquidity_delta = Liquidity::from_integer(liquidity_delta.get());
     {
         let incorrect_lower_tick_index = lower_tick_index - 50;
         let incorrect_upper_tick_index = upper_tick_index + 50;
@@ -214,7 +214,7 @@ fn test_remove_position() {
 
     assert_eq!(
         pool_state_after.fee_growth_global_x,
-        FeeGrowth::new(U128::from(49999950000049999u64))
+        FeeGrowth::new(U128::from(499995000049999500u64))
     );
     assert_eq!(
         pool_state_after.fee_protocol_token_x,
@@ -341,7 +341,7 @@ fn test_position_within_current_tick() {
     let lower_tick_index = min_tick_test + 10;
     let upper_tick_index = max_tick_test - 10;
 
-    let liquidity_delta = Liquidity::new(U256::from(initial_balance));
+    let liquidity_delta = Liquidity::from_integer(100);
 
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
@@ -385,8 +385,8 @@ fn test_position_within_current_tick() {
     let dex_y = token_y.balance_of(invariant.address());
 
     let zero_fee = FeeGrowth::new(U128::from(0));
-    let expected_x_increase = 3163;
-    let expected_y_increase = 317;
+    let expected_x_increase = 317;
+    let expected_y_increase = 32;
 
     // Check ticks
     assert!(lower_tick.index == lower_tick_index);
@@ -466,7 +466,7 @@ fn test_position_below_current_tick() {
     let lower_tick_index = -46080;
     let upper_tick_index = -23040;
 
-    let liquidity_delta = Liquidity::new(U256::from(initial_balance));
+    let liquidity_delta = Liquidity::from_integer(10000);
 
     let pool_state_before = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
@@ -511,7 +511,7 @@ fn test_position_below_current_tick() {
 
     let zero_fee = FeeGrowth::new(U128::from(0));
     let expected_x_increase = 0;
-    let expected_y_increase = 21616;
+    let expected_y_increase = 2162;
 
     // Check ticks
     assert!(lower_tick.index == lower_tick_index);
@@ -590,7 +590,7 @@ fn test_position_above_current_tick() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let lower_tick_index = -22980;
     let upper_tick_index = 0;
-    let liquidity_delta = Liquidity::new(U256::from(initial_balance));
+    let liquidity_delta = Liquidity::from_integer(1000);
 
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
@@ -620,7 +620,7 @@ fn test_position_above_current_tick() {
     let dex_y = token_y.balance_of(invariant.address());
 
     let zero_fee = FeeGrowth::new(U128::from(0));
-    let expected_x_increase = 215486;
+    let expected_x_increase = 2155;
     let expected_y_increase = 0;
 
     // Check ticks
