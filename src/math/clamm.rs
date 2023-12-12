@@ -384,6 +384,94 @@ mod tests {
     use odra::types::{U128, U256};
 
     #[test]
+    fn test_calculate_min_amount_out() {
+        // 0% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_integer(0);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(100)));
+        }
+        // 1% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_scale(1, 2);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(99)));
+        }
+        // 3% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_scale(3, 2);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(97)));
+        }
+        // 5% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_scale(5, 2);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(95)));
+        }
+        // 10% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_scale(1, 1);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(90)));
+        }
+        // 20% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_scale(2, 1);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(80)));
+        }
+        // 50% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_scale(5, 1);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(50)));
+        }
+        // 100% fee
+        {
+            let expected_amount_out = TokenAmount::new(U256::from(100));
+            let slippage = Percentage::from_integer(1);
+            let result = calculate_min_amount_out(expected_amount_out, slippage);
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
+        }
+    }
+
+    #[test]
+    fn test_domain_calculate_min_amount_out() {
+        let min_amount = TokenAmount::new(U256::from(0));
+        let max_amount = TokenAmount::max_instance();
+        let min_fee = Percentage::new(U128::from(0));
+        let max_fee = Percentage::from_integer(1);
+        // min amount min fee
+        {
+            let result = calculate_min_amount_out(min_amount, min_fee);
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
+        }
+        // min amount max fee
+        {
+            let result = calculate_min_amount_out(min_amount, max_fee);
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
+        }
+        // max amount max fee
+        {
+            let result = calculate_min_amount_out(max_amount, max_fee);
+            assert_eq!(result, TokenAmount::new(U256::from(0)));
+        }
+        // max amount min fee
+        {
+            let result = calculate_min_amount_out(max_amount, min_fee);
+            assert_eq!(result, max_amount);
+        }
+    }
+
+    #[test]
     fn test_domain_get_next_sqrt_price_from_input() {
         let max_liquidity = Liquidity::max_instance();
         let min_liquidity = Liquidity::new(U256::from(1));
