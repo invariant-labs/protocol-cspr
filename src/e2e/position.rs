@@ -1,4 +1,4 @@
-use crate::contracts::{InvariantError, PoolKey};
+use crate::contracts::{CreatePositionEvent, InvariantError, PoolKey, RemovePositionEvent};
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::sqrt_price::SqrtPrice;
@@ -7,6 +7,7 @@ use crate::math::MIN_SQRT_PRICE;
 use crate::token::TokenDeployer;
 use crate::{contracts::FeeTier, math::percentage::Percentage, InvariantDeployer};
 use decimal::{Decimal, Factories};
+use odra::assert_events;
 use odra::types::U256;
 use odra::{prelude::string::String, test_env, types::U128};
 
@@ -31,16 +32,36 @@ fn test_create_position() {
 
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
+    let lower_tick = -10;
+    let upper_tick = 10;
+    let liquidity_delta = Liquidity::new(U256::from(10));
     invariant
         .create_position(
             pool_key,
-            -10,
-            10,
-            Liquidity::new(U256::from(10)),
+            lower_tick,
+            upper_tick,
+            liquidity_delta,
             SqrtPrice::new(U128::from(0)),
             SqrtPrice::max_instance(),
         )
         .unwrap();
+
+    let pool = invariant
+        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .unwrap();
+
+    assert_events!(
+        invariant,
+        CreatePositionEvent {
+            timestamp: 0,
+            address: alice,
+            pool: pool_key,
+            liquidity: liquidity_delta,
+            lower_tick,
+            upper_tick,
+            current_sqrt_price: pool.sqrt_price,
+        }
+    );
 }
 
 #[test]
@@ -104,6 +125,19 @@ fn test_remove_position() {
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
 
+    assert_events!(
+        invariant,
+        CreatePositionEvent {
+            timestamp: 0,
+            address: alice,
+            pool: pool_key,
+            liquidity: liquidity_delta,
+            lower_tick: lower_tick_index,
+            upper_tick: upper_tick_index,
+            current_sqrt_price: pool_state.sqrt_price
+        }
+    );
+
     assert_eq!(pool_state.liquidity, liquidity_delta);
     let liquidity_delta = Liquidity::new(liquidity_delta.get() * 1_000_000);
     {
@@ -125,6 +159,20 @@ fn test_remove_position() {
             .unwrap();
 
         let position_state = invariant.get_position(1).unwrap();
+
+        assert_events!(
+            invariant,
+            CreatePositionEvent {
+                timestamp: 0,
+                address: alice,
+                pool: pool_key,
+                liquidity: liquidity_delta,
+                lower_tick: incorrect_lower_tick_index,
+                upper_tick: incorrect_upper_tick_index,
+                current_sqrt_price: pool_state.sqrt_price,
+            }
+        );
+
         // Check position
         assert!(position_state.lower_tick_index == incorrect_lower_tick_index);
         assert!(position_state.upper_tick_index == incorrect_upper_tick_index);
@@ -190,6 +238,20 @@ fn test_remove_position() {
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
+
+    assert_events!(
+        invariant,
+        RemovePositionEvent {
+            timestamp: 0,
+            address: alice,
+            pool: pool_key,
+            liquidity: Liquidity::new(U256::from(0)),
+            lower_tick: lower_tick_index,
+            upper_tick: upper_tick_index,
+            current_sqrt_price: pool_state.sqrt_price,
+        }
+    );
+
     let lower_tick = invariant.get_tick(pool_key, lower_tick_index);
     let upper_tick = invariant.get_tick(pool_key, upper_tick_index);
     let lower_tick_bit = invariant.is_tick_initialized(pool_key, lower_tick_index);
@@ -283,6 +345,20 @@ fn test_position_within_current_tick() {
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
+
+    assert_events!(
+        invariant,
+        CreatePositionEvent {
+            timestamp: 0,
+            address: alice,
+            pool: pool_key,
+            liquidity: liquidity_delta,
+            lower_tick: lower_tick_index,
+            upper_tick: upper_tick_index,
+            current_sqrt_price: pool_state.sqrt_price,
+        }
+    );
+
     let lower_tick = invariant.get_tick(pool_key, lower_tick_index).unwrap();
     let upper_tick = invariant.get_tick(pool_key, upper_tick_index).unwrap();
     let alice_x = token_x.balance_of(&alice);
@@ -388,6 +464,20 @@ fn test_position_below_current_tick() {
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
+
+    assert_events!(
+        invariant,
+        CreatePositionEvent {
+            timestamp: 0,
+            address: alice,
+            pool: pool_key,
+            liquidity: liquidity_delta,
+            lower_tick: lower_tick_index,
+            upper_tick: upper_tick_index,
+            current_sqrt_price: pool_state.sqrt_price,
+        }
+    );
+
     let lower_tick = invariant.get_tick(pool_key, lower_tick_index).unwrap();
     let upper_tick = invariant.get_tick(pool_key, upper_tick_index).unwrap();
     let alice_x = token_x.balance_of(&alice);
