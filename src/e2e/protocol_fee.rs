@@ -3,6 +3,7 @@ use crate::contracts::PoolKey;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
+use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::sqrt_price::SqrtPrice;
 use crate::math::token_amount::TokenAmount;
 use crate::math::MIN_SQRT_PRICE;
@@ -32,8 +33,15 @@ fn test_protocol_fee() {
         assert!(exist);
 
         let init_tick = 0;
+        let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
         invariant
-            .create_pool(pool_key.token_x, pool_key.token_y, fee_tier, init_tick)
+            .create_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier,
+                init_sqrt_price,
+                init_tick,
+            )
             .unwrap();
     }
     // Init basic position
@@ -75,10 +83,11 @@ fn test_protocol_fee() {
     // Init basic swap
     {
         let caller = test_env::get_account(1);
-        test_env::set_caller(caller);
         let amount = U256::from(1000);
+        token_x.mint(&deployer, &amount);
+        token_x.transfer(&caller, &amount);
 
-        token_x.mint(&caller, &amount);
+        test_env::set_caller(caller);
         token_x.approve(invariant.address(), &amount);
 
         let amount_x = token_x.balance_of(invariant.address());
@@ -180,8 +189,15 @@ fn test_protocol_fee_not_admin() {
         assert!(exist);
 
         let init_tick = 0;
+        let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
         invariant
-            .create_pool(pool_key.token_x, pool_key.token_y, fee_tier, init_tick)
+            .create_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier,
+                init_sqrt_price,
+                init_tick,
+            )
             .unwrap();
     }
     // Init basic position
@@ -223,10 +239,11 @@ fn test_protocol_fee_not_admin() {
     // Init basic swap
     {
         let caller = test_env::get_account(1);
-        test_env::set_caller(caller);
         let amount = U256::from(1000);
+        token_x.mint(&deployer, &amount);
+        token_x.transfer(&caller, &amount);
 
-        token_x.mint(&caller, &amount);
+        test_env::set_caller(caller);
         token_x.approve(invariant.address(), &amount);
 
         let amount_x = token_x.balance_of(invariant.address());
