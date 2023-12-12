@@ -1,7 +1,7 @@
 use crate::contracts::{CreatePositionEvent, InvariantError, PoolKey, RemovePositionEvent};
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
-use crate::math::sqrt_price::SqrtPrice;
+use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
 use crate::math::token_amount::TokenAmount;
 use crate::math::MIN_SQRT_PRICE;
 use crate::token::TokenDeployer;
@@ -24,7 +24,13 @@ fn test_create_position() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, 10)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(10).unwrap(),
+            10,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(500));
@@ -96,7 +102,13 @@ fn test_remove_position() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     let lower_tick_index = -20;
@@ -313,7 +325,13 @@ fn test_position_within_current_tick() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
@@ -432,7 +450,13 @@ fn test_position_below_current_tick() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
@@ -551,7 +575,13 @@ fn test_position_above_current_tick() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
