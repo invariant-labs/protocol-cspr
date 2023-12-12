@@ -124,6 +124,64 @@
       }
     },
     {
+      "name": "get_protocol_fee",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": "Any"
+    },
+    {
+      "name": "withdraw_protocol_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "pool_key",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "change_protocol_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "protocol_fee",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "change_fee_receiver",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "pool_key",
+          "ty": "Any"
+        },
+        {
+          "name": "fee_receiver",
+          "ty": "Key"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
       "name": "is_tick_initialized",
       "is_mutable": false,
       "args": [
@@ -156,6 +214,107 @@
           "ok": "Any",
           "err": "U32"
         }
+      }
+    },
+    {
+      "name": "create_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "pool_key",
+          "ty": "Any"
+        },
+        {
+          "name": "lower_tick",
+          "ty": "I32"
+        },
+        {
+          "name": "upper_tick",
+          "ty": "I32"
+        },
+        {
+          "name": "liquidity_delta",
+          "ty": "Any"
+        },
+        {
+          "name": "slippage_limit_lower",
+          "ty": "Any"
+        },
+        {
+          "name": "slippage_limit_upper",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "transfer_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "index",
+          "ty": "U32"
+        },
+        {
+          "name": "receiver",
+          "ty": "Key"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "remove_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "index",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": {
+            "Tuple2": [
+              "Any",
+              "Any"
+            ]
+          },
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "index",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_all_positions",
+      "is_mutable": true,
+      "args": [],
+      "return_ty": {
+        "List": "Any"
       }
     }
   ],

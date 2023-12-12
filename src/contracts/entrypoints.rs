@@ -1,6 +1,9 @@
 use super::{FeeTier, Pool, PoolKey, Position, Tick};
 use crate::{
-    math::{liquidity::Liquidity, sqrt_price::SqrtPrice, token_amount::TokenAmount},
+    math::{
+        liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice,
+        token_amount::TokenAmount,
+    },
     InvariantError,
 };
 use odra::{prelude::vec::Vec, types::Address};
@@ -26,8 +29,16 @@ pub trait Entrypoints {
     ) -> Result<Pool, InvariantError>;
     fn get_pools(&self) -> Vec<PoolKey>;
 
-    fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool;
+    fn get_protocol_fee(&self) -> Percentage;
+    fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError>;
+    fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError>;
+    fn change_fee_receiver(
+        &mut self,
+        pool_key: PoolKey,
+        fee_receiver: Address,
+    ) -> Result<(), InvariantError>;
 
+    fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool;
     fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError>;
 
     fn create_position(
