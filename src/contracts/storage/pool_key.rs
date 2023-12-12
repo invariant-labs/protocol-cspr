@@ -1,5 +1,5 @@
 use super::fee_tier::FeeTier;
-use crate::InvariantError;
+use crate::contracts::errors::InvariantError;
 use odra::types::casper_types::ContractPackageHash;
 use odra::types::Address;
 use odra::OdraType;

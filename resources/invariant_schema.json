@@ -337,6 +337,70 @@
       "return_ty": {
         "List": "Any"
       }
+    },
+    {
+      "name": "quote",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "pool_key",
+          "ty": "Any"
+        },
+        {
+          "name": "x_to_y",
+          "ty": "Bool"
+        },
+        {
+          "name": "amount",
+          "ty": "Any"
+        },
+        {
+          "name": "by_amount_in",
+          "ty": "Bool"
+        },
+        {
+          "name": "sqrt_price_limit",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "swap",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "pool_key",
+          "ty": "Any"
+        },
+        {
+          "name": "x_to_y",
+          "ty": "Bool"
+        },
+        {
+          "name": "amount",
+          "ty": "Any"
+        },
+        {
+          "name": "by_amount_in",
+          "ty": "Bool"
+        },
+        {
+          "name": "sqrt_price_limit",
+          "ty": "Any"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
     }
   ],
   "events": []
