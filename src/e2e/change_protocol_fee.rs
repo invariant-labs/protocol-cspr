@@ -22,7 +22,7 @@ fn test_change_protocol_fee() {
 }
 
 #[test]
-fn test_change_protocol_fee_not_adming() {
+fn test_change_protocol_fee_not_admin() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
     let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
