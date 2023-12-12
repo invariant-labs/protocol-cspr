@@ -4,7 +4,7 @@ use crate::{
         liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice,
         token_amount::TokenAmount,
     },
-    InvariantError, QuoteResult,
+    CalculateSwapResult, InvariantError, QuoteResult,
 };
 use odra::{prelude::vec::Vec, types::Address};
 
@@ -70,4 +70,12 @@ pub trait Entrypoints {
         by_amount_in: bool,
         sqrt_price_limit: SqrtPrice,
     ) -> Result<QuoteResult, InvariantError>;
+    fn swap(
+        &mut self,
+        pool_key: PoolKey,
+        x_to_y: bool,
+        amount: TokenAmount,
+        by_amount_in: bool,
+        sqrt_price_limit: SqrtPrice,
+    ) -> Result<CalculateSwapResult, InvariantError>;
 }
