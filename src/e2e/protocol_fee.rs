@@ -84,8 +84,7 @@ fn test_protocol_fee() {
     {
         let caller = test_env::get_account(1);
         let amount = U256::from(1000);
-        token_x.mint(&deployer, &amount);
-        token_x.transfer(&caller, &amount);
+        token_x.mint(&caller, &amount);
 
         test_env::set_caller(caller);
         token_x.approve(invariant.address(), &amount);
@@ -240,8 +239,7 @@ fn test_protocol_fee_not_admin() {
     {
         let caller = test_env::get_account(1);
         let amount = U256::from(1000);
-        token_x.mint(&deployer, &amount);
-        token_x.transfer(&caller, &amount);
+        token_x.mint(&caller, &amount);
 
         test_env::set_caller(caller);
         token_x.approve(invariant.address(), &amount);
