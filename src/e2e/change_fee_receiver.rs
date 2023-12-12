@@ -1,5 +1,6 @@
 use crate::contracts::errors::InvariantError;
 use crate::math::percentage::Percentage;
+use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::InvariantDeployer;
 use crate::{FeeTier, PoolKey};
 use decimal::*;
@@ -24,8 +25,9 @@ fn test_change_fee_reciever() {
     assert!(exist);
 
     let init_tick = 0;
+    let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
-        .create_pool(token_0, token_1, fee_tier, init_tick)
+        .create_pool(token_0, token_1, fee_tier, init_sqrt_price, init_tick)
         .unwrap();
 
     let new_receiver = test_env::get_account(1);
@@ -55,8 +57,9 @@ fn test_not_admin_change_fee_reciever() {
     assert!(exist);
 
     let init_tick = 0;
+    let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
-        .create_pool(token_0, token_1, fee_tier, init_tick)
+        .create_pool(token_0, token_1, fee_tier, init_sqrt_price, init_tick)
         .unwrap();
 
     let new_receiver = test_env::get_account(1);

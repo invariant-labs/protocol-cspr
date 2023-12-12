@@ -80,6 +80,10 @@
           "ty": "Any"
         },
         {
+          "name": "init_sqrt_price",
+          "ty": "Any"
+        },
+        {
           "name": "init_tick",
           "ty": "I32"
         }
