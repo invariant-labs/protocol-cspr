@@ -361,4 +361,108 @@ mod tests {
         assert_eq!(dex_x, U256::from(expected_x_increase));
         assert_eq!(dex_y, U256::from(expected_y_increase));
     }
+
+    #[test]
+    fn test_position_above_current_tick() {
+        let alice = test_env::get_account(0);
+        test_env::set_caller(alice);
+
+        let init_tick = -23028;
+
+        let initial_balance = 10_000_000_000i64;
+        let mut token_x = TokenDeployer::init(
+            String::from(""),
+            String::from(""),
+            0,
+            &U256::from(initial_balance),
+        );
+        let mut token_y = TokenDeployer::init(
+            String::from(""),
+            String::from(""),
+            0,
+            &U256::from(initial_balance),
+        );
+        let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+
+        let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 4).unwrap();
+
+        invariant.add_fee_tier(fee_tier).unwrap();
+
+        invariant
+            .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+            .unwrap();
+
+        token_x.approve(invariant.address(), &U256::from(initial_balance));
+        token_y.approve(invariant.address(), &U256::from(initial_balance));
+
+        let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+        let lower_tick_index = -22980;
+        let upper_tick_index = 0;
+        let liquidity_delta = Liquidity::new(U256::from(initial_balance));
+
+        let pool_state = invariant
+            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .unwrap();
+
+        invariant
+            .create_position(
+                pool_key,
+                lower_tick_index,
+                upper_tick_index,
+                liquidity_delta,
+                pool_state.sqrt_price,
+                SqrtPrice::max_instance(),
+            )
+            .unwrap();
+
+        // Load states
+        let position_state = invariant.get_position(0).unwrap();
+        let pool_state = invariant
+            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .unwrap();
+        let lower_tick = invariant.get_tick(pool_key, lower_tick_index).unwrap();
+        let upper_tick = invariant.get_tick(pool_key, upper_tick_index).unwrap();
+        let alice_x = token_x.balance_of(&alice);
+        let alice_y = token_y.balance_of(&alice);
+        let dex_x = token_x.balance_of(invariant.address());
+        let dex_y = token_y.balance_of(invariant.address());
+
+        let zero_fee = FeeGrowth::new(U128::from(0));
+        let expected_x_increase = 21549;
+        let expected_y_increase = 0;
+
+        // Check ticks
+        assert!(lower_tick.index == lower_tick_index);
+        assert!(upper_tick.index == upper_tick_index);
+        assert_eq!(lower_tick.liquidity_gross, liquidity_delta);
+        assert_eq!(upper_tick.liquidity_gross, liquidity_delta);
+        assert_eq!(lower_tick.liquidity_change, liquidity_delta);
+        assert_eq!(upper_tick.liquidity_change, liquidity_delta);
+        assert!(lower_tick.sign);
+        assert!(!upper_tick.sign);
+
+        // Check pool
+        assert!(pool_state.liquidity == Liquidity::new(U256::from(0)));
+        assert!(pool_state.current_tick_index == init_tick);
+
+        // Check position
+        assert!(position_state.pool_key == pool_key);
+        assert!(position_state.liquidity == liquidity_delta);
+        assert!(position_state.lower_tick_index == lower_tick_index);
+        assert!(position_state.upper_tick_index == upper_tick_index);
+        assert!(position_state.fee_growth_inside_x == zero_fee);
+        assert!(position_state.fee_growth_inside_y == zero_fee);
+
+        // Check balances
+        assert_eq!(
+            alice_x,
+            U256::from(initial_balance).checked_sub(dex_x).unwrap()
+        );
+        assert_eq!(
+            alice_y,
+            U256::from(initial_balance).checked_sub(dex_y).unwrap()
+        );
+        assert_eq!(dex_x, U256::from(expected_x_increase));
+        assert_eq!(dex_y, U256::from(expected_y_increase));
+    }
 }
