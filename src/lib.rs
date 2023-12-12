@@ -214,6 +214,36 @@ impl Invariant {
             ticks,
         })
     }
+
+    fn route(
+        &mut self,
+        is_swap: bool,
+        amount_in: TokenAmount,
+        swaps: Vec<Hop>,
+    ) -> Result<TokenAmount, InvariantError> {
+        let mut next_swap_amount = amount_in;
+
+        for swap in swaps.iter() {
+            let Hop { pool_key, x_to_y } = *swap;
+
+            let sqrt_price_limit = if x_to_y {
+                SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
+            } else {
+                SqrtPrice::new(U128::from(MAX_SQRT_PRICE))
+            };
+
+            let result = if is_swap {
+                self.swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)
+            } else {
+                self.calculate_swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)
+            }?;
+
+            next_swap_amount = result.amount_out;
+        }
+
+        Ok(next_swap_amount)
+    }
+
     fn emit_create_position_event(
         &self,
         address: Address,
@@ -736,25 +766,11 @@ impl Entrypoints for Invariant {
         amount_in: TokenAmount,
         swaps: Vec<Hop>,
     ) -> Result<TokenAmount, InvariantError> {
-        let mut next_swap_amount = amount_in;
+        let amount_out = self.route(false, amount_in, swaps)?;
 
-        for swap in swaps.iter() {
-            let Hop { pool_key, x_to_y } = *swap;
-
-            let sqrt_price_limit = if x_to_y {
-                SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
-            } else {
-                SqrtPrice::new(U128::from(MAX_SQRT_PRICE))
-            };
-
-            let result =
-                self.calculate_swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)?;
-
-            next_swap_amount = result.amount_out;
-        }
-
-        Ok(next_swap_amount)
+        Ok(amount_out)
     }
+
     pub fn swap_route(
         &mut self,
         amount_in: TokenAmount,
@@ -762,25 +778,11 @@ impl Entrypoints for Invariant {
         slippage: Percentage,
         swaps: Vec<Hop>,
     ) -> Result<(), InvariantError> {
-        let mut next_swap_amount = amount_in;
-
-        for swap in swaps.iter() {
-            let Hop { pool_key, x_to_y } = *swap;
-
-            let sqrt_price_limit = if x_to_y {
-                SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
-            } else {
-                SqrtPrice::new(U128::from(MAX_SQRT_PRICE))
-            };
-
-            let result = self.swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)?;
-
-            next_swap_amount = result.amount_out;
-        }
+        let amount_out = self.route(true, amount_in, swaps)?;
 
         let min_amount_out = calculate_min_amount_out(expected_amount_out, slippage);
 
-        if next_swap_amount < min_amount_out {
+        if amount_out < min_amount_out {
             return Err(InvariantError::AmountUnderMinimumAmountOut);
         }
 
