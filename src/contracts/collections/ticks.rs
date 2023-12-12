@@ -1,5 +1,5 @@
+use crate::contracts::errors::InvariantError;
 use crate::contracts::{PoolKey, Tick};
-use crate::InvariantError;
 use odra::Mapping;
 
 #[odra::module]

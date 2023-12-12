@@ -1,5 +1,5 @@
+use crate::contracts::errors::InvariantError;
 use crate::contracts::Position;
-use crate::InvariantError;
 use odra::prelude::vec::Vec;
 use odra::types::Address;
 use odra::Mapping;

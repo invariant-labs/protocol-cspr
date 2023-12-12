@@ -11,73 +11,43 @@ use odra_modules::erc20::Erc20Ref;
 #[cfg(test)]
 pub mod e2e;
 
+use crate::contracts::errors::InvariantError;
 use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
+use contracts::events::*;
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, State, Tick, Tickmap,
     Ticks,
 };
 use decimal::Decimal;
+use math::clamm::{compute_swap_step, SwapResult};
+use math::get_tick_at_sqrt_price;
 use math::liquidity::Liquidity;
 use math::token_amount::TokenAmount;
+use math::{MAX_SQRT_PRICE, MIN_SQRT_PRICE};
+use odra::contract_env;
+use odra::prelude::vec;
 use odra::prelude::vec::Vec;
 use odra::types::event::OdraEvent;
-use odra::types::{Address, U256};
-use odra::{contract_env, Event};
+use odra::types::{Address, U128, U256};
 use odra::{OdraType, UnwrapOrRevert, Variable};
+use traceable_result::*;
 
 #[derive(OdraType, Debug, PartialEq)]
-pub enum InvariantError {
-    NotAdmin,
-    NotFeeReceiver,
-    PoolAlreadyExist,
-    PoolNotFound,
-    TickAlreadyExist,
-    InvalidTickIndexOrTickSpacing,
-    PositionNotFound,
-    TickNotFound,
-    FeeTierNotFound,
-    PoolKeyNotFound,
-    AmountIsZero,
-    WrongLimit,
-    PriceLimitReached,
-    NoGainSwap,
-    InvalidTickSpacing,
-    FeeTierAlreadyExist,
-    PoolKeyAlreadyExist,
-    UnauthorizedFeeReceiver,
-    ZeroLiquidity,
-    TransferError,
-    TokensAreSame,
-    AmountUnderMinimumAmountOut,
-    InvalidFee,
-    NotEmptyTickDeinitialization,
-    InvalidInitTick,
+pub struct QuoteResult {
+    pub amount_in: TokenAmount,
+    pub amount_out: TokenAmount,
+    pub target_sqrt_price: SqrtPrice,
+    pub ticks: Vec<Tick>,
 }
-
-#[derive(Event, PartialEq, Eq, Debug)]
-pub struct CreatePositionEvent {
-    timestamp: u64,
-    address: Address,
-    pool: PoolKey,
-    liquidity: Liquidity,
-    lower_tick: i32,
-    upper_tick: i32,
-    current_sqrt_price: SqrtPrice,
-}
-
-#[derive(Event, PartialEq, Eq, Debug)]
-pub struct RemovePositionEvent {
-    timestamp: u64,
-    address: Address,
-    pool: PoolKey,
-    liquidity: Liquidity,
-    lower_tick: i32,
-    upper_tick: i32,
-    current_sqrt_price: SqrtPrice,
-}
-
-pub struct SwapResult {
-    next_sqrt_price: SqrtPrice,
+#[derive(OdraType, Debug, PartialEq)]
+pub struct CalculateSwapResult {
+    pub amount_in: TokenAmount,
+    pub amount_out: TokenAmount,
+    pub start_sqrt_price: SqrtPrice,
+    pub target_sqrt_price: SqrtPrice,
+    pub fee: TokenAmount,
+    pub pool: Pool,
+    pub ticks: Vec<Tick>,
 }
 
 #[odra::module]
@@ -120,6 +90,125 @@ impl Invariant {
         Ok(())
     }
 
+    fn calculate_swap(
+        &self,
+        pool_key: PoolKey,
+        x_to_y: bool,
+        amount: TokenAmount,
+        by_amount_in: bool,
+        sqrt_price_limit: SqrtPrice,
+    ) -> Result<CalculateSwapResult, InvariantError> {
+        let current_timestamp = contract_env::get_block_time();
+        let state = self.state.get().unwrap_or_revert();
+        if amount.is_zero() {
+            return Err(InvariantError::AmountIsZero);
+        }
+
+        let mut ticks: Vec<Tick> = vec![];
+
+        let mut pool = self.pools.get(pool_key)?;
+
+        if x_to_y {
+            if pool.sqrt_price <= sqrt_price_limit
+                || sqrt_price_limit > SqrtPrice::new(U128::from(MAX_SQRT_PRICE))
+            {
+                return Err(InvariantError::WrongLimit);
+            }
+        } else if pool.sqrt_price >= sqrt_price_limit
+            || sqrt_price_limit < SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
+        {
+            return Err(InvariantError::WrongLimit);
+        }
+
+        let mut remaining_amount = amount;
+
+        let mut total_amount_in = TokenAmount::new(U256::from(0));
+        let mut total_amount_out = TokenAmount::new(U256::from(0));
+
+        let event_start_sqrt_price = pool.sqrt_price;
+        let mut event_fee_amount = TokenAmount::new(U256::from(0));
+
+        while !remaining_amount.is_zero() {
+            let (swap_limit, limiting_tick) = self.tickmap.get_closer_limit(
+                sqrt_price_limit,
+                x_to_y,
+                pool.current_tick_index,
+                pool_key.fee_tier.tick_spacing,
+                pool_key,
+            );
+
+            let result = unwrap!(compute_swap_step(
+                pool.sqrt_price,
+                swap_limit,
+                pool.liquidity,
+                remaining_amount,
+                by_amount_in,
+                pool_key.fee_tier.fee,
+            ));
+
+            // make remaining amount smaller
+            if by_amount_in {
+                remaining_amount -= result.amount_in + result.fee_amount;
+            } else {
+                remaining_amount -= result.amount_out;
+            }
+
+            unwrap!(pool.add_fee(result.fee_amount, x_to_y, state.protocol_fee));
+            event_fee_amount += result.fee_amount;
+
+            pool.sqrt_price = result.next_sqrt_price;
+
+            total_amount_in += result.amount_in + result.fee_amount;
+            total_amount_out += result.amount_out;
+
+            // Fail if price would go over swap limit
+            if pool.sqrt_price == sqrt_price_limit && !remaining_amount.is_zero() {
+                return Err(InvariantError::PriceLimitReached);
+            }
+
+            if let Some((tick_index, is_initialized)) = limiting_tick {
+                if is_initialized {
+                    let mut tick = self.ticks.get(pool_key, tick_index)?;
+
+                    let (amount_to_add, has_crossed) = pool.cross_tick(
+                        result,
+                        swap_limit,
+                        &mut tick,
+                        &mut remaining_amount,
+                        by_amount_in,
+                        x_to_y,
+                        current_timestamp,
+                        state.protocol_fee,
+                        pool_key.fee_tier,
+                    );
+
+                    total_amount_in += amount_to_add;
+                    if has_crossed {
+                        ticks.push(tick);
+                    }
+                }
+            } else {
+                pool.current_tick_index = unwrap!(get_tick_at_sqrt_price(
+                    result.next_sqrt_price,
+                    pool_key.fee_tier.tick_spacing
+                ));
+            }
+        }
+
+        if total_amount_out.get().is_zero() {
+            return Err(InvariantError::NoGainSwap);
+        }
+
+        Ok(CalculateSwapResult {
+            amount_in: total_amount_in,
+            amount_out: total_amount_out,
+            start_sqrt_price: event_start_sqrt_price,
+            target_sqrt_price: pool.sqrt_price,
+            fee: event_fee_amount,
+            pool,
+            ticks,
+        })
+    }
     fn emit_create_position_event(
         &self,
         address: Address,
@@ -162,6 +251,44 @@ impl Invariant {
             current_sqrt_price,
         }
         .emit();
+    }
+
+    fn emit_cross_tick_event(&self, address: Address, pool: PoolKey, indexes: Vec<i32>) {
+        let timestamp = contract_env::get_block_time();
+        CrossTickEvent {
+            timestamp,
+            address,
+            pool,
+            indexes,
+        }
+        .emit();
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn emit_swap_event(
+        &self,
+        address: Address,
+        pool: PoolKey,
+        amount_in: TokenAmount,
+        amount_out: TokenAmount,
+        fee: TokenAmount,
+        start_sqrt_price: SqrtPrice,
+        target_sqrt_price: SqrtPrice,
+        x_to_y: bool,
+    ) {
+        let timestamp = contract_env::get_block_time();
+        SwapEvent {
+            timestamp,
+            address,
+            pool,
+            amount_in,
+            amount_out,
+            fee,
+            start_sqrt_price,
+            target_sqrt_price,
+            x_to_y,
+        }
+        .emit()
     }
 }
 
@@ -519,5 +646,83 @@ impl Entrypoints for Invariant {
         let caller = contract_env::caller();
 
         self.positions.get_all(caller)
+    }
+
+    pub fn quote(
+        &self,
+        pool_key: PoolKey,
+        x_to_y: bool,
+        amount: TokenAmount,
+        by_amount_in: bool,
+        sqrt_price_limit: SqrtPrice,
+    ) -> Result<QuoteResult, InvariantError> {
+        let calculate_swap_result =
+            self.calculate_swap(pool_key, x_to_y, amount, by_amount_in, sqrt_price_limit)?;
+
+        Ok(QuoteResult {
+            amount_in: calculate_swap_result.amount_in,
+            amount_out: calculate_swap_result.amount_out,
+            target_sqrt_price: calculate_swap_result.pool.sqrt_price,
+            ticks: calculate_swap_result.ticks,
+        })
+    }
+
+    pub fn swap(
+        &mut self,
+        pool_key: PoolKey,
+        x_to_y: bool,
+        amount: TokenAmount,
+        by_amount_in: bool,
+        sqrt_price_limit: SqrtPrice,
+    ) -> Result<CalculateSwapResult, InvariantError> {
+        let caller = contract_env::caller();
+        let contract = contract_env::self_address();
+
+        let calculate_swap_result =
+            self.calculate_swap(pool_key, x_to_y, amount, by_amount_in, sqrt_price_limit)?;
+
+        let mut crossed_tick_indexes: Vec<i32> = vec![];
+
+        for tick in calculate_swap_result.ticks.iter() {
+            self.ticks.update(pool_key, tick.index, tick)?;
+            crossed_tick_indexes.push(tick.index);
+        }
+
+        if !crossed_tick_indexes.is_empty() {
+            self.emit_cross_tick_event(caller, pool_key, crossed_tick_indexes);
+        }
+
+        self.pools.update(pool_key, &calculate_swap_result.pool)?;
+
+        if x_to_y {
+            Erc20Ref::at(&pool_key.token_x).transfer_from(
+                &caller,
+                &contract,
+                &calculate_swap_result.amount_in.get(),
+            );
+            Erc20Ref::at(&pool_key.token_y)
+                .transfer(&caller, &calculate_swap_result.amount_out.get());
+        } else {
+            Erc20Ref::at(&pool_key.token_y).transfer_from(
+                &caller,
+                &contract,
+                &calculate_swap_result.amount_in.get(),
+            );
+            Erc20Ref::at(&pool_key.token_x)
+                .transfer(&caller, &calculate_swap_result.amount_out.get());
+        };
+
+        self.emit_swap_event(
+            caller,
+            pool_key,
+            calculate_swap_result.amount_in,
+            calculate_swap_result.amount_out,
+            calculate_swap_result.fee,
+            calculate_swap_result.start_sqrt_price,
+            calculate_swap_result.target_sqrt_price,
+            x_to_y,
+        );
+
+        Ok(calculate_swap_result)
     }
 }

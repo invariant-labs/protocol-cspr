@@ -1,7 +1,7 @@
+use crate::contracts::errors::InvariantError;
 use crate::math::percentage::Percentage;
 use crate::FeeTier;
 use crate::InvariantDeployer;
-use crate::InvariantError;
 use decimal::*;
 use odra::test_env;
 use odra::types::casper_types::ContractPackageHash;

@@ -1,4 +1,5 @@
 use super::{Pool, Tick};
+use crate::contracts::errors::InvariantError;
 use crate::contracts::PoolKey;
 use crate::math::calculate_max_liquidity_per_tick;
 use crate::math::fee_growth::calculate_fee_growth_inside;
@@ -9,7 +10,6 @@ use crate::math::{
     sqrt_price::SqrtPrice,
     token_amount::TokenAmount,
 };
-use crate::InvariantError;
 use decimal::*;
 use odra::types::{U128, U256};
 use odra::OdraType;

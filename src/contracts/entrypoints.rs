@@ -1,11 +1,12 @@
-use super::{FeeTier, Pool, PoolKey, Position, Tick};
+use super::{FeeTier, InvariantError, Pool, PoolKey, Position, Tick};
 use crate::{
     math::{
         liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice,
         token_amount::TokenAmount,
     },
-    InvariantError,
+    CalculateSwapResult, QuoteResult,
 };
+
 use odra::{prelude::vec::Vec, types::Address};
 
 pub trait Entrypoints {
@@ -61,4 +62,21 @@ pub trait Entrypoints {
     fn get_position(&mut self, index: u32) -> Result<Position, InvariantError>;
 
     fn get_all_positions(&mut self) -> Vec<Position>;
+
+    fn quote(
+        &self,
+        pool_key: PoolKey,
+        x_to_y: bool,
+        amount: TokenAmount,
+        by_amount_in: bool,
+        sqrt_price_limit: SqrtPrice,
+    ) -> Result<QuoteResult, InvariantError>;
+    fn swap(
+        &mut self,
+        pool_key: PoolKey,
+        x_to_y: bool,
+        amount: TokenAmount,
+        by_amount_in: bool,
+        sqrt_price_limit: SqrtPrice,
+    ) -> Result<CalculateSwapResult, InvariantError>;
 }

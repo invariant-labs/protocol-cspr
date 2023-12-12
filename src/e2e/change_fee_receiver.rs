@@ -1,6 +1,6 @@
+use crate::contracts::errors::InvariantError;
 use crate::math::percentage::Percentage;
 use crate::InvariantDeployer;
-use crate::InvariantError;
 use crate::{FeeTier, PoolKey};
 use decimal::*;
 use odra::test_env;

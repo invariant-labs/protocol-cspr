@@ -1,5 +1,5 @@
+use crate::contracts::errors::InvariantError;
 use crate::math::percentage::Percentage;
-use crate::InvariantError;
 use decimal::*;
 use odra::types::U128;
 use odra::OdraType;

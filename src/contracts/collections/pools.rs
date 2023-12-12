@@ -1,5 +1,5 @@
+use crate::contracts::errors::InvariantError;
 use crate::contracts::{Pool, PoolKey};
-use crate::InvariantError;
 use odra::Mapping;
 
 #[odra::module]
