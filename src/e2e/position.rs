@@ -2,7 +2,7 @@
 mod tests {
     use crate::contracts::PoolKey;
     use crate::math::liquidity::Liquidity;
-    use crate::math::sqrt_price::SqrtPrice;
+    use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
     use crate::token::TokenDeployer;
     use crate::{contracts::FeeTier, math::percentage::Percentage, InvariantDeployer};
     use decimal::Decimal;
@@ -23,8 +23,16 @@ mod tests {
         let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
         invariant.add_fee_tier(fee_tier).unwrap();
 
+        let init_tick = 10;
+        let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
         invariant
-            .create_pool(*token_x.address(), *token_y.address(), fee_tier, 10)
+            .create_pool(
+                *token_x.address(),
+                *token_y.address(),
+                fee_tier,
+                init_sqrt_price,
+                init_tick,
+            )
             .unwrap();
 
         token_x.approve(invariant.address(), &U256::from(500));

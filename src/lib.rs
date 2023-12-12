@@ -351,6 +351,7 @@ impl Entrypoints for Invariant {
         token_0: Address,
         token_1: Address,
         fee_tier: FeeTier,
+        init_sqrt_price: SqrtPrice,
         init_tick: i32,
     ) -> Result<(), InvariantError> {
         let current_timestamp = odra::contract_env::get_block_time();
@@ -371,7 +372,13 @@ impl Entrypoints for Invariant {
             return Err(InvariantError::PoolAlreadyExist);
         };
 
-        let pool = Pool::create(init_tick, current_timestamp, state.admin);
+        let pool = Pool::create(
+            init_sqrt_price,
+            init_tick,
+            current_timestamp,
+            fee_tier.tick_spacing,
+            state.admin,
+        )?;
 
         self.pools.add(pool_key, &pool)?;
         pool_keys.add(pool_key)?;
