@@ -301,11 +301,11 @@ impl Entrypoints for Invariant {
         self.ticks
             .update(position.pool_key, position.upper_tick_index, &upper_tick)?;
 
-        if x.get() > U256::from(0) {
+        if x.get().is_zero() {
             Erc20Ref::at(&position.pool_key.token_x).transfer(&caller, &x.get());
         }
 
-        if y.get() > U256::from(0) {
+        if y.get().is_zero() {
             Erc20Ref::at(&position.pool_key.token_y).transfer(&caller, &y.get());
         }
 
