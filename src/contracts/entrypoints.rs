@@ -4,7 +4,7 @@ use crate::{
         liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice,
         token_amount::TokenAmount,
     },
-    InvariantError,
+    InvariantError, QuoteResult,
 };
 use odra::{prelude::vec::Vec, types::Address};
 
@@ -61,4 +61,13 @@ pub trait Entrypoints {
     fn get_position(&mut self, index: u32) -> Result<Position, InvariantError>;
 
     fn get_all_positions(&mut self) -> Vec<Position>;
+
+    fn quote(
+        &self,
+        pool_key: PoolKey,
+        x_to_y: bool,
+        amount: TokenAmount,
+        by_amount_in: bool,
+        sqrt_price_limit: SqrtPrice,
+    ) -> Result<QuoteResult, InvariantError>;
 }
