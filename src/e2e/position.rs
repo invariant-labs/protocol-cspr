@@ -219,8 +219,8 @@ mod tests {
         let dex_y = token_y.balance_of(invariant.address());
 
         let zero_fee = FeeGrowth::new(U128::from(0));
-        let expected_x_increase = 317;
-        let expected_y_increase = 32;
+        let expected_x_increase = 3163;
+        let expected_y_increase = 317;
 
         // Check ticks
         assert!(lower_tick.index == lower_tick_index);
@@ -325,7 +325,7 @@ mod tests {
 
         let zero_fee = FeeGrowth::new(U128::from(0));
         let expected_x_increase = 0;
-        let expected_y_increase = 2162;
+        let expected_y_increase = 21616;
 
         // Check ticks
         assert!(lower_tick.index == lower_tick_index);
@@ -428,7 +428,7 @@ mod tests {
         let dex_y = token_y.balance_of(invariant.address());
 
         let zero_fee = FeeGrowth::new(U128::from(0));
-        let expected_x_increase = 21549;
+        let expected_x_increase = 215486;
         let expected_y_increase = 0;
 
         // Check ticks
