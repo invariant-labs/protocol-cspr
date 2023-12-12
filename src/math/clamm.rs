@@ -370,6 +370,12 @@ pub fn check_tick(tick_index: i32, tick_spacing: u32) -> TrackableResult<()> {
 
     Ok(())
 }
+pub fn calculate_min_amount_out(
+    expected_amount_out: TokenAmount,
+    slippage: Percentage,
+) -> TokenAmount {
+    expected_amount_out.big_mul(Percentage::from_integer(1u8) - slippage)
+}
 
 #[cfg(test)]
 mod tests {
