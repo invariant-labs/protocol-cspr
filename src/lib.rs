@@ -50,7 +50,7 @@ pub struct CalculateSwapResult {
     pub ticks: Vec<Tick>,
 }
 #[derive(OdraType, Debug)]
-pub struct Hop {
+pub struct SwapHop {
     pub pool_key: PoolKey,
     pub x_to_y: bool,
 }
@@ -219,12 +219,12 @@ impl Invariant {
         &mut self,
         is_swap: bool,
         amount_in: TokenAmount,
-        swaps: Vec<Hop>,
+        swaps: Vec<SwapHop>,
     ) -> Result<TokenAmount, InvariantError> {
         let mut next_swap_amount = amount_in;
 
         for swap in swaps.iter() {
-            let Hop { pool_key, x_to_y } = *swap;
+            let SwapHop { pool_key, x_to_y } = *swap;
 
             let sqrt_price_limit = if x_to_y {
                 SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
@@ -764,7 +764,7 @@ impl Entrypoints for Invariant {
     pub fn quote_route(
         &mut self,
         amount_in: TokenAmount,
-        swaps: Vec<Hop>,
+        swaps: Vec<SwapHop>,
     ) -> Result<TokenAmount, InvariantError> {
         let amount_out = self.route(false, amount_in, swaps)?;
 
@@ -776,7 +776,7 @@ impl Entrypoints for Invariant {
         amount_in: TokenAmount,
         expected_amount_out: TokenAmount,
         slippage: Percentage,
-        swaps: Vec<Hop>,
+        swaps: Vec<SwapHop>,
     ) -> Result<(), InvariantError> {
         let amount_out = self.route(true, amount_in, swaps)?;
 

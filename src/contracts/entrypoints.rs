@@ -4,7 +4,7 @@ use crate::{
         liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice,
         token_amount::TokenAmount,
     },
-    CalculateSwapResult, Hop, QuoteResult,
+    CalculateSwapResult, QuoteResult, SwapHop,
 };
 
 use odra::{prelude::vec::Vec, types::Address};
@@ -83,13 +83,13 @@ pub trait Entrypoints {
     fn quote_route(
         &mut self,
         amount_in: TokenAmount,
-        swaps: Vec<Hop>,
+        swaps: Vec<SwapHop>,
     ) -> Result<TokenAmount, InvariantError>;
     fn swap_route(
         &mut self,
         amount_in: TokenAmount,
         expected_amount_out: TokenAmount,
         slippage: Percentage,
-        swaps: Vec<Hop>,
+        swaps: Vec<SwapHop>,
     ) -> Result<(), InvariantError>;
 }
