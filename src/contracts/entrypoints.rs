@@ -41,6 +41,8 @@ pub trait Entrypoints {
     fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool;
     fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError>;
 
+    fn claim_fee(&mut self, index: u32) -> Result<(TokenAmount, TokenAmount), InvariantError>;
+
     fn create_position(
         &mut self,
         pool_key: PoolKey,
