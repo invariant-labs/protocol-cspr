@@ -6,6 +6,8 @@ pub mod contracts;
 pub mod math;
 pub mod token;
 
+use odra_modules::erc20::Erc20Ref;
+
 #[cfg(test)]
 pub mod e2e;
 
@@ -22,7 +24,6 @@ use odra::types::event::OdraEvent;
 use odra::types::{Address, U256};
 use odra::{contract_env, Event};
 use odra::{OdraType, UnwrapOrRevert, Variable};
-use odra_modules::erc20::Erc20Ref;
 
 #[derive(OdraType, Debug, PartialEq)]
 pub enum InvariantError {
@@ -268,6 +269,63 @@ impl Entrypoints for Invariant {
         self.pool_keys.get().unwrap_or_revert().get_all()
     }
 
+    pub fn get_protocol_fee(&self) -> Percentage {
+        let state = self.state.get().unwrap_or_revert();
+        state.protocol_fee
+    }
+
+    pub fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let mut pool = self.pools.get(pool_key)?;
+
+        if caller != pool.fee_receiver {
+            return Err(InvariantError::NotFeeReceiver);
+        }
+
+        let (fee_protocol_token_x, fee_protocol_token_y) = pool.withdraw_protocol_fee(pool_key);
+
+        Erc20Ref::at(&pool_key.token_x).transfer(&pool.fee_receiver, &fee_protocol_token_x.get());
+        Erc20Ref::at(&pool_key.token_y).transfer(&pool.fee_receiver, &fee_protocol_token_y.get());
+
+        self.pools.update(pool_key, &pool)?;
+
+        Ok(())
+    }
+
+    pub fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let mut state = self.state.get().unwrap_or_revert();
+
+        if caller != state.admin {
+            return Err(InvariantError::NotAdmin);
+        }
+
+        state.protocol_fee = protocol_fee;
+
+        self.state.set(state);
+
+        Ok(())
+    }
+
+    pub fn change_fee_receiver(
+        &mut self,
+        pool_key: PoolKey,
+        fee_receiver: Address,
+    ) -> Result<(), InvariantError> {
+        let caller = contract_env::caller();
+        let state = self.state.get().unwrap_or_revert();
+        let mut pool = self.pools.get(pool_key)?;
+
+        if caller != state.admin {
+            return Err(InvariantError::NotAdmin);
+        }
+
+        pool.fee_receiver = fee_receiver;
+        self.pools.update(pool_key, &pool)?;
+
+        Ok(())
+    }
+
     pub fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool {
         self.tickmap.get(index, key.fee_tier.tick_spacing, key)
     }
@@ -276,6 +334,42 @@ impl Entrypoints for Invariant {
         self.ticks.get(key, index)
     }
 
+    pub fn claim_fee(&mut self, index: u32) -> Result<(TokenAmount, TokenAmount), InvariantError> {
+        let caller = odra::contract_env::caller();
+        let current_timestamp = odra::contract_env::get_block_time();
+        let mut position = self.positions.get(caller, index)?;
+        let mut lower_tick = self
+            .ticks
+            .get(position.pool_key, position.lower_tick_index)?;
+        let mut upper_tick = self
+            .ticks
+            .get(position.pool_key, position.upper_tick_index)?;
+        let mut pool = self.pools.get(position.pool_key)?;
+
+        let (x, y) = position.claim_fee(
+            &mut pool,
+            &mut upper_tick,
+            &mut lower_tick,
+            current_timestamp,
+        );
+
+        self.positions.update(caller, index, &position)?;
+        self.pools.update(position.pool_key, &pool)?;
+        self.ticks
+            .update(position.pool_key, position.lower_tick_index, &lower_tick)?;
+        self.ticks
+            .update(position.pool_key, position.upper_tick_index, &upper_tick)?;
+
+        if x.get().is_zero() {
+            Erc20Ref::at(&position.pool_key.token_x).transfer(&caller, &x.get());
+        }
+
+        if y.get().is_zero() {
+            Erc20Ref::at(&position.pool_key.token_y).transfer(&caller, &y.get());
+        }
+
+        Ok((x, y))
+    }
     pub fn create_position(
         &mut self,
         pool_key: PoolKey,
