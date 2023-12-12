@@ -405,6 +405,58 @@
           "err": "U32"
         }
       }
+    },
+    {
+      "name": "quote_route",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "amount_in",
+          "ty": "Any"
+        },
+        {
+          "name": "swaps",
+          "ty": {
+            "List": "Any"
+          }
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "swap_route",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "amount_in",
+          "ty": "Any"
+        },
+        {
+          "name": "expected_amount_out",
+          "ty": "Any"
+        },
+        {
+          "name": "slippage",
+          "ty": "Any"
+        },
+        {
+          "name": "swaps",
+          "ty": {
+            "List": "Any"
+          }
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
     }
   ],
   "events": []

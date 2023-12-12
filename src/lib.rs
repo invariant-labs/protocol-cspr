@@ -19,7 +19,7 @@ use contracts::{
     Ticks,
 };
 use decimal::Decimal;
-use math::clamm::{compute_swap_step, SwapResult};
+use math::clamm::{calculate_min_amount_out, compute_swap_step, SwapResult};
 use math::get_tick_at_sqrt_price;
 use math::liquidity::Liquidity;
 use math::token_amount::TokenAmount;
@@ -48,6 +48,11 @@ pub struct CalculateSwapResult {
     pub fee: TokenAmount,
     pub pool: Pool,
     pub ticks: Vec<Tick>,
+}
+#[derive(OdraType, Debug)]
+pub struct SwapHop {
+    pub pool_key: PoolKey,
+    pub x_to_y: bool,
 }
 
 #[odra::module]
@@ -209,6 +214,36 @@ impl Invariant {
             ticks,
         })
     }
+
+    fn route(
+        &mut self,
+        is_swap: bool,
+        amount_in: TokenAmount,
+        swaps: Vec<SwapHop>,
+    ) -> Result<TokenAmount, InvariantError> {
+        let mut next_swap_amount = amount_in;
+
+        for swap in swaps.iter() {
+            let SwapHop { pool_key, x_to_y } = *swap;
+
+            let sqrt_price_limit = if x_to_y {
+                SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
+            } else {
+                SqrtPrice::new(U128::from(MAX_SQRT_PRICE))
+            };
+
+            let result = if is_swap {
+                self.swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)
+            } else {
+                self.calculate_swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)
+            }?;
+
+            next_swap_amount = result.amount_out;
+        }
+
+        Ok(next_swap_amount)
+    }
+
     fn emit_create_position_event(
         &self,
         address: Address,
@@ -731,5 +766,33 @@ impl Entrypoints for Invariant {
         );
 
         Ok(calculate_swap_result)
+    }
+
+    pub fn quote_route(
+        &mut self,
+        amount_in: TokenAmount,
+        swaps: Vec<SwapHop>,
+    ) -> Result<TokenAmount, InvariantError> {
+        let amount_out = self.route(false, amount_in, swaps)?;
+
+        Ok(amount_out)
+    }
+
+    pub fn swap_route(
+        &mut self,
+        amount_in: TokenAmount,
+        expected_amount_out: TokenAmount,
+        slippage: Percentage,
+        swaps: Vec<SwapHop>,
+    ) -> Result<(), InvariantError> {
+        let amount_out = self.route(true, amount_in, swaps)?;
+
+        let min_amount_out = calculate_min_amount_out(expected_amount_out, slippage);
+
+        if amount_out < min_amount_out {
+            return Err(InvariantError::AmountUnderMinimumAmountOut);
+        }
+
+        Ok(())
     }
 }
