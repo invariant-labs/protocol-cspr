@@ -11,6 +11,7 @@ use odra_modules::erc20::Erc20Ref;
 #[cfg(test)]
 pub mod e2e;
 
+use crate::contracts::errors::InvariantError;
 use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::events::*;
 use contracts::{
@@ -47,35 +48,6 @@ pub struct CalculateSwapResult {
     pub fee: TokenAmount,
     pub pool: Pool,
     pub ticks: Vec<Tick>,
-}
-
-#[derive(OdraType, Debug, PartialEq)]
-pub enum InvariantError {
-    NotAdmin,
-    NotFeeReceiver,
-    PoolAlreadyExist,
-    PoolNotFound,
-    TickAlreadyExist,
-    InvalidTickIndexOrTickSpacing,
-    PositionNotFound,
-    TickNotFound,
-    FeeTierNotFound,
-    PoolKeyNotFound,
-    AmountIsZero,
-    WrongLimit,
-    PriceLimitReached,
-    NoGainSwap,
-    InvalidTickSpacing,
-    FeeTierAlreadyExist,
-    PoolKeyAlreadyExist,
-    UnauthorizedFeeReceiver,
-    ZeroLiquidity,
-    TransferError,
-    TokensAreSame,
-    AmountUnderMinimumAmountOut,
-    InvalidFee,
-    NotEmptyTickDeinitialization,
-    InvalidInitTick,
 }
 
 #[odra::module]

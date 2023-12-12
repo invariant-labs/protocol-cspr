@@ -1,5 +1,5 @@
+use crate::contracts::errors::InvariantError;
 use crate::contracts::FeeTier;
-use crate::InvariantError;
 use odra::prelude::vec::Vec;
 use odra::OdraType;
 

@@ -1,11 +1,12 @@
-use super::{FeeTier, Pool, PoolKey, Position, Tick};
+use super::{FeeTier, InvariantError, Pool, PoolKey, Position, Tick};
 use crate::{
     math::{
         liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice,
         token_amount::TokenAmount,
     },
-    CalculateSwapResult, InvariantError, QuoteResult,
+    CalculateSwapResult, QuoteResult,
 };
+
 use odra::{prelude::vec::Vec, types::Address};
 
 pub trait Entrypoints {
