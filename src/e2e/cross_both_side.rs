@@ -117,14 +117,14 @@ fn test_cross_both_side() {
             .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
             .unwrap();
 
-        let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
+        let sqrt_price_limit = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         invariant
             .swap(
                 pool_key,
                 true,
                 limit_without_cross_tick_amount,
                 true,
-                slippage,
+                sqrt_price_limit,
             )
             .unwrap();
 
@@ -141,18 +141,18 @@ fn test_cross_both_side() {
     }
 
     {
-        let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
+        let sqrt_price_limit = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         invariant
             .swap(
                 pool_key,
                 true,
                 min_amount_to_cross_from_tick_price,
                 true,
-                slippage,
+                sqrt_price_limit,
             )
             .unwrap();
 
-        let slippage = SqrtPrice::new(U128::from(MAX_SQRT_PRICE));
+        let sqrt_price_limit = SqrtPrice::new(U128::from(MAX_SQRT_PRICE));
 
         invariant
             .swap(
@@ -160,7 +160,7 @@ fn test_cross_both_side() {
                 false,
                 min_amount_to_cross_from_tick_price,
                 true,
-                slippage,
+                sqrt_price_limit,
             )
             .unwrap();
     }
@@ -382,14 +382,14 @@ fn test_cross_both_side_not_cross_case() {
             .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
             .unwrap();
 
-        let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
+        let sqrt_price_limit = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         invariant
             .swap(
                 pool_key,
                 true,
                 limit_without_cross_tick_amount,
                 true,
-                slippage,
+                sqrt_price_limit,
             )
             .unwrap();
 
@@ -405,7 +405,7 @@ fn test_cross_both_side_not_cross_case() {
         assert_eq!(pool.liquidity, pool_before.liquidity);
     }
 
-    let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
-    let result = invariant.swap(pool_key, true, not_cross_amount, true, slippage);
+    let sqrt_price_limit = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
+    let result = invariant.swap(pool_key, true, not_cross_amount, true, sqrt_price_limit);
     assert_eq!(result, Err(InvariantError::NoGainSwap));
 }
