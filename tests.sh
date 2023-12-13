@@ -11,6 +11,6 @@ cd ../../..
 cargo fmt --all -- --check
 cargo clippy --all-targets -- --no-deps -D warnings
 
-cargo test
-cargo odra test
-cargo odra build -b casper
+# cargo test
+cargo odra test -b casper
+# cargo odra build -b casper

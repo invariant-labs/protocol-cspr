@@ -8,6 +8,7 @@ use crate::math::sqrt_price::SqrtPrice;
 use crate::math::token_amount::TokenAmount;
 use crate::math::MIN_SQRT_PRICE;
 use crate::token::TokenDeployer;
+use crate::token::TokenRef;
 use crate::FeeTier;
 use crate::InvariantDeployer;
 use alloc::string::String;
@@ -15,14 +16,27 @@ use decimal::*;
 use odra::test_env;
 use odra::types::{U128, U256};
 
+fn create_tokens() -> (TokenRef, TokenRef) {
+    let mint_amount = U256::from(10u128.pow(10));
+    let token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    let token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    if token_x.address() < token_y.address() {
+        (token_x, token_y)
+    } else {
+        (token_y, token_x)
+    }
+}
 #[test]
 fn test_protocol_fee() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
     // Init basic dex and tokens
     let mint_amount = U256::from(10u128.pow(10));
-    let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    // let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    // let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
+
+    let (mut token_x, mut token_y) = create_tokens();
+
     let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
@@ -181,6 +195,7 @@ fn test_protocol_fee_not_admin() {
     let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+
     // Init basic pool
     {
         invariant.add_fee_tier(fee_tier).unwrap();

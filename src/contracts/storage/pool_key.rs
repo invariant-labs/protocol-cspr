@@ -46,3 +46,20 @@ impl PoolKey {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_creating_pool_key() {
+        let token_x: Address = Address::Contract(ContractPackageHash::from([0x01; 32]));
+        let token_y: Address = Address::Contract(ContractPackageHash::from([0x02; 32]));
+        let fee_tier = FeeTier::default();
+        let pool_key = PoolKey::new(token_x, token_y, fee_tier).unwrap();
+        let rev_pool_key = PoolKey::new(token_y, token_x, fee_tier).unwrap();
+        assert_eq!(pool_key.token_x, rev_pool_key.token_x);
+        assert_eq!(pool_key.token_y, rev_pool_key.token_y);
+    }
+}
