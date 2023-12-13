@@ -143,7 +143,7 @@ fn liquidity_gap() {
         let result = invariant.swap(pool_key, true, swap_amount, true, slippage);
         assert_eq!(result, Err(InvariantError::NoGainSwap));
     }
-    // Should skip gap and then swap
+
     {
         test_env::set_caller(deployer);
         let lower_tick_after_swap = -90;
@@ -174,6 +174,8 @@ fn liquidity_gap() {
             )
             .unwrap();
 
+        // Should skip gap and then swap
+
         let caller = test_env::get_account(1);
         let amount = U256::from(10067);
         token_x.mint(&caller, &amount);
@@ -191,8 +193,10 @@ fn liquidity_gap() {
             .swap(pool_key, true, swap_amount, true, target_sqrt_price)
             .unwrap();
 
-        invariant
+        let pool = invariant
             .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
             .unwrap();
+
+        assert_eq!(pool.current_tick_index, -60);
     }
 }
