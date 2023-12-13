@@ -151,7 +151,7 @@ fn test_remove_position() {
     );
 
     assert_eq!(pool_state.liquidity, liquidity_delta);
-    let liquidity_delta = Liquidity::from_integer(liquidity_delta.get());
+    let liquidity_delta = Liquidity::new(liquidity_delta.get() * 1_000_000);
     {
         let incorrect_lower_tick_index = lower_tick_index - 50;
         let incorrect_upper_tick_index = upper_tick_index + 50;
@@ -214,7 +214,7 @@ fn test_remove_position() {
 
     assert_eq!(
         pool_state_after.fee_growth_global_x,
-        FeeGrowth::new(U128::from(499995000049999500u64))
+        FeeGrowth::new(U128::from(49999950000049999u64))
     );
     assert_eq!(
         pool_state_after.fee_protocol_token_x,
