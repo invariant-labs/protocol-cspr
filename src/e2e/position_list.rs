@@ -2,7 +2,7 @@ use crate::contracts::{FeeTier, InvariantError, PoolKey, Position};
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
-use crate::math::sqrt_price::SqrtPrice;
+use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
 use crate::token::TokenDeployer;
 use crate::InvariantDeployer;
 use decimal::{Decimal, Factories};
@@ -75,7 +75,13 @@ fn test_remove_position_from_empty_list() {
     let init_tick = -23028;
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     let result = invariant.remove_position(0);
@@ -109,7 +115,13 @@ fn test_add_multiple_positions() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
@@ -289,7 +301,13 @@ fn test_only_owner_can_modify_position_list() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
@@ -438,7 +456,13 @@ fn test_transfer_position_ownership() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
@@ -660,7 +684,13 @@ fn test_only_owner_can_transfer_position() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
@@ -759,7 +789,13 @@ fn test_multiple_positions_on_same_tick() {
     invariant.add_fee_tier(fee_tier).unwrap();
 
     invariant
-        .create_pool(*token_x.address(), *token_y.address(), fee_tier, init_tick)
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            calculate_sqrt_price(init_tick).unwrap(),
+            init_tick,
+        )
         .unwrap();
 
     token_x.approve(invariant.address(), &U256::from(initial_balance));
