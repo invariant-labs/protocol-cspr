@@ -27,4 +27,5 @@ pub enum InvariantError {
     InvalidFee,
     NotEmptyTickDeinitialization,
     InvalidInitTick,
+    InvalidInitSqrtPrice,
 }
