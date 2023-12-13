@@ -130,10 +130,10 @@ fn test_cross() {
             .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
             .unwrap();
 
-        let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
+        let sqrt_price_limit = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
         invariant
-            .swap(pool_key, true, swap_amount, true, slippage)
+            .swap(pool_key, true, swap_amount, true, sqrt_price_limit)
             .unwrap();
 
         let pool_after = invariant
