@@ -80,10 +80,7 @@ fn test_basic_slippage() {
     }
     // Init swap
     {
-        // let caller = test_env::get_account(1);
         let amount = U256::from(10u128.pow(8));
-        // token_x.mint(&caller, &amount);
-        // test_env::set_caller(caller);
         token_x.approve(invariant.address(), &amount);
 
         let target_sqrt_price = SqrtPrice::new(U128::from(1009940000000000000000001u128));
