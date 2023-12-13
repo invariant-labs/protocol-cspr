@@ -174,3 +174,29 @@ fn test_position_slippage_below_range() {
 
     assert_eq!(result, Err(InvariantError::PriceLimitReached));
 }
+
+#[test]
+fn test_position_slippage_above_range() {
+    let (invariant, token_x, token_y) = init_slippage_dex_and_tokens();
+    let (mut invariant, token_x, token_y, pool_key) =
+        init_slippage_pool_with_liquidity(invariant, token_x, token_y);
+
+    invariant
+        .get_pool(*token_x.address(), *token_y.address(), pool_key.fee_tier)
+        .unwrap();
+
+    let liquidity_delta = Liquidity::from_integer(1_000_000);
+    let limit_lower = SqrtPrice::new(U128::from(955339206774222158009382u128));
+    let limit_upper = SqrtPrice::new(U128::from(984442481813945288458906u128));
+    let tick = pool_key.fee_tier.tick_spacing as i32;
+    let result = invariant.create_position(
+        pool_key,
+        -tick,
+        tick,
+        liquidity_delta,
+        limit_lower,
+        limit_upper,
+    );
+
+    assert_eq!(result, Err(InvariantError::PriceLimitReached));
+}
