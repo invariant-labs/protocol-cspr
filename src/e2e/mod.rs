@@ -4,8 +4,8 @@ pub mod change_protocol_fee;
 pub mod constructor;
 pub mod create_pool;
 pub mod cross;
+pub mod liquidity_gap;
 pub mod position;
 pub mod protocol_fee;
 pub mod remove_fee_tier;
-
 pub mod slippage;
