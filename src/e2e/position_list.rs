@@ -1,4 +1,5 @@
-use crate::contracts::{FeeTier, InvariantError, PoolKey, Position};
+use crate::contracts::{FeeTier, InvariantError, PoolKey};
+use crate::e2e::positions_equals;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
@@ -9,44 +10,6 @@ use decimal::{Decimal, Factories};
 use odra::prelude::string::String;
 use odra::test_env;
 use odra::types::{U128, U256};
-
-fn positions_equals(position_a: Position, position_b: Position) -> bool {
-    let mut equal = true;
-
-    if position_a.fee_growth_inside_x != position_b.fee_growth_inside_x {
-        equal = false;
-    };
-
-    if position_a.fee_growth_inside_y != position_b.fee_growth_inside_y {
-        equal = false;
-    };
-
-    if position_a.liquidity != position_b.liquidity {
-        equal = false;
-    };
-
-    if position_a.lower_tick_index != position_b.lower_tick_index {
-        equal = false;
-    };
-
-    if position_a.upper_tick_index != position_b.upper_tick_index {
-        equal = false;
-    };
-
-    if position_a.pool_key != position_b.pool_key {
-        equal = false;
-    };
-
-    if position_a.tokens_owed_x != position_b.tokens_owed_x {
-        equal = false;
-    };
-
-    if position_a.tokens_owed_y != position_b.tokens_owed_y {
-        equal = false;
-    };
-
-    equal
-}
 
 #[test]
 fn test_remove_position_from_empty_list() {
@@ -134,7 +97,7 @@ fn test_add_multiple_positions() {
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
 
-    // Open three positions
+    // Open four positions
     {
         invariant
             .create_position(
@@ -320,7 +283,7 @@ fn test_only_owner_can_modify_position_list() {
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
 
-    // Open three positions
+    // Open four positions
     {
         invariant
             .create_position(
@@ -379,26 +342,7 @@ fn test_only_owner_can_modify_position_list() {
         let tested_position = positions_list_after[position_index_to_remove as usize];
 
         // Last position should be at removed index
-        assert_eq!(last_position.pool_key, tested_position.pool_key);
-        assert_eq!(last_position.liquidity, tested_position.liquidity);
-        assert_eq!(
-            last_position.lower_tick_index,
-            tested_position.lower_tick_index
-        );
-        assert_eq!(
-            last_position.upper_tick_index,
-            tested_position.upper_tick_index
-        );
-        assert_eq!(
-            last_position.fee_growth_inside_x,
-            tested_position.fee_growth_inside_x
-        );
-        assert_eq!(
-            last_position.fee_growth_inside_y,
-            tested_position.fee_growth_inside_y
-        );
-        assert_eq!(last_position.tokens_owed_x, tested_position.tokens_owed_x);
-        assert_eq!(last_position.tokens_owed_y, tested_position.tokens_owed_y);
+        assert!(positions_equals(last_position, tested_position));
     }
     // Add position in place of the removed one
     {
