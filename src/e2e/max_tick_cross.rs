@@ -1,7 +1,5 @@
-use crate::contracts::InvariantError;
 use crate::contracts::PoolKey;
 use crate::e2e::snippets::init;
-use crate::math::fee_growth::FeeGrowth;
 use crate::math::get_tick_at_sqrt_price;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
@@ -12,7 +10,7 @@ use crate::math::MIN_SQRT_PRICE;
 use crate::FeeTier;
 use decimal::*;
 use odra::test_env;
-use odra::types::{U128, U256, U512};
+use odra::types::{U128, U256};
 
 #[test]
 fn test_max_tick_cross() {
