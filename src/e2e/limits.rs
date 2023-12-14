@@ -1,4 +1,5 @@
 use crate::contracts::{get_liquidity_by_x, get_liquidity_by_y, FeeTier, PoolKey};
+use crate::e2e::snippets::init;
 use crate::math::get_delta_y;
 use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::sqrt_price::get_max_tick;
@@ -13,21 +14,9 @@ use odra::prelude::string::String;
 use odra::test_env;
 use odra::types::{U128, U256};
 
-fn init_dex_and_tokens_max_mint_amount() -> (InvariantRef, TokenRef, TokenRef) {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
-
-    let mint_amount = U256::max_value();
-
-    let token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
-
-    (invariant, token_x, token_y)
-}
-
 fn big_deposit_and_swap(x_to_y: bool) {
-    let (mut invariant, mut token_x, mut token_y) = init_dex_and_tokens_max_mint_amount();
+    let (mut invariant, mut token_x, mut token_y) =
+        init(Percentage::from_scale(1, 2), U256::max_value());
 
     let mint_amount = "102844034832575377634685573909834406561420991602098741459288064"; // 2^206
     token_x.approve(
@@ -194,9 +183,11 @@ fn test_limits_big_deposit_y_and_swap_x() {
 
 #[test]
 fn test_limits_big_deposit_both_tokens() {
-    let (mut invariant, mut token_x, mut token_y) = init_dex_and_tokens_max_mint_amount();
+    let (mut invariant, mut token_x, mut token_y) =
+        init(Percentage::from_scale(1, 2), U256::max_value());
 
     let mint_amount = "95780971304118053647396689196894323976171195136475136"; // 2^176
+
     token_x.approve(invariant.address(), &U256::max_value());
     token_y.approve(invariant.address(), &U256::max_value());
 
@@ -269,7 +260,8 @@ fn test_limits_big_deposit_both_tokens() {
 
 #[test]
 fn test_deposit_limits_at_upper_limit() {
-    let (mut invariant, mut token_x, mut token_y) = init_dex_and_tokens_max_mint_amount();
+    let (mut invariant, mut token_x, mut token_y) =
+        init(Percentage::from_scale(1, 2), U256::max_value());
 
     let mint_amount = "110427941548649020598956093796432407239217743554726184882600387580788736"; // 2^236
     token_x.approve(invariant.address(), &U256::max_value());
