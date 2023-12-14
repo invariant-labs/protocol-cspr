@@ -93,6 +93,10 @@ jobs:
           key: |
             ${{ runner.os }}-cargo-odra-${{ hashFiles('rust-toolchain.toml') }}
 
+      - name: Install WABT
+        run: |
+            sudo apt install wabt
+
       - name: Add rustfmt component
         run: |
             rustup component add rustfmt
