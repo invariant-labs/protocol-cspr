@@ -64,6 +64,7 @@ jobs:
 
       - name: Install Rust toolchain
         run: |
+            rustup install nightly-2023-04-20
             rustup target add wasm32-unknown-unknown   
 
       - name: Install cargo odra
@@ -97,6 +98,7 @@ jobs:
 
       - name: Install Rust toolchain
         run: |
+            rustup install nightly-2023-04-20
             rustup target add wasm32-unknown-unknown
 
       - name: Add rustfmt component
