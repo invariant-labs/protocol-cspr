@@ -93,7 +93,7 @@ impl Positions {
     }
 }
 
-#[cfg(all(test, not(feature = "e2e-tests")))]
+#[cfg(all(test, not(feature = "casper")))]
 mod tests {
     use super::*;
     use odra::prelude::vec;

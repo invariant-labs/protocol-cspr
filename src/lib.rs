@@ -8,7 +8,7 @@ pub mod token;
 
 use odra_modules::erc20::Erc20Ref;
 
-#[cfg(all(test, feature = "e2e-tests"))]
+#[cfg(all(test, feature = "casper"))]
 pub mod e2e;
 
 use crate::contracts::errors::InvariantError;

@@ -39,7 +39,7 @@ impl Pools {
     }
 }
 
-#[cfg(all(test, not(feature = "e2e-tests")))]
+#[cfg(all(test, not(feature = "casper")))]
 mod tests {
     use super::*;
     use crate::{contracts::FeeTier, math::percentage::Percentage};
