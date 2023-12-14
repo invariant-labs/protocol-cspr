@@ -51,7 +51,7 @@ fn test_max_tick_cross() {
         let liquidity = Liquidity::from_integer(10000000);
 
         // 2k git
-        for i in (-800..20).step_by(10) {
+        for i in (-2500..20).step_by(10) {
             let pool = invariant
                 .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
                 .unwrap();
@@ -69,9 +69,6 @@ fn test_max_tick_cross() {
                     slippage_limit_upper,
                 )
                 .unwrap();
-
-            // let last_call_gas_cost = test_env::last_call_contract_gas_cost();
-            // assert_eq!(last_call_gas_cost, U512::from(0));
         }
 
         let pool = invariant
@@ -81,15 +78,8 @@ fn test_max_tick_cross() {
     }
     // Init swap
     {
-        // 10k - 1
-        // 50k - 9
-        // 60k - 11
-        // 70k - 13
-        // 200k - 39
-        // 300k - 58 - -590
-        // 400k - x - -780
-
-        let amount = U256::from(400_000);
+        // 1.1625m - 218 - -2190
+        let amount = U256::from(1_162_500);
 
         let pool_before = invariant
             .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
@@ -107,8 +97,8 @@ fn test_max_tick_cross() {
 
         let crosses_after_quote =
             ((pool_after_quote.current_tick_index - pool_before.current_tick_index) / 10).abs();
-        // assert_eq!(crosses_after_quote, 0);
-        // assert_eq!(quote_result.ticks.len() - 1, 145);
+        assert_eq!(crosses_after_quote, 0);
+        assert_eq!(quote_result.ticks.len() - 1, 218);
 
         invariant
             .swap(pool_key, true, swap_amount, true, slippage)
@@ -118,10 +108,8 @@ fn test_max_tick_cross() {
             .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
             .unwrap();
 
-        assert_eq!(pool_after.current_tick_index, 0);
-
         let crosses = ((pool_after.current_tick_index - pool_before.current_tick_index) / 10).abs();
-        assert_eq!(crosses - 1, 146);
+        assert_eq!(crosses - 1, 218);
         assert_eq!(
             pool_after.current_tick_index,
             get_tick_at_sqrt_price(quote_result.target_sqrt_price, 10).unwrap()
