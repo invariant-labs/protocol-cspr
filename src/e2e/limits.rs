@@ -314,3 +314,92 @@ fn test_deposit_limits_at_upper_limit() {
         )
         .unwrap();
 }
+
+#[test]
+fn test_limits_big_deposit_and_swaps() {
+    let (mut invariant, mut token_x, mut token_y) =
+        init(Percentage::from_scale(1, 2), U256::max_value());
+
+    let mint_amount = "191561942608236107294793378393788647952342390272950272"; // 2^177
+    token_x.approve(invariant.address(), &U256::max_value());
+    token_y.approve(invariant.address(), &U256::max_value());
+
+    let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
+    invariant.add_fee_tier(fee_tier).unwrap();
+
+    let init_tick = 0;
+    let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
+    invariant
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            init_sqrt_price,
+            init_tick,
+        )
+        .unwrap();
+
+    let pos_amount = U256::from_dec_str(mint_amount).unwrap() / 2;
+    let lower_tick = -(fee_tier.tick_spacing as i32);
+    let upper_tick = fee_tier.tick_spacing as i32;
+    let pool = invariant
+        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .unwrap();
+
+    let liquidity_delta = get_liquidity_by_x(
+        TokenAmount::new(pos_amount),
+        lower_tick,
+        upper_tick,
+        pool.sqrt_price,
+        false,
+    )
+    .unwrap()
+    .l;
+
+    let y = get_delta_y(
+        calculate_sqrt_price(lower_tick).unwrap(),
+        pool.sqrt_price,
+        liquidity_delta,
+        true,
+    )
+    .unwrap();
+
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+    let slippage_limit_lower = pool.sqrt_price;
+    let slippage_limit_upper = pool.sqrt_price;
+    invariant
+        .create_position(
+            pool_key,
+            lower_tick,
+            upper_tick,
+            liquidity_delta,
+            slippage_limit_lower,
+            slippage_limit_upper,
+        )
+        .unwrap();
+
+    let alice = test_env::get_account(0);
+    let user_amount_x = token_x.balance_of(&alice);
+    let user_amount_y = token_y.balance_of(&alice);
+    assert_eq!(user_amount_x, U256::max_value() - pos_amount);
+    assert_eq!(user_amount_y, U256::max_value() - y.get());
+
+    let contract_amount_x = token_x.balance_of(invariant.address());
+    let contract_amount_y = token_y.balance_of(invariant.address());
+    assert_eq!(contract_amount_x, pos_amount);
+    assert_eq!(contract_amount_y, y.get());
+
+    let swap_amount = TokenAmount::new(U256::from_dec_str(mint_amount).unwrap() / 8);
+
+    for i in 1..=4 {
+        let (_, sqrt_price_limit) = if i % 2 == 0 {
+            (true, SqrtPrice::new(U128::from(MIN_SQRT_PRICE)))
+        } else {
+            (false, SqrtPrice::new(U128::from(MAX_SQRT_PRICE)))
+        };
+
+        invariant
+            .swap(pool_key, i % 2 == 0, swap_amount, true, sqrt_price_limit)
+            .unwrap();
+    }
+}
