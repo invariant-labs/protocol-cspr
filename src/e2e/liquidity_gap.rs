@@ -143,7 +143,7 @@ fn liquidity_gap() {
         let result = invariant.swap(pool_key, true, swap_amount, true, slippage);
         assert_eq!(result, Err(InvariantError::NoGainSwap));
     }
-
+    // Open second position non-adjacent to the previous one, consequently creating a gap in liquidity
     {
         test_env::set_caller(deployer);
         let lower_tick_after_swap = -90;
@@ -173,9 +173,9 @@ fn liquidity_gap() {
                 slippage_limit_upper,
             )
             .unwrap();
-
-        // Should skip gap and then swap
-
+    }
+    // Should skip gap and then swap
+    {
         let caller = test_env::get_account(1);
         let amount = U256::from(10067);
         token_x.mint(&caller, &amount);
