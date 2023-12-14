@@ -15,4 +15,3 @@ borsh = { version = "0.9.3", default-features = false }
 default = ["mock-vm"]
 mock-vm = ["odra/mock-vm", "odra-modules/mock-vm"]
 casper = ["odra/casper", "odra-modules/casper"]
-
