@@ -20,15 +20,10 @@ fn test_limits_big_deposit_x_and_swap_y() {
     let (mut invariant, mut token_x, mut token_y) =
         init(Percentage::from_scale(1, 2), U256::max_value());
 
-    let mint_amount = "102844034832575377634685573909834406561420991602098741459288064"; // 2^206
-    token_x.approve(
-        invariant.address(),
-        &U256::from_dec_str(mint_amount).unwrap(),
-    );
-    token_y.approve(
-        invariant.address(),
-        &U256::from_dec_str(mint_amount).unwrap(),
-    );
+    let limit_amount = "102844034832575377634685573909834406561420991602098741459288064"; // 2^206
+
+    token_x.approve(invariant.address(), &U256::max_value());
+    token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier {
         fee: Percentage::from_scale(6, 3),
@@ -55,7 +50,7 @@ fn test_limits_big_deposit_x_and_swap_y() {
         .unwrap();
 
     let liquidity_delta = get_liquidity_by_y(
-        TokenAmount::new(U256::from_dec_str(mint_amount).unwrap()),
+        TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
         lower_tick,
         upper_tick,
         pool.sqrt_price,
@@ -103,7 +98,7 @@ fn test_limits_big_deposit_x_and_swap_y() {
         .swap(
             pool_key,
             true,
-            TokenAmount::new(U256::from_dec_str(mint_amount).unwrap()),
+            TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
             true,
             sqrt_price_limit,
         )
@@ -126,15 +121,10 @@ fn test_limits_big_deposit_y_and_swap_x() {
     let (mut invariant, mut token_x, mut token_y) =
         init(Percentage::from_scale(1, 2), U256::max_value());
 
-    let mint_amount = "102844034832575377634685573909834406561420991602098741459288064"; // 2^206
-    token_x.approve(
-        invariant.address(),
-        &U256::from_dec_str(mint_amount).unwrap(),
-    );
-    token_y.approve(
-        invariant.address(),
-        &U256::from_dec_str(mint_amount).unwrap(),
-    );
+    let limit_amount = "102844034832575377634685573909834406561420991602098741459288064"; // 2^206
+
+    token_x.approve(invariant.address(), &U256::max_value());
+    token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier {
         fee: Percentage::from_scale(6, 3),
@@ -161,7 +151,7 @@ fn test_limits_big_deposit_y_and_swap_x() {
         .unwrap();
 
     let liquidity_delta = get_liquidity_by_x(
-        TokenAmount::new(U256::from_dec_str(mint_amount).unwrap()),
+        TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
         lower_tick,
         upper_tick,
         pool.sqrt_price,
@@ -209,7 +199,7 @@ fn test_limits_big_deposit_y_and_swap_x() {
         .swap(
             pool_key,
             false,
-            TokenAmount::new(U256::from_dec_str(mint_amount).unwrap()),
+            TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
             true,
             sqrt_price_limit,
         )
@@ -232,7 +222,7 @@ fn test_limits_big_deposit_both_tokens() {
     let (mut invariant, mut token_x, mut token_y) =
         init(Percentage::from_scale(1, 2), U256::max_value());
 
-    let mint_amount = "95780971304118053647396689196894323976171195136475136"; // 2^176
+    let limit_amount = "95780971304118053647396689196894323976171195136475136"; // 2^176
 
     token_x.approve(invariant.address(), &U256::max_value());
     token_y.approve(invariant.address(), &U256::max_value());
@@ -259,7 +249,7 @@ fn test_limits_big_deposit_both_tokens() {
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
     let liquidity_delta = get_liquidity_by_x(
-        TokenAmount::new(U256::from_dec_str(mint_amount).unwrap()),
+        TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
         lower_tick,
         upper_tick,
         pool.sqrt_price,
@@ -294,13 +284,13 @@ fn test_limits_big_deposit_both_tokens() {
     let user_amount_y = token_y.balance_of(&alice);
     assert_eq!(
         user_amount_x,
-        U256::max_value() - U256::from_dec_str(mint_amount).unwrap()
+        U256::max_value() - U256::from_dec_str(limit_amount).unwrap()
     );
     assert_eq!(user_amount_y, U256::max_value() - y.get());
 
     let contract_amount_x = token_x.balance_of(invariant.address());
     let contract_amount_y = token_y.balance_of(invariant.address());
-    assert_eq!(contract_amount_x, U256::from_dec_str(mint_amount).unwrap());
+    assert_eq!(contract_amount_x, U256::from_dec_str(limit_amount).unwrap());
     assert_eq!(contract_amount_y, y.get());
 }
 
@@ -309,7 +299,8 @@ fn test_deposit_limits_at_upper_limit() {
     let (mut invariant, mut token_x, mut token_y) =
         init(Percentage::from_scale(1, 2), U256::max_value());
 
-    let mint_amount = "110427941548649020598956093796432407239217743554726184882600387580788736"; // 2^236
+    let limit_amount = "110427941548649020598956093796432407239217743554726184882600387580788736"; // 2^236
+
     token_x.approve(invariant.address(), &U256::max_value());
     token_y.approve(invariant.address(), &U256::max_value());
 
@@ -334,7 +325,7 @@ fn test_deposit_limits_at_upper_limit() {
     assert_eq!(pool.current_tick_index, init_tick);
     assert_eq!(pool.sqrt_price, calculate_sqrt_price(init_tick).unwrap());
 
-    let position_amount = U256::from_dec_str(mint_amount).unwrap() - U256::from(1);
+    let position_amount = U256::from_dec_str(limit_amount).unwrap() - U256::from(1);
 
     let liquidity_delta = get_liquidity_by_y(
         TokenAmount::new(position_amount),
@@ -366,7 +357,8 @@ fn test_limits_big_deposit_and_swaps() {
     let (mut invariant, mut token_x, mut token_y) =
         init(Percentage::from_scale(1, 2), U256::max_value());
 
-    let mint_amount = "191561942608236107294793378393788647952342390272950272"; // 2^177
+    let limit_amount = "191561942608236107294793378393788647952342390272950272"; // 2^177
+
     token_x.approve(invariant.address(), &U256::max_value());
     token_y.approve(invariant.address(), &U256::max_value());
 
@@ -385,7 +377,7 @@ fn test_limits_big_deposit_and_swaps() {
         )
         .unwrap();
 
-    let pos_amount = U256::from_dec_str(mint_amount).unwrap() / 2;
+    let pos_amount = U256::from_dec_str(limit_amount).unwrap() / 2;
     let lower_tick = -(fee_tier.tick_spacing as i32);
     let upper_tick = fee_tier.tick_spacing as i32;
     let pool = invariant
@@ -435,7 +427,7 @@ fn test_limits_big_deposit_and_swaps() {
     assert_eq!(contract_amount_x, pos_amount);
     assert_eq!(contract_amount_y, y.get());
 
-    let swap_amount = TokenAmount::new(U256::from_dec_str(mint_amount).unwrap() / 8);
+    let swap_amount = TokenAmount::new(U256::from_dec_str(limit_amount).unwrap() / 8);
 
     for i in 1..=4 {
         let (_, sqrt_price_limit) = if i % 2 == 0 {
@@ -455,7 +447,9 @@ fn test_limits_full_range_with_max_liquidity() {
     let (mut invariant, mut token_x, mut token_y) =
         init(Percentage::from_scale(1, 2), U256::max_value());
 
-    let mint_amount = "220855883097298041197912187592864814478435487109452369765200775161577472"; // 2^237
+    let liquidity_limit_amount =
+        "220855883097298041197912187592864814478435487109452369765200775161577472"; // 2^237
+
     token_x.approve(invariant.address(), &U256::max_value());
     token_y.approve(invariant.address(), &U256::max_value());
 
@@ -481,7 +475,7 @@ fn test_limits_full_range_with_max_liquidity() {
     assert_eq!(pool.sqrt_price, calculate_sqrt_price(init_tick).unwrap());
 
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
-    let liquidity_delta = Liquidity::new(U256::from_dec_str(mint_amount).unwrap());
+    let liquidity_delta = Liquidity::new(U256::from_dec_str(liquidity_limit_amount).unwrap());
     let slippage_limit_lower = pool.sqrt_price;
     let slippage_limit_upper = pool.sqrt_price;
     invariant
