@@ -12,3 +12,4 @@ pub mod position_list;
 pub mod position_slippage;
 pub mod protocol_fee;
 pub mod remove_fee_tier;
+pub mod snippets;
