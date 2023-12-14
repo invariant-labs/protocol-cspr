@@ -64,13 +64,12 @@ jobs:
 
       - name: Install Rust toolchain
         run: |
+            rustup install nightly-2023-04-20
             rustup target add wasm32-unknown-unknown   
 
       - name: Install cargo odra
-        uses: actions-rs/cargo@v1
-        with:
-            command: install
-            args: cargo-odra --locked
+        run: |
+          cargo +nightly-2023-04-20 install cargo-odra --locked
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
@@ -99,6 +98,7 @@ jobs:
 
       - name: Install Rust toolchain
         run: |
+            rustup install nightly-2023-04-20
             rustup target add wasm32-unknown-unknown
 
       - name: Add rustfmt component
@@ -106,10 +106,8 @@ jobs:
             rustup component add rustfmt
 
       - name: Install cargo odra
-        uses: actions-rs/cargo@v1
-        with:
-            command: install
-            args: cargo-odra --locked
+        run: |
+          cargo +nightly-2023-04-20 install cargo-odra --locked
 
       - name: Build contract with casper backend
         uses: actions-rs/cargo@v1
