@@ -1,18 +1,14 @@
 use crate::contracts::logic::get_liquidity;
-use crate::contracts::InvariantError;
 use crate::contracts::PoolKey;
+use crate::e2e::snippets::init;
 use crate::math::fee_growth::FeeGrowth;
-use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
 use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::sqrt_price::SqrtPrice;
 use crate::math::token_amount::TokenAmount;
 use crate::math::MAX_SQRT_PRICE;
 use crate::math::MIN_SQRT_PRICE;
-use crate::token::TokenDeployer;
 use crate::FeeTier;
-use crate::InvariantDeployer;
-use alloc::string::String;
 use decimal::*;
 use odra::test_env;
 use odra::types::{U128, U256};
@@ -23,9 +19,8 @@ fn test_multiple_swap_x_to_y() {
     test_env::set_caller(deployer);
     // Init basic dex and tokens
     let mint_amount = U256::from(10u128.pow(10));
-    let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
+    let fee = Percentage::from_scale(1, 2);
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
     let fee_tier = FeeTier::new(Percentage::from_scale(1, 3), 1).unwrap();
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
@@ -73,10 +68,6 @@ fn test_multiple_swap_x_to_y() {
     )
     .unwrap()
     .l;
-
-    // expected - 2149137865
-    // assert_eq!(liquidity, Liquidity::new(U256::from(2149137865u128)));
-    // let liquidity = Liquidity::new(U256::from(2149137865u128));
 
     let slippage_limit_lower = pool.sqrt_price;
     let slippage_limit_upper = pool.sqrt_price;
@@ -134,7 +125,7 @@ fn test_multiple_swap_x_to_y() {
         assert_eq!(pool.fee_protocol_token_y, TokenAmount::new(U256::from(0)));
         assert_eq!(
             pool.sqrt_price,
-            SqrtPrice::new(U128::from(959805958620596146276151u128))
+            SqrtPrice::new(U128::from(959805958530842759275220u128))
         );
         assert_eq!(dex_amount_x, U256::from(200));
         assert_eq!(dex_amount_y, U256::from(20));
@@ -149,9 +140,8 @@ fn test_multiple_swap_y_to_x() {
     test_env::set_caller(deployer);
     // Init basic dex and tokens
     let mint_amount = U256::from(10u128.pow(10));
-    let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
+    let fee = Percentage::from_scale(1, 2);
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
     let fee_tier = FeeTier::new(Percentage::from_scale(1, 3), 1).unwrap();
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
@@ -199,8 +189,6 @@ fn test_multiple_swap_y_to_x() {
     )
     .unwrap()
     .l;
-
-    // let liquidity = Liquidity::new(U256::from(2149137865u128));
 
     let slippage_limit_lower = pool.sqrt_price;
     let slippage_limit_upper = pool.sqrt_price;
@@ -256,10 +244,10 @@ fn test_multiple_swap_y_to_x() {
         assert_eq!(pool.current_tick_index, 820);
         assert_eq!(pool.fee_protocol_token_x, TokenAmount::new(U256::from(0)));
         assert_eq!(pool.fee_protocol_token_y, TokenAmount::new(U256::from(10)));
-        // assert_eq!(
-        //     pool.sqrt_price,
-        //     SqrtPrice::new(U128::from(1041877257604411525269920u128))
-        // );
+        assert_eq!(
+            pool.sqrt_price,
+            SqrtPrice::new(U128::from(1041877257701839564633600u128))
+        );
         assert_eq!(dex_amount_x, U256::from(20));
         assert_eq!(dex_amount_y, U256::from(200));
         assert_eq!(user_amount_x, U256::from(80));

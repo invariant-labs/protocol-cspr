@@ -14,7 +14,6 @@ fn init_dex_and_tokens_max_mint_amount() -> (InvariantRef, TokenRef, TokenRef) {
     test_env::set_caller(alice);
 
     let mint_amount = U256::max_value();
-
     let token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
     let token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
     let invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
