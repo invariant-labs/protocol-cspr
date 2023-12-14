@@ -5,6 +5,7 @@ pub mod constructor;
 pub mod create_pool;
 pub mod cross;
 pub mod cross_both_side;
+pub mod limits;
 pub mod liquidity_gap;
 pub mod position;
 pub mod position_list;
