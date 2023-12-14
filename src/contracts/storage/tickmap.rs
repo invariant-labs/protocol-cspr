@@ -229,7 +229,7 @@ impl Tickmap {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "casper")))]
 mod tests {
     use super::*;
     use crate::{contracts::FeeTier, math::percentage::Percentage};
