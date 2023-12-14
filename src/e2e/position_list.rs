@@ -1,5 +1,4 @@
-use crate::contracts::{FeeTier, InvariantError, PoolKey};
-use crate::e2e::positions_equals;
+use crate::contracts::{FeeTier, InvariantError, PoolKey, Position};
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
@@ -10,6 +9,45 @@ use decimal::{Decimal, Factories};
 use odra::prelude::string::String;
 use odra::test_env;
 use odra::types::{U128, U256};
+
+#[cfg(test)]
+fn positions_equals(position_a: Position, position_b: Position) -> bool {
+    let mut equal = true;
+
+    if position_a.fee_growth_inside_x != position_b.fee_growth_inside_x {
+        equal = false;
+    };
+
+    if position_a.fee_growth_inside_y != position_b.fee_growth_inside_y {
+        equal = false;
+    };
+
+    if position_a.liquidity != position_b.liquidity {
+        equal = false;
+    };
+
+    if position_a.lower_tick_index != position_b.lower_tick_index {
+        equal = false;
+    };
+
+    if position_a.upper_tick_index != position_b.upper_tick_index {
+        equal = false;
+    };
+
+    if position_a.pool_key != position_b.pool_key {
+        equal = false;
+    };
+
+    if position_a.tokens_owed_x != position_b.tokens_owed_x {
+        equal = false;
+    };
+
+    if position_a.tokens_owed_y != position_b.tokens_owed_y {
+        equal = false;
+    };
+
+    equal
+}
 
 #[test]
 fn test_remove_position_from_empty_list() {
