@@ -1,4 +1,5 @@
 use crate::contracts::{CreatePositionEvent, InvariantError, PoolKey, RemovePositionEvent};
+use crate::e2e::snippets::init;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
@@ -8,17 +9,17 @@ use crate::token::TokenDeployer;
 use crate::{contracts::FeeTier, math::percentage::Percentage, InvariantDeployer};
 use decimal::{Decimal, Factories};
 use odra::assert_events;
-use odra::types::U256;
-use odra::{prelude::string::String, test_env, types::U128};
+use odra::types::{U128, U256};
+use odra::{prelude::string::String, test_env};
 
 #[test]
 fn test_create_position() {
     let alice = test_env::get_account(0);
     test_env::set_caller(alice);
 
-    let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &U256::from(500));
-    let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &U256::from(500));
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mint_amount = U256::from(500);
+    let fee = Percentage::new(U128::from(0));
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -81,21 +82,9 @@ fn test_remove_position() {
     let init_tick = 0;
     let remove_position_index = 0;
 
-    let initial_mint = 10u128.pow(10);
-
-    let mut token_x = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_mint),
-    );
-    let mut token_y = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_mint),
-    );
-    let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
+    let mint_amount = U256::from(10u128.pow(10));
+    let fee = Percentage::from_scale(1, 2);
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
 
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
@@ -115,8 +104,8 @@ fn test_remove_position() {
     let upper_tick_index = 10;
     let liquidity_delta = Liquidity::from_integer(1_000_000);
 
-    token_x.approve(invariant.address(), &U256::from(initial_mint));
-    token_y.approve(invariant.address(), &U256::from(initial_mint));
+    token_x.approve(invariant.address(), &U256::from(mint_amount));
+    token_y.approve(invariant.address(), &U256::from(mint_amount));
 
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
@@ -305,20 +294,9 @@ fn test_position_within_current_tick() {
     let min_tick_test = -max_tick_test;
     let init_tick = -23028;
 
-    let initial_balance = 100_000_000;
-    let mut token_x = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_balance),
-    );
-    let mut token_y = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_balance),
-    );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let initial_balance = U256::from(100_000_000);
+    let fee = Percentage::new(U128::from(0));
+    let (mut invariant, mut token_x, mut token_y) = init(fee, initial_balance);
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 4).unwrap();
 
@@ -430,20 +408,9 @@ fn test_position_below_current_tick() {
 
     let init_tick = -23028;
 
-    let initial_balance = 10_000_000_000u64;
-    let mut token_x = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_balance),
-    );
-    let mut token_y = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_balance),
-    );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let initial_balance = U256::from(10_000_000_000u64);
+    let fee = Percentage::new(U128::from(0));
+    let (mut invariant, mut token_x, mut token_y) = init(fee, initial_balance);
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 4).unwrap();
 
@@ -555,20 +522,9 @@ fn test_position_above_current_tick() {
 
     let init_tick = -23028;
 
-    let initial_balance = 10_000_000_000i64;
-    let mut token_x = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_balance),
-    );
-    let mut token_y = TokenDeployer::init(
-        String::from(""),
-        String::from(""),
-        0,
-        &U256::from(initial_balance),
-    );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let initial_balance = U256::from(10_000_000_000i64);
+    let fee = Percentage::new(U128::from(0));
+    let (mut invariant, mut token_x, mut token_y) = init(fee, initial_balance);
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 4).unwrap();
 

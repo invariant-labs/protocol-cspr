@@ -1,5 +1,6 @@
 use crate::contracts::InvariantError;
 use crate::contracts::PoolKey;
+use crate::e2e::snippets::init;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
@@ -21,9 +22,9 @@ fn test_protocol_fee() {
     test_env::set_caller(deployer);
     // Init basic dex and tokens
     let mint_amount = U256::from(10u128.pow(10));
-    let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
+    let fee = Percentage::from_scale(1, 2);
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
+
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
@@ -176,9 +177,9 @@ fn test_protocol_fee_not_admin() {
     test_env::set_caller(deployer);
     // Init basic dex and tokens
     let mint_amount = U256::from(10u128.pow(10));
-    let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
+    let fee = Percentage::from_scale(1, 2);
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
+
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool

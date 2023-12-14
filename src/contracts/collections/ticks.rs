@@ -49,7 +49,7 @@ impl Ticks {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(feature = "e2e-tests")))]
 mod tests {
     use super::*;
     use crate::{contracts::FeeTier, math::percentage::Percentage};

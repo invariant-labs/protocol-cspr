@@ -13,4 +13,5 @@ cargo clippy --all-targets -- --no-deps -D warnings
 
 cargo test
 cargo odra test
+cargo odra test -b casper -- --features e2e-tests
 cargo odra build -b casper
