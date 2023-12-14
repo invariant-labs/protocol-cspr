@@ -5,7 +5,8 @@ use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::sqrt_price::get_max_tick;
 use crate::math::token_amount::TokenAmount;
 use crate::math::{
-    percentage::Percentage, sqrt_price::SqrtPrice, MAX_SQRT_PRICE, MAX_TICK, MIN_SQRT_PRICE,
+    liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice, MAX_SQRT_PRICE, MAX_TICK,
+    MIN_SQRT_PRICE,
 };
 use crate::token::{TokenDeployer, TokenRef};
 use crate::{InvariantDeployer, InvariantRef};
@@ -402,4 +403,58 @@ fn test_limits_big_deposit_and_swaps() {
             .swap(pool_key, i % 2 == 0, swap_amount, true, sqrt_price_limit)
             .unwrap();
     }
+}
+
+#[test]
+fn test_limits_full_range_with_max_liquidity() {
+    let (mut invariant, mut token_x, mut token_y) =
+        init(Percentage::from_scale(1, 2), U256::max_value());
+
+    let mint_amount = "220855883097298041197912187592864814478435487109452369765200775161577472"; // 2^237
+    token_x.approve(invariant.address(), &U256::max_value());
+    token_y.approve(invariant.address(), &U256::max_value());
+
+    let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
+    invariant.add_fee_tier(fee_tier).unwrap();
+
+    let init_tick = get_max_tick(1);
+    let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
+    invariant
+        .create_pool(
+            *token_x.address(),
+            *token_y.address(),
+            fee_tier,
+            init_sqrt_price,
+            init_tick,
+        )
+        .unwrap();
+
+    let pool = invariant
+        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .unwrap();
+    assert_eq!(pool.current_tick_index, init_tick);
+    assert_eq!(pool.sqrt_price, calculate_sqrt_price(init_tick).unwrap());
+
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+    let liquidity_delta = Liquidity::new(U256::from_dec_str(mint_amount).unwrap());
+    let slippage_limit_lower = pool.sqrt_price;
+    let slippage_limit_upper = pool.sqrt_price;
+    invariant
+        .create_position(
+            pool_key,
+            -MAX_TICK,
+            MAX_TICK,
+            liquidity_delta,
+            slippage_limit_lower,
+            slippage_limit_upper,
+        )
+        .unwrap();
+
+    let contract_amount_x = token_x.balance_of(invariant.address());
+    let contract_amount_y = token_y.balance_of(invariant.address());
+
+    let expected_x = 0;
+    let expected_y = "144738750896072444118518848476700723725861030905971328860187553943253568"; // < 2^237
+    assert_eq!(contract_amount_x, U256::from(expected_x));
+    assert_eq!(contract_amount_y, U256::from_dec_str(expected_y).unwrap());
 }
