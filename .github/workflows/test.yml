@@ -78,7 +78,7 @@ jobs:
           command: odra
           args: test
 
-  tests_casper:
+  e2e_casper:
     name: Tests e2e Casper backend
     runs-on: ubuntu-latest
 
@@ -92,6 +92,10 @@ jobs:
           path: ~/.cargo
           key: |
             ${{ runner.os }}-cargo-odra-${{ hashFiles('rust-toolchain.toml') }}
+
+      - name: Add rustfmt component
+        run: |
+            rustup component add rustfmt
 
       - name: Install Rust toolchain
         run: |
