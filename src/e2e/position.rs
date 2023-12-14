@@ -5,12 +5,11 @@ use crate::math::liquidity::Liquidity;
 use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
 use crate::math::token_amount::TokenAmount;
 use crate::math::MIN_SQRT_PRICE;
-use crate::token::TokenDeployer;
-use crate::{contracts::FeeTier, math::percentage::Percentage, InvariantDeployer};
+use crate::{contracts::FeeTier, math::percentage::Percentage};
 use decimal::{Decimal, Factories};
 use odra::assert_events;
+use odra::test_env;
 use odra::types::{U128, U256};
-use odra::{prelude::string::String, test_env};
 
 #[test]
 fn test_create_position() {
