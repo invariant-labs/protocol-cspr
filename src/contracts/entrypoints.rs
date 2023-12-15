@@ -38,11 +38,12 @@ pub trait Entrypoints {
     /// - Fails if fee tier does not exist
     fn remove_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError>;
 
-    /// Retrieves added fee tiers
+    /// Retrieves available fee tiers
     fn get_fee_tiers(&self) -> Vec<FeeTier>;
 
     /// Allows a user to create a custom pool on a specified token pair and fee tier.
-    /// The contract specifies the order of tokens as x and y. The choice is deterministic.
+    /// The contract specifies the order of tokens as x and y, the lower token address assigned as token x.
+    /// The choice is deterministic.
     ///
     /// # Parameters
     /// - `token_0`: The address of the first token.
