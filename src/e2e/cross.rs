@@ -11,7 +11,6 @@ use crate::math::MIN_SQRT_PRICE;
 use crate::FeeTier;
 use decimal::*;
 use odra::assert_events;
-use odra::prelude::vec::Vec;
 use odra::test_env;
 use odra::types::{U128, U256};
 
@@ -179,8 +178,6 @@ fn test_cross() {
             TokenAmount::new(U256::from(0))
         );
 
-        let tick_indexes: Vec<i32> = result.ticks.iter().map(|tick| tick.index).collect();
-
         assert_events!(
             invariant,
             CreatePositionEvent {
@@ -205,7 +202,7 @@ fn test_cross() {
                 timestamp: 0,
                 address: caller,
                 pool: pool_key,
-                indexes: tick_indexes.clone(),
+                indexes: result.ticks.iter().map(|tick| tick.index).collect(),
             },
             SwapEvent {
                 timestamp: 0,
