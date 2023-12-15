@@ -68,7 +68,13 @@ jobs:
             rustup install nightly-2023-04-20
             rustup target add wasm32-unknown-unknown   
 
+      - name: Check if cargo odra exists
+        id: check-odra-exists
+        continue-on-error: true
+        run: cargo odra --version 
+
       - name: Install cargo odra
+        if: ${{ steps.check-odra-exists.outcome == 'failure' }}
         run: |
           cargo +nightly-2023-04-20 install cargo-odra --locked
 
@@ -106,7 +112,13 @@ jobs:
             rustup install nightly-2023-04-20
             rustup target add wasm32-unknown-unknown   
 
+      - name: Check if cargo odra exists
+        id: check-odra-exists
+        continue-on-error: true
+        run: cargo odra --version 
+
       - name: Install cargo odra
+        if: ${{ steps.check-odra-exists.outcome == 'failure' }}
         run: |
           cargo +nightly-2023-04-20 install cargo-odra --locked
 

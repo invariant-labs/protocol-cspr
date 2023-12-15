@@ -10,7 +10,6 @@ use odra::prelude::string::String;
 use odra::test_env;
 use odra::types::{U128, U256};
 
-#[cfg(test)]
 fn positions_equals(position_a: Position, position_b: Position) -> bool {
     let mut equal = true;
 
