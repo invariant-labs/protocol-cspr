@@ -10,7 +10,7 @@ use odra::types::U128;
 fn test_add_multiple_fee_tiers() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let first_fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
     let second_fee_tier = FeeTier::new(Percentage::new(U128::from(20)), 2).unwrap();
@@ -38,7 +38,7 @@ fn test_add_multiple_fee_tiers() {
 fn test_add_existing_fee_tier() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let first_fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
@@ -53,7 +53,7 @@ fn test_add_fee_tier_not_admin() {
     let deployer = test_env::get_account(0);
     let not_admin = test_env::get_account(1);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
     test_env::set_caller(not_admin);
@@ -66,7 +66,7 @@ fn test_add_fee_tier_not_admin() {
 fn test_add_fee_tier_zero_fee() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
     let first_fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
 
     invariant.add_fee_tier(first_fee_tier).unwrap();

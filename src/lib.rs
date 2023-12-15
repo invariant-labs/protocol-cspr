@@ -330,14 +330,14 @@ impl Invariant {
 #[odra::module]
 impl Entrypoints for Invariant {
     #[odra(init)]
-    pub fn init(&mut self, protocol_fee: Percentage) {
+    pub fn init(&mut self, protocol_fee: U128) {
         let caller = contract_env::caller();
 
         self.pool_keys.set(PoolKeys::default());
         self.fee_tiers.set(FeeTiers::default());
         self.state.set(State {
             admin: caller,
-            protocol_fee,
+            protocol_fee: Percentage::new(protocol_fee),
         })
     }
     pub fn add_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {

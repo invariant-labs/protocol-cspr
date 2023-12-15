@@ -7,7 +7,7 @@
       "args": [
         {
           "name": "protocol_fee",
-          "ty": "Any"
+          "ty": "U128"
         }
       ],
       "return_ty": "Unit"

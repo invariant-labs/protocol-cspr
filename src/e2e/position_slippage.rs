@@ -34,7 +34,7 @@ fn test_position_slippage_zero_slippage_and_inside_range() {
         0,
         &U256::from(mint_amount),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier {
         fee: Percentage::from_scale(6, 3),
@@ -149,7 +149,7 @@ fn test_position_slippage_below_range() {
         0,
         &U256::from(mint_amount),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier {
         fee: Percentage::from_scale(6, 3),
@@ -243,7 +243,7 @@ fn test_position_slippage_above_range() {
         0,
         &U256::from(mint_amount),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier {
         fee: Percentage::from_scale(6, 3),
