@@ -103,8 +103,8 @@ fn test_remove_position() {
     let upper_tick_index = 10;
     let liquidity_delta = Liquidity::from_integer(1_000_000);
 
-    token_x.approve(invariant.address(), &U256::from(mint_amount));
-    token_y.approve(invariant.address(), &U256::from(mint_amount));
+    token_x.approve(invariant.address(), &mint_amount);
+    token_y.approve(invariant.address(), &mint_amount);
 
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
@@ -311,8 +311,8 @@ fn test_position_within_current_tick() {
         )
         .unwrap();
 
-    token_x.approve(invariant.address(), &U256::from(initial_balance));
-    token_y.approve(invariant.address(), &U256::from(initial_balance));
+    token_x.approve(invariant.address(), &initial_balance);
+    token_y.approve(invariant.address(), &initial_balance);
 
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let lower_tick_index = min_tick_test + 10;
@@ -388,14 +388,8 @@ fn test_position_within_current_tick() {
     assert!(position_state.fee_growth_inside_y == zero_fee);
 
     // Check balances
-    assert_eq!(
-        alice_x,
-        U256::from(initial_balance).checked_sub(dex_x).unwrap()
-    );
-    assert_eq!(
-        alice_y,
-        U256::from(initial_balance).checked_sub(dex_y).unwrap()
-    );
+    assert_eq!(alice_x, initial_balance.checked_sub(dex_x).unwrap());
+    assert_eq!(alice_y, initial_balance.checked_sub(dex_y).unwrap());
     assert_eq!(dex_x, U256::from(expected_x_increase));
     assert_eq!(dex_y, U256::from(expected_y_increase));
 }
@@ -425,8 +419,8 @@ fn test_position_below_current_tick() {
         )
         .unwrap();
 
-    token_x.approve(invariant.address(), &U256::from(initial_balance));
-    token_y.approve(invariant.address(), &U256::from(initial_balance));
+    token_x.approve(invariant.address(), &initial_balance);
+    token_y.approve(invariant.address(), &initial_balance);
 
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let lower_tick_index = -46080;
@@ -502,14 +496,8 @@ fn test_position_below_current_tick() {
     assert!(position_state.fee_growth_inside_y == zero_fee);
 
     // Check balances
-    assert_eq!(
-        alice_x,
-        U256::from(initial_balance).checked_sub(dex_x).unwrap()
-    );
-    assert_eq!(
-        alice_y,
-        U256::from(initial_balance).checked_sub(dex_y).unwrap()
-    );
+    assert_eq!(alice_x, initial_balance.checked_sub(dex_x).unwrap());
+    assert_eq!(alice_y, initial_balance.checked_sub(dex_y).unwrap());
     assert_eq!(dex_x, U256::from(expected_x_increase));
     assert_eq!(dex_y, U256::from(expected_y_increase));
 }
@@ -539,8 +527,8 @@ fn test_position_above_current_tick() {
         )
         .unwrap();
 
-    token_x.approve(invariant.address(), &U256::from(initial_balance));
-    token_y.approve(invariant.address(), &U256::from(initial_balance));
+    token_x.approve(invariant.address(), &initial_balance);
+    token_y.approve(invariant.address(), &initial_balance);
 
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let lower_tick_index = -22980;
@@ -601,14 +589,8 @@ fn test_position_above_current_tick() {
     assert!(position_state.fee_growth_inside_y == zero_fee);
 
     // Check balances
-    assert_eq!(
-        alice_x,
-        U256::from(initial_balance).checked_sub(dex_x).unwrap()
-    );
-    assert_eq!(
-        alice_y,
-        U256::from(initial_balance).checked_sub(dex_y).unwrap()
-    );
+    assert_eq!(alice_x, initial_balance.checked_sub(dex_x).unwrap());
+    assert_eq!(alice_y, initial_balance.checked_sub(dex_y).unwrap());
     assert_eq!(dex_x, U256::from(expected_x_increase));
     assert_eq!(dex_y, U256::from(expected_y_increase));
 }
