@@ -1,4 +1,5 @@
-use crate::contracts::PoolKey;
+use crate::contracts::{CreatePositionEvent, PoolKey};
+use crate::contracts::{CrossTickEvent, SwapEvent};
 use crate::e2e::snippets::init;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
@@ -9,6 +10,8 @@ use crate::math::token_amount::TokenAmount;
 use crate::math::MIN_SQRT_PRICE;
 use crate::FeeTier;
 use decimal::*;
+use odra::assert_events;
+use odra::prelude::vec::Vec;
 use odra::test_env;
 use odra::types::{U128, U256};
 
@@ -41,7 +44,7 @@ fn test_cross() {
             )
             .unwrap();
     }
-    // Init basic positio
+    // Init basic position
     {
         token_x.approve(invariant.address(), &mint_amount);
         token_y.approve(invariant.address(), &mint_amount);
@@ -130,7 +133,7 @@ fn test_cross() {
 
         let sqrt_price_limit = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
-        invariant
+        let result = invariant
             .swap(pool_key, true, swap_amount, true, sqrt_price_limit)
             .unwrap();
 
@@ -174,6 +177,47 @@ fn test_cross() {
         assert_eq!(
             pool_after.fee_protocol_token_y,
             TokenAmount::new(U256::from(0))
+        );
+
+        let tick_indexes: Vec<i32> = result.ticks.iter().map(|tick| tick.index).collect();
+
+        assert_events!(
+            invariant,
+            CreatePositionEvent {
+                timestamp: 0,
+                address: deployer,
+                pool: pool_key,
+                liquidity: Liquidity::from_integer(1000000),
+                lower_tick: -20,
+                upper_tick: 10,
+                current_sqrt_price: calculate_sqrt_price(0).unwrap(),
+            },
+            CreatePositionEvent {
+                timestamp: 0,
+                address: deployer,
+                pool: pool_key,
+                liquidity: Liquidity::from_integer(1000000),
+                lower_tick: -40,
+                upper_tick: -10,
+                current_sqrt_price: calculate_sqrt_price(0).unwrap()
+            },
+            CrossTickEvent {
+                timestamp: 0,
+                address: caller,
+                pool: pool_key,
+                indexes: tick_indexes.clone(),
+            },
+            SwapEvent {
+                timestamp: 0,
+                address: caller,
+                pool: pool_key,
+                amount_in: TokenAmount::new(U256::from(1000)),
+                amount_out: TokenAmount::new(U256::from(990)),
+                fee: TokenAmount::new(U256::from(7)),
+                start_sqrt_price: pool_before.sqrt_price,
+                target_sqrt_price: pool_after.sqrt_price,
+                x_to_y: true,
+            }
         );
     }
 }
