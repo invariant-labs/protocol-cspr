@@ -16,6 +16,12 @@ It's recommend to install:
 - [cargo-odra](https://github.com/odradev/cargo-odra)
 - [wasm-strip](https://github.com/WebAssembly/wabt)
 
+To install `wasm-strip` using apt, run the following command:
+
+```bash
+sudo apt install wabt
+```
+
 Additionally, add the wasm32-unknown-unknown target by running:
 
 ```bash
