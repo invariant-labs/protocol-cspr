@@ -70,10 +70,10 @@ fn test_limits_big_deposit_x_and_swap_y() {
         )
         .unwrap();
 
-    let alice = test_env::get_account(0);
+    let deployer = test_env::get_account(0);
 
-    let amount_x = token_x.balance_of(&alice);
-    let amount_y = token_y.balance_of(&alice);
+    let amount_x = token_x.balance_of(&deployer);
+    let amount_y = token_y.balance_of(&deployer);
     assert_eq!(
         amount_x,
         U256::from_dec_str(
@@ -101,8 +101,8 @@ fn test_limits_big_deposit_x_and_swap_y() {
         )
         .unwrap();
 
-    let amount_x = token_x.balance_of(&alice);
-    let amount_y = token_y.balance_of(&alice);
+    let amount_x = token_x.balance_of(&deployer);
+    let amount_y = token_y.balance_of(&deployer);
     assert_eq!(
         amount_x,
         U256::from_dec_str(
@@ -171,10 +171,10 @@ fn test_limits_big_deposit_y_and_swap_x() {
         )
         .unwrap();
 
-    let alice = test_env::get_account(0);
+    let deployer = test_env::get_account(0);
 
-    let amount_x = token_x.balance_of(&alice);
-    let amount_y = token_y.balance_of(&alice);
+    let amount_x = token_x.balance_of(&deployer);
+    let amount_y = token_y.balance_of(&deployer);
     assert_eq!(
         amount_x,
         U256::from_dec_str(
@@ -202,8 +202,8 @@ fn test_limits_big_deposit_y_and_swap_x() {
         )
         .unwrap();
 
-    let amount_x = token_x.balance_of(&alice);
-    let amount_y = token_y.balance_of(&alice);
+    let amount_x = token_x.balance_of(&deployer);
+    let amount_y = token_y.balance_of(&deployer);
     assert_ne!(amount_x, U256::from(0));
     assert_eq!(
         amount_y,
@@ -276,9 +276,9 @@ fn test_limits_big_deposit_both_tokens() {
         )
         .unwrap();
 
-    let alice = test_env::get_account(0);
-    let user_amount_x = token_x.balance_of(&alice);
-    let user_amount_y = token_y.balance_of(&alice);
+    let deployer = test_env::get_account(0);
+    let user_amount_x = token_x.balance_of(&deployer);
+    let user_amount_y = token_y.balance_of(&deployer);
     assert_eq!(
         user_amount_x,
         U256::max_value() - U256::from_dec_str(limit_amount).unwrap()
@@ -413,9 +413,9 @@ fn test_limits_big_deposit_and_swaps() {
         )
         .unwrap();
 
-    let alice = test_env::get_account(0);
-    let user_amount_x = token_x.balance_of(&alice);
-    let user_amount_y = token_y.balance_of(&alice);
+    let deployer = test_env::get_account(0);
+    let user_amount_x = token_x.balance_of(&deployer);
+    let user_amount_y = token_y.balance_of(&deployer);
     assert_eq!(user_amount_x, U256::max_value() - pos_amount);
     assert_eq!(user_amount_y, U256::max_value() - y.get());
 
