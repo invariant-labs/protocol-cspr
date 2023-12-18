@@ -625,6 +625,7 @@ impl Entrypoints for Invariant {
         let current_timestamp = contract_env::get_block_time();
 
         let mut position = self.positions.get(caller, index)?;
+        let withdrawed_liquidity = position.liquidity;
 
         let mut lower_tick = self
             .ticks
@@ -669,7 +670,7 @@ impl Entrypoints for Invariant {
         self.emit_remove_position_event(
             caller,
             position.pool_key,
-            position.liquidity,
+            withdrawed_liquidity,
             lower_tick.index,
             upper_tick.index,
             pool.sqrt_price,
