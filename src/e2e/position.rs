@@ -245,7 +245,7 @@ fn test_remove_position() {
             timestamp: 0,
             address: alice,
             pool: pool_key,
-            liquidity: Liquidity::new(U256::from(0)),
+            liquidity: Liquidity::from_integer(1_000_000),
             lower_tick: lower_tick_index,
             upper_tick: upper_tick_index,
             current_sqrt_price: pool_state.sqrt_price,
