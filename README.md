@@ -45,10 +45,10 @@ To run tests, choose between the `MockVM` and `Casper backend` using the followi
 cargo odra test
 ```
 
+#### Run tests on Casper backend
+
 To test actual wasm files against a backend,
 you need to specify the backend passing -b argument to `cargo-odra`.
-
-#### Run tests on Casper backend
 
 ```bash
 cargo odra test -b casper
