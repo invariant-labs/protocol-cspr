@@ -17,8 +17,8 @@ use odra::{
 
 #[test]
 fn test_position_slippage_zero_slippage_and_inside_range() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let deployer = test_env::get_account(0);
+    test_env::set_caller(deployer);
 
     let mint_amount = 10u128.pow(23);
 
@@ -132,8 +132,8 @@ fn test_position_slippage_zero_slippage_and_inside_range() {
 
 #[test]
 fn test_position_slippage_below_range() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let deployer = test_env::get_account(0);
+    test_env::set_caller(deployer);
 
     let mint_amount = 10u128.pow(23);
 
@@ -226,8 +226,8 @@ fn test_position_slippage_below_range() {
 
 #[test]
 fn test_position_slippage_above_range() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let deployer = test_env::get_account(0);
+    test_env::set_caller(deployer);
 
     let mint_amount = 10u128.pow(23);
 
