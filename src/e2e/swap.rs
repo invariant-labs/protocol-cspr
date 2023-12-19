@@ -1,4 +1,3 @@
-use crate::contracts::InvariantError;
 use crate::contracts::PoolKey;
 use crate::e2e::snippets::init;
 use crate::math::fee_growth::FeeGrowth;

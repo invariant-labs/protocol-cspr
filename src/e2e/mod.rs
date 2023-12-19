@@ -17,3 +17,4 @@ pub mod remove_fee_tier;
 pub mod slippage;
 pub mod snippets;
 pub mod swap;
+pub mod swap_route;
