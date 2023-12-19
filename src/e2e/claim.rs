@@ -169,7 +169,7 @@ fn test_claim() {
 }
 
 #[test]
-fn test_claim_not_admin() {
+fn test_claim_not_position_owner() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
     // Init basic dex and tokens
