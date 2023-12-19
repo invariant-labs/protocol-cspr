@@ -13,8 +13,8 @@ use odra::types::{U128, U256};
 
 #[test]
 fn test_remove_position_from_empty_list() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let user_without_any_positions: odra::types::Address = test_env::get_account(0);
+    test_env::set_caller(user_without_any_positions);
 
     let initial_amount = 10u128.pow(10);
     let token_x = TokenDeployer::init(
@@ -53,8 +53,8 @@ fn test_remove_position_from_empty_list() {
 
 #[test]
 fn test_add_multiple_positions() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let positions_owner = test_env::get_account(0);
+    test_env::set_caller(positions_owner);
 
     let init_tick = -23028;
 
@@ -239,8 +239,8 @@ fn test_add_multiple_positions() {
 
 #[test]
 fn test_only_owner_can_modify_position_list() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let positions_owner = test_env::get_account(0);
+    test_env::set_caller(positions_owner);
 
     let init_tick = -23028;
     let initial_balance = 10u128.pow(10);
@@ -375,8 +375,8 @@ fn test_only_owner_can_modify_position_list() {
 
 #[test]
 fn test_transfer_position_ownership() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let positions_owner = test_env::get_account(0);
+    test_env::set_caller(positions_owner);
 
     let init_tick = -23028;
 
@@ -434,7 +434,7 @@ fn test_transfer_position_ownership() {
         assert_eq!(list_length, 1)
     }
 
-    let bob = test_env::get_account(1);
+    let recipient = test_env::get_account(1);
     // Open  additional positions
     {
         invariant
@@ -472,18 +472,20 @@ fn test_transfer_position_ownership() {
     {
         let transferred_index = 0;
         let owner_list_before = invariant.get_all_positions();
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_list_before = invariant.get_all_positions();
-        test_env::set_caller(alice);
+        test_env::set_caller(positions_owner);
         let removed_position = invariant.get_position(transferred_index).unwrap();
         let last_position_before = owner_list_before[owner_list_before.len() - 1];
 
-        invariant.transfer_position(transferred_index, bob).unwrap();
+        invariant
+            .transfer_position(transferred_index, recipient)
+            .unwrap();
 
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_position = invariant.get_position(transferred_index).unwrap();
         let recipient_list_after = invariant.get_all_positions();
-        test_env::set_caller(alice);
+        test_env::set_caller(positions_owner);
         let owner_first_position_after = invariant.get_position(transferred_index).unwrap();
         let owner_list_after = invariant.get_all_positions();
 
@@ -504,17 +506,19 @@ fn test_transfer_position_ownership() {
     {
         let transferred_index = 1;
         let owner_list_before = invariant.get_all_positions();
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_list_before = invariant.get_all_positions();
         let last_position_before = owner_list_before[owner_list_before.len() - 1];
 
-        test_env::set_caller(alice);
-        invariant.transfer_position(transferred_index, bob).unwrap();
+        test_env::set_caller(positions_owner);
+        invariant
+            .transfer_position(transferred_index, recipient)
+            .unwrap();
 
         let owner_list_after = invariant.get_all_positions();
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_list_after = invariant.get_all_positions();
-        test_env::set_caller(alice);
+        test_env::set_caller(positions_owner);
         let owner_first_position_after = invariant.get_position(transferred_index).unwrap();
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
@@ -532,9 +536,11 @@ fn test_transfer_position_ownership() {
         let transferred_index = (owner_list_before.len() - 1) as u32;
         let removed_position = invariant.get_position(transferred_index).unwrap();
 
-        invariant.transfer_position(transferred_index, bob).unwrap();
+        invariant
+            .transfer_position(transferred_index, recipient)
+            .unwrap();
 
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_list_after = invariant.get_all_positions();
         let recipient_position_index = (recipient_list_after.len() - 1) as u32;
         let recipient_position = invariant.get_position(recipient_position_index).unwrap();
@@ -546,16 +552,18 @@ fn test_transfer_position_ownership() {
     {
         let transferred_index = 0;
         let recipient_list_before = invariant.get_all_positions();
-        test_env::set_caller(alice);
+        test_env::set_caller(positions_owner);
         let removed_position = invariant.get_position(transferred_index).unwrap();
 
-        invariant.transfer_position(transferred_index, bob).unwrap();
+        invariant
+            .transfer_position(transferred_index, recipient)
+            .unwrap();
 
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_list_after = invariant.get_all_positions();
         let recipient_position_index = (recipient_list_after.len() - 1) as u32;
         let recipient_position = invariant.get_position(recipient_position_index).unwrap();
-        test_env::set_caller(alice);
+        test_env::set_caller(positions_owner);
         let owner_list_after = invariant.get_all_positions();
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
@@ -569,22 +577,22 @@ fn test_transfer_position_ownership() {
     {
         let transferred_index = 0;
         let owner_list_before = invariant.get_all_positions();
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_list_before = invariant.get_all_positions();
         let removed_position = invariant.get_position(transferred_index).unwrap();
         let last_position_before = recipient_list_before[recipient_list_before.len() - 1];
 
         invariant
-            .transfer_position(transferred_index, alice)
+            .transfer_position(transferred_index, positions_owner)
             .unwrap();
 
-        test_env::set_caller(alice);
+        test_env::set_caller(positions_owner);
         let owner_list_after = invariant.get_all_positions();
-        test_env::set_caller(bob);
+        test_env::set_caller(recipient);
         let recipient_list_after = invariant.get_all_positions();
         let recipient_first_position_after = invariant.get_position(transferred_index).unwrap();
 
-        test_env::set_caller(alice);
+        test_env::set_caller(positions_owner);
         let owner_new_position = invariant.get_position(transferred_index).unwrap();
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() - 1);
@@ -603,8 +611,8 @@ fn test_transfer_position_ownership() {
 
 #[test]
 fn test_only_owner_can_transfer_position() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let position_owner = test_env::get_account(0);
+    test_env::set_caller(position_owner);
 
     let init_tick = -23028;
 
@@ -662,7 +670,6 @@ fn test_only_owner_can_transfer_position() {
         assert_eq!(list_length, 1)
     }
 
-    let bob = test_env::get_account(1);
     // Open  additional positions
     {
         invariant
@@ -699,17 +706,17 @@ fn test_only_owner_can_transfer_position() {
     // Transfer first position
     {
         let transferred_index = 0;
-
-        test_env::set_caller(bob);
-        let result = invariant.transfer_position(transferred_index, alice);
+        let unauthorized_user = test_env::get_account(1);
+        test_env::set_caller(unauthorized_user);
+        let result = invariant.transfer_position(transferred_index, position_owner);
         assert_eq!(result, Err(InvariantError::PositionNotFound));
     }
 }
 
 #[test]
 fn test_multiple_positions_on_same_tick() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let positions_owner = test_env::get_account(0);
+    test_env::set_caller(positions_owner);
 
     let init_tick = 0;
 

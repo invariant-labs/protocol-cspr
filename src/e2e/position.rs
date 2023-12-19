@@ -13,8 +13,8 @@ use odra::types::{U128, U256};
 
 #[test]
 fn test_create_position() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let position_owner = test_env::get_account(0);
+    test_env::set_caller(position_owner);
 
     let mint_amount = U256::from(500);
     let fee = Percentage::new(U128::from(0));
@@ -60,7 +60,7 @@ fn test_create_position() {
         invariant,
         CreatePositionEvent {
             timestamp: 0,
-            address: alice,
+            address: position_owner,
             pool: pool_key,
             liquidity: liquidity_delta,
             lower_tick,
@@ -72,9 +72,8 @@ fn test_create_position() {
 
 #[test]
 fn test_remove_position() {
-    let alice = test_env::get_account(0);
-    let bob = test_env::get_account(1);
-    test_env::set_caller(alice);
+    let position_owner = test_env::get_account(0);
+    test_env::set_caller(position_owner);
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
 
@@ -129,7 +128,7 @@ fn test_remove_position() {
         invariant,
         CreatePositionEvent {
             timestamp: 0,
-            address: alice,
+            address: position_owner,
             pool: pool_key,
             liquidity: liquidity_delta,
             lower_tick: lower_tick_index,
@@ -164,7 +163,7 @@ fn test_remove_position() {
             invariant,
             CreatePositionEvent {
                 timestamp: 0,
-                address: alice,
+                address: position_owner,
                 pool: pool_key,
                 liquidity: liquidity_delta,
                 lower_tick: incorrect_lower_tick_index,
@@ -178,12 +177,13 @@ fn test_remove_position() {
         assert!(position_state.upper_tick_index == incorrect_upper_tick_index);
     }
 
+    let other_user_performs_swap = test_env::get_account(1);
     let amount = 1000;
-    token_x.mint(&bob, &U256::from(amount));
-    let amount_x = token_x.balance_of(&bob);
+    token_x.mint(&other_user_performs_swap, &U256::from(amount));
+    let amount_x = token_x.balance_of(&other_user_performs_swap);
     assert_eq!(amount_x, U256::from(amount));
 
-    test_env::set_caller(bob);
+    test_env::set_caller(other_user_performs_swap);
     token_x.approve(invariant.address(), &U256::from(amount));
 
     let pool_state_before = invariant
@@ -221,8 +221,8 @@ fn test_remove_position() {
     assert_eq!(pool_state_after.current_tick_index, -10);
     assert_ne!(pool_state_after.sqrt_price, pool_state_before.sqrt_price);
 
-    let amount_x = token_x.balance_of(&bob);
-    let amount_y = token_y.balance_of(&bob);
+    let amount_x = token_x.balance_of(&other_user_performs_swap);
+    let amount_y = token_y.balance_of(&other_user_performs_swap);
     assert_eq!(amount_x, U256::from(0));
     assert_eq!(amount_y, U256::from(993));
 
@@ -231,7 +231,7 @@ fn test_remove_position() {
     let dex_y_before_remove = token_y.balance_of(invariant.address());
 
     // Remove position
-    test_env::set_caller(alice);
+    test_env::set_caller(position_owner);
     invariant.remove_position(remove_position_index).unwrap();
 
     // Load states
@@ -243,9 +243,9 @@ fn test_remove_position() {
         invariant,
         RemovePositionEvent {
             timestamp: 0,
-            address: alice,
+            address: position_owner,
             pool: pool_key,
-            liquidity: Liquidity::new(U256::from(0)),
+            liquidity: Liquidity::from_integer(1_000_000),
             lower_tick: lower_tick_index,
             upper_tick: upper_tick_index,
             current_sqrt_price: pool_state.sqrt_price,
@@ -286,8 +286,8 @@ fn test_remove_position() {
 
 #[test]
 fn test_position_within_current_tick() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let position_owner = test_env::get_account(0);
+    test_env::set_caller(position_owner);
 
     let max_tick_test = 177_450; // for tickSpacing 4
     let min_tick_test = -max_tick_test;
@@ -345,7 +345,7 @@ fn test_position_within_current_tick() {
         invariant,
         CreatePositionEvent {
             timestamp: 0,
-            address: alice,
+            address: position_owner,
             pool: pool_key,
             liquidity: liquidity_delta,
             lower_tick: lower_tick_index,
@@ -356,8 +356,8 @@ fn test_position_within_current_tick() {
 
     let lower_tick = invariant.get_tick(pool_key, lower_tick_index).unwrap();
     let upper_tick = invariant.get_tick(pool_key, upper_tick_index).unwrap();
-    let alice_x = token_x.balance_of(&alice);
-    let alice_y = token_y.balance_of(&alice);
+    let position_owner_x = token_x.balance_of(&position_owner);
+    let position_owner_y = token_y.balance_of(&position_owner);
     let dex_x = token_x.balance_of(invariant.address());
     let dex_y = token_y.balance_of(invariant.address());
 
@@ -388,16 +388,22 @@ fn test_position_within_current_tick() {
     assert!(position_state.fee_growth_inside_y == zero_fee);
 
     // Check balances
-    assert_eq!(alice_x, initial_balance.checked_sub(dex_x).unwrap());
-    assert_eq!(alice_y, initial_balance.checked_sub(dex_y).unwrap());
+    assert_eq!(
+        position_owner_x,
+        initial_balance.checked_sub(dex_x).unwrap()
+    );
+    assert_eq!(
+        position_owner_y,
+        initial_balance.checked_sub(dex_y).unwrap()
+    );
     assert_eq!(dex_x, U256::from(expected_x_increase));
     assert_eq!(dex_y, U256::from(expected_y_increase));
 }
 
 #[test]
 fn test_position_below_current_tick() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let position_owner = test_env::get_account(0);
+    test_env::set_caller(position_owner);
 
     let init_tick = -23028;
 
@@ -453,7 +459,7 @@ fn test_position_below_current_tick() {
         invariant,
         CreatePositionEvent {
             timestamp: 0,
-            address: alice,
+            address: position_owner,
             pool: pool_key,
             liquidity: liquidity_delta,
             lower_tick: lower_tick_index,
@@ -464,8 +470,8 @@ fn test_position_below_current_tick() {
 
     let lower_tick = invariant.get_tick(pool_key, lower_tick_index).unwrap();
     let upper_tick = invariant.get_tick(pool_key, upper_tick_index).unwrap();
-    let alice_x = token_x.balance_of(&alice);
-    let alice_y = token_y.balance_of(&alice);
+    let position_owner_x = token_x.balance_of(&position_owner);
+    let position_owner_y = token_y.balance_of(&position_owner);
     let dex_x = token_x.balance_of(invariant.address());
     let dex_y = token_y.balance_of(invariant.address());
 
@@ -496,16 +502,22 @@ fn test_position_below_current_tick() {
     assert!(position_state.fee_growth_inside_y == zero_fee);
 
     // Check balances
-    assert_eq!(alice_x, initial_balance.checked_sub(dex_x).unwrap());
-    assert_eq!(alice_y, initial_balance.checked_sub(dex_y).unwrap());
+    assert_eq!(
+        position_owner_x,
+        initial_balance.checked_sub(dex_x).unwrap()
+    );
+    assert_eq!(
+        position_owner_y,
+        initial_balance.checked_sub(dex_y).unwrap()
+    );
     assert_eq!(dex_x, U256::from(expected_x_increase));
     assert_eq!(dex_y, U256::from(expected_y_increase));
 }
 
 #[test]
 fn test_position_above_current_tick() {
-    let alice = test_env::get_account(0);
-    test_env::set_caller(alice);
+    let position_owner = test_env::get_account(0);
+    test_env::set_caller(position_owner);
 
     let init_tick = -23028;
 
@@ -557,8 +569,8 @@ fn test_position_above_current_tick() {
         .unwrap();
     let lower_tick = invariant.get_tick(pool_key, lower_tick_index).unwrap();
     let upper_tick = invariant.get_tick(pool_key, upper_tick_index).unwrap();
-    let alice_x = token_x.balance_of(&alice);
-    let alice_y = token_y.balance_of(&alice);
+    let position_owner_x = token_x.balance_of(&position_owner);
+    let position_owner_y = token_y.balance_of(&position_owner);
     let dex_x = token_x.balance_of(invariant.address());
     let dex_y = token_y.balance_of(invariant.address());
 
@@ -589,8 +601,14 @@ fn test_position_above_current_tick() {
     assert!(position_state.fee_growth_inside_y == zero_fee);
 
     // Check balances
-    assert_eq!(alice_x, initial_balance.checked_sub(dex_x).unwrap());
-    assert_eq!(alice_y, initial_balance.checked_sub(dex_y).unwrap());
+    assert_eq!(
+        position_owner_x,
+        initial_balance.checked_sub(dex_x).unwrap()
+    );
+    assert_eq!(
+        position_owner_y,
+        initial_balance.checked_sub(dex_y).unwrap()
+    );
     assert_eq!(dex_x, U256::from(expected_x_increase));
     assert_eq!(dex_y, U256::from(expected_y_increase));
 }

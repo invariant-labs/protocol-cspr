@@ -97,8 +97,7 @@ impl Position {
             .unchecked_sub(self.fee_growth_inside_y)
             .to_fee(self.liquidity))?;
 
-        self.liquidity =
-            ok_or_mark_trace!(self.calculate_new_liquidity_safely(sign, liquidity_delta))?;
+        self.liquidity = ok_or_mark_trace!(self.calculate_new_liquidity(sign, liquidity_delta))?;
         self.fee_growth_inside_x = fee_growth_inside_x;
         self.fee_growth_inside_y = fee_growth_inside_y;
 
@@ -107,7 +106,7 @@ impl Position {
         Ok(())
     }
 
-    fn calculate_new_liquidity_safely(
+    fn calculate_new_liquidity(
         &mut self,
         sign: bool,
         liquidity_delta: Liquidity,
@@ -256,7 +255,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_calculate_new_liquidity_safely() {
+    fn test_calculate_new_liquidity() {
         // negative liquidity error
         {
             let mut position = Position {
@@ -266,7 +265,7 @@ mod tests {
             let sign: bool = false;
             let liquidity_delta = Liquidity::from_integer(2);
 
-            let result = position.calculate_new_liquidity_safely(sign, liquidity_delta);
+            let result = position.calculate_new_liquidity(sign, liquidity_delta);
 
             assert!(result.is_err());
         }
@@ -280,7 +279,7 @@ mod tests {
             let liquidity_delta = Liquidity::from_integer(2);
 
             let new_liquidity = position
-                .calculate_new_liquidity_safely(sign, liquidity_delta)
+                .calculate_new_liquidity(sign, liquidity_delta)
                 .unwrap();
 
             assert_eq!(new_liquidity, Liquidity::from_integer(4));
@@ -295,7 +294,7 @@ mod tests {
             let liquidity_delta = Liquidity::from_integer(2);
 
             let new_liquidity = position
-                .calculate_new_liquidity_safely(sign, liquidity_delta)
+                .calculate_new_liquidity(sign, liquidity_delta)
                 .unwrap();
 
             assert_eq!(new_liquidity, Liquidity::new(U256::from(0)));

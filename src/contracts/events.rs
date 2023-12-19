@@ -1,8 +1,8 @@
 use super::PoolKey;
 use crate::math::{liquidity::Liquidity, sqrt_price::SqrtPrice, token_amount::TokenAmount};
-use odra::{prelude::vec::Vec, types::Address};
-// use odra_derive::Event;
 use odra::Event;
+use odra::{prelude::vec::Vec, types::Address};
+
 #[derive(Event, PartialEq, Eq, Debug)]
 pub struct CreatePositionEvent {
     pub timestamp: u64,
