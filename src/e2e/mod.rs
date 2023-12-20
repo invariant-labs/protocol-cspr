@@ -9,6 +9,7 @@ pub mod cross_both_side;
 pub mod interaction_with_pool_on_removed_fee_tier;
 pub mod limits;
 pub mod liquidity_gap;
+#[cfg(feature = "time-consuming")]
 pub mod max_tick_cross;
 pub mod multiple_swap;
 pub mod position;
