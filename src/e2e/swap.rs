@@ -44,9 +44,6 @@ fn test_swap() {
     }
     // Init basic position
     {
-        // let mint_amount = U256::from(10u128.pow(10));
-        // token_x.mint(&deployer, &mint_amount);
-        // token_y.mint(&deployer, &mint_amount);
         token_x.approve(invariant.address(), &mint_amount);
         token_y.approve(invariant.address(), &mint_amount);
 
@@ -173,9 +170,6 @@ fn test_swap_x_to_y() {
     }
     // Init basic position
     {
-        // let mint_amount = U256::from(10u128.pow(10));
-        // token_x.mint(&deployer, &mint_amount);
-        // token_y.mint(&deployer, &mint_amount);
         token_x.approve(invariant.address(), &mint_amount);
         token_y.approve(invariant.address(), &mint_amount);
 
