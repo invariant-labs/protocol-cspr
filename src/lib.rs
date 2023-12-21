@@ -13,10 +13,9 @@ pub mod e2e;
 
 use crate::contracts::errors::InvariantError;
 use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
-use contracts::events::*;
+use contracts::{events::*, InvariantConfig};
 use contracts::{
-    FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, State, Tick, Tickmap,
-    Ticks,
+    FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, Tick, Tickmap, Ticks,
 };
 use decimal::Decimal;
 use math::clamm::{calculate_min_amount_out, compute_swap_step, SwapResult};
@@ -63,7 +62,7 @@ pub struct Invariant {
     ticks: Ticks,
     fee_tiers: Variable<FeeTiers>,
     pool_keys: Variable<PoolKeys>,
-    state: Variable<State>,
+    config: Variable<InvariantConfig>,
 }
 
 impl Invariant {
@@ -104,7 +103,7 @@ impl Invariant {
         sqrt_price_limit: SqrtPrice,
     ) -> Result<CalculateSwapResult, InvariantError> {
         let current_timestamp = contract_env::get_block_time();
-        let state = self.state.get().unwrap_or_revert();
+        let config = self.config.get().unwrap_or_revert();
         if amount.is_zero() {
             return Err(InvariantError::AmountIsZero);
         }
@@ -158,7 +157,7 @@ impl Invariant {
                 remaining_amount -= result.amount_out;
             }
 
-            unwrap!(pool.add_fee(result.fee_amount, x_to_y, state.protocol_fee));
+            unwrap!(pool.add_fee(result.fee_amount, x_to_y, config.protocol_fee));
             event_fee_amount += result.fee_amount;
 
             pool.sqrt_price = result.next_sqrt_price;
@@ -183,7 +182,7 @@ impl Invariant {
                         by_amount_in,
                         x_to_y,
                         current_timestamp,
-                        state.protocol_fee,
+                        config.protocol_fee,
                         pool_key.fee_tier,
                     );
 
@@ -335,17 +334,17 @@ impl Entrypoints for Invariant {
 
         self.pool_keys.set(PoolKeys::default());
         self.fee_tiers.set(FeeTiers::default());
-        self.state.set(State {
+        self.config.set(InvariantConfig {
             admin: caller,
             protocol_fee,
         })
     }
     pub fn add_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
-        let state = self.state.get().unwrap_or_revert();
+        let config = self.config.get().unwrap_or_revert();
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
 
-        if caller != state.admin {
+        if caller != config.admin {
             return Err(InvariantError::NotAdmin);
         }
 
@@ -362,10 +361,10 @@ impl Entrypoints for Invariant {
 
     pub fn remove_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
-        let state = self.state.get().unwrap_or_revert();
+        let config = self.config.get().unwrap_or_revert();
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
 
-        if caller != state.admin {
+        if caller != config.admin {
             return Err(InvariantError::NotAdmin);
         }
 
@@ -392,7 +391,7 @@ impl Entrypoints for Invariant {
         let current_timestamp = odra::contract_env::get_block_time();
         let mut pool_keys = self.pool_keys.get().unwrap_or_revert();
         let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
-        let state = self.state.get().unwrap_or_revert();
+        let config = self.config.get().unwrap_or_revert();
 
         if !fee_tiers.contains(fee_tier) {
             return Err(InvariantError::FeeTierNotFound);
@@ -412,7 +411,7 @@ impl Entrypoints for Invariant {
             init_tick,
             current_timestamp,
             fee_tier.tick_spacing,
-            state.admin,
+            config.admin,
         )?;
 
         self.pools.add(pool_key, &pool)?;
@@ -439,8 +438,8 @@ impl Entrypoints for Invariant {
     }
 
     pub fn get_protocol_fee(&self) -> Percentage {
-        let state = self.state.get().unwrap_or_revert();
-        state.protocol_fee
+        let config = self.config.get().unwrap_or_revert();
+        config.protocol_fee
     }
 
     pub fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
@@ -463,15 +462,15 @@ impl Entrypoints for Invariant {
 
     pub fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
-        let mut state = self.state.get().unwrap_or_revert();
+        let mut config = self.config.get().unwrap_or_revert();
 
-        if caller != state.admin {
+        if caller != config.admin {
             return Err(InvariantError::NotAdmin);
         }
 
-        state.protocol_fee = protocol_fee;
+        config.protocol_fee = protocol_fee;
 
-        self.state.set(state);
+        self.config.set(config);
 
         Ok(())
     }
@@ -482,10 +481,10 @@ impl Entrypoints for Invariant {
         fee_receiver: Address,
     ) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
-        let state = self.state.get().unwrap_or_revert();
+        let config = self.config.get().unwrap_or_revert();
         let mut pool = self.pools.get(pool_key)?;
 
-        if caller != state.admin {
+        if caller != config.admin {
             return Err(InvariantError::NotAdmin);
         }
 
