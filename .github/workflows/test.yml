@@ -128,6 +128,50 @@ jobs:
           command: odra
           args: test -b casper
 
+  e2e_time_consuming:
+    name: Time consuming e2e tests Casper backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Cache Crates
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo
+          key: |
+            ${{ runner.os }}-cargo-odra-${{ hashFiles('rust-toolchain.toml') }}
+
+      - name: Install WABT
+        run: |
+            sudo apt install wabt
+
+      - name: Add rustfmt component
+        run: |
+            rustup component add rustfmt
+
+      - name: Install Rust toolchain
+        run: |
+            rustup install nightly-2023-04-20
+            rustup target add wasm32-unknown-unknown
+
+      - name: Check if cargo odra exists
+        id: check-odra-exists
+        continue-on-error: true
+        run: cargo odra --version
+
+      - name: Install cargo odra
+        if: ${{ steps.check-odra-exists.outcome == 'failure' }}
+        run: |
+          cargo +nightly-2023-04-20 install cargo-odra --locked
+
+      - name: Run unit tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: odra
+          args: test -b casper -- --features time-consuming
+
   build:
     name: Build contract
     runs-on: ubuntu-latest
