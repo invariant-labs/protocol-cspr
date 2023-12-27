@@ -17,12 +17,14 @@ jobs:
           uses: actions/checkout@v3
   
         - name: Test decimal
+          working-directory: ./src/decimal
           run: |
-            cd src/decimal && cargo test
+            cargo test
 
         - name: Test decimal core
+          working-directory: ./src/decimal/decimal_core
           run: |
-            cd src/decimal/decimal_core && cargo test
+            cargo test
 
   linting:
     name: Linting (fmt + clippy)
