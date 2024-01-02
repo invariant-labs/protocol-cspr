@@ -1,5 +1,5 @@
-use super::snippets::{init, positions_equals};
 use crate::contracts::{InvariantError, PoolKey};
+use crate::e2e::snippets::{init, positions_equals};
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
