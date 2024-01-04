@@ -224,24 +224,6 @@ impl Position {
             deinitialize_upper_tick,
         )
     }
-
-    // pub fn update_seconds_per_liquidity(
-    //     &mut self,
-    //     pool: Pool,
-    //     lower_tick: Tick,
-    //     upper_tick: Tick,
-    //     current_timestamp: u64,
-    // ) {
-    //     self.seconds_per_liquidity_inside = unwrap!(calculate_seconds_per_liquidity_inside(
-    //         lower_tick.index,
-    //         upper_tick.index,
-    //         pool.current_tick_index,
-    //         lower_tick.seconds_per_liquidity_outside,
-    //         upper_tick.seconds_per_liquidity_outside,
-    //         pool.seconds_per_liquidity_global,
-    //     ));
-    //     self.last_block_number = current_timestamp;
-    // }
 }
 
 #[cfg(test)]

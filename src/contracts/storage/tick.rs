@@ -72,14 +72,6 @@ impl Tick {
             .ok_or_else(|| err!("current_timestamp - pool.start_timestamp underflow"))?;
         self.seconds_outside = seconds_passed.wrapping_sub(self.seconds_outside);
 
-        // if !pool.liquidity.is_zero() {
-        //     ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
-        // } else {
-        //     pool.last_timestamp = current_timestamp;
-        // }
-        // self.seconds_per_liquidity_outside = pool
-        //     .seconds_per_liquidity_global
-        //     .unchecked_sub(self.seconds_per_liquidity_outside);
         pool.last_timestamp = current_timestamp;
 
         // When going to higher tick net_liquidity should be added and for going lower subtracted
