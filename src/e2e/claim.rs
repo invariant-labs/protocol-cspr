@@ -150,7 +150,7 @@ fn test_claim() {
         let pool = invariant
             .get_pool(*token_x.address(), *token_y.address(), fee_tier)
             .unwrap();
-        let position = invariant.get_position(0).unwrap();
+        let position = invariant.get_position(position_owner, 0).unwrap();
         let user_amount_after_claim = token_x.balance_of(&position_owner);
         let dex_amount_after_claim = token_x.balance_of(invariant.address());
         let expected_tokens_claimed = U256::from(5);
