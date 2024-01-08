@@ -678,16 +678,12 @@ impl Entrypoints for Invariant {
         Ok((amount_x, amount_y))
     }
 
-    pub fn get_position(&mut self, index: u32) -> Result<Position, InvariantError> {
-        let caller = contract_env::caller();
-
-        self.positions.get(caller, index)
+    pub fn get_position(&mut self, owner: Address, index: u32) -> Result<Position, InvariantError> {
+        self.positions.get(owner, index)
     }
 
-    pub fn get_all_positions(&mut self) -> Vec<Position> {
-        let caller = contract_env::caller();
-
-        self.positions.get_all(caller)
+    pub fn get_all_positions(&mut self, owner: Address) -> Vec<Position> {
+        self.positions.get_all(owner)
     }
 
     pub fn quote(

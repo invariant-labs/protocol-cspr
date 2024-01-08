@@ -93,9 +93,9 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
             .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
             .unwrap();
 
-        let pos = invariant.get_all_positions();
+        let pos = invariant.get_all_positions(deployer);
         assert_eq!(1, pos.len());
-        let position = invariant.get_position(0).unwrap();
+        let position = invariant.get_position(deployer, 0).unwrap();
         assert_eq!(position.liquidity, liquidity);
         assert_eq!(pool_after.liquidity, liquidity)
     }
@@ -249,22 +249,26 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
         let recipient = test_env::get_account(1);
 
         let transferred_index = 0;
-        let owner_list_before = invariant.get_all_positions();
+        let owner_list_before = invariant.get_all_positions(position_owner);
         test_env::set_caller(recipient);
-        let recipient_list_before = invariant.get_all_positions();
+        let recipient_list_before = invariant.get_all_positions(recipient);
         test_env::set_caller(position_owner);
-        let removed_position = invariant.get_position(transferred_index).unwrap();
+        let removed_position = invariant
+            .get_position(position_owner, transferred_index)
+            .unwrap();
 
         invariant
             .transfer_position(transferred_index, recipient)
             .unwrap();
 
         test_env::set_caller(recipient);
-        let recipient_position = invariant.get_position(transferred_index).unwrap();
-        let recipient_list_after = invariant.get_all_positions();
+        let recipient_position = invariant
+            .get_position(recipient, transferred_index)
+            .unwrap();
+        let recipient_list_after = invariant.get_all_positions(recipient);
         test_env::set_caller(position_owner);
-        let owner_positions_after = invariant.get_all_positions();
-        let owner_list_after = invariant.get_all_positions();
+        let owner_positions_after = invariant.get_all_positions(position_owner);
+        let owner_list_after = invariant.get_all_positions(position_owner);
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
         assert_eq!(owner_list_before.len() - 1, owner_list_after.len());

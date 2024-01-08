@@ -323,6 +323,10 @@
       "is_mutable": true,
       "args": [
         {
+          "name": "owner",
+          "ty": "Key"
+        },
+        {
           "name": "index",
           "ty": "U32"
         }
@@ -337,7 +341,12 @@
     {
       "name": "get_all_positions",
       "is_mutable": true,
-      "args": [],
+      "args": [
+        {
+          "name": "owner",
+          "ty": "Key"
+        }
+      ],
       "return_ty": {
         "List": "Any"
       }

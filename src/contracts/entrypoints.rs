@@ -215,10 +215,10 @@ pub trait Entrypoints {
     ///
     /// # Errors
     /// - Fails if position cannot be found
-    fn get_position(&mut self, index: u32) -> Result<Position, InvariantError>;
+    fn get_position(&mut self, owner: Address, index: u32) -> Result<Position, InvariantError>;
 
     /// Retrieves a vector containing all positions held by the user.
-    fn get_all_positions(&mut self) -> Vec<Position>;
+    fn get_all_positions(&mut self, owner: Address) -> Vec<Position>;
 
     /// Simulates the swap without its execution.
     ///
