@@ -212,12 +212,16 @@ pub trait Entrypoints {
     ///
     /// # Parameters
     /// - `index`: The index of the user position.
+    /// - 'owner': An `Address` identifying the user who owns the positions.
     ///
     /// # Errors
     /// - Fails if position cannot be found
     fn get_position(&mut self, owner: Address, index: u32) -> Result<Position, InvariantError>;
 
     /// Retrieves a vector containing all positions held by the user.
+    ///
+    /// # Parameters
+    /// - 'owner': An `Address` identifying the user who owns the positions.
     fn get_all_positions(&mut self, owner: Address) -> Vec<Position>;
 
     /// Simulates the swap without its execution.
