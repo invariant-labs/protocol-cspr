@@ -4,11 +4,7 @@ use crate::contracts::PoolKey;
 use crate::math::calculate_max_liquidity_per_tick;
 use crate::math::fee_growth::calculate_fee_growth_inside;
 use crate::math::{
-    fee_growth::FeeGrowth,
-    liquidity::Liquidity,
-    // seconds_per_liquidity::{calculate_seconds_per_liquidity_inside, SecondsPerLiquidity},
-    sqrt_price::SqrtPrice,
-    token_amount::TokenAmount,
+    fee_growth::FeeGrowth, liquidity::Liquidity, sqrt_price::SqrtPrice, token_amount::TokenAmount,
 };
 use decimal::*;
 use odra::types::{U128, U256};
@@ -22,7 +18,6 @@ pub struct Position {
     pub upper_tick_index: i32,
     pub fee_growth_inside_x: FeeGrowth,
     pub fee_growth_inside_y: FeeGrowth,
-    // pub seconds_per_liquidity_inside: SecondsPerLiquidity,
     pub last_block_number: u64,
     pub tokens_owed_x: TokenAmount,
     pub tokens_owed_y: TokenAmount,
@@ -179,7 +174,6 @@ impl Position {
             upper_tick_index: upper_tick.index,
             fee_growth_inside_x: FeeGrowth::new(U128::from(0)),
             fee_growth_inside_y: FeeGrowth::new(U128::from(0)),
-            // seconds_per_liquidity_inside: SecondsPerLiquidity::new(U128::from(0)),
             last_block_number: block_number,
             tokens_owed_x: TokenAmount::new(U256::from(0)),
             tokens_owed_y: TokenAmount::new(U256::from(0)),
@@ -230,24 +224,6 @@ impl Position {
             deinitialize_upper_tick,
         )
     }
-
-    // pub fn update_seconds_per_liquidity(
-    //     &mut self,
-    //     pool: Pool,
-    //     lower_tick: Tick,
-    //     upper_tick: Tick,
-    //     current_timestamp: u64,
-    // ) {
-    //     self.seconds_per_liquidity_inside = unwrap!(calculate_seconds_per_liquidity_inside(
-    //         lower_tick.index,
-    //         upper_tick.index,
-    //         pool.current_tick_index,
-    //         lower_tick.seconds_per_liquidity_outside,
-    //         upper_tick.seconds_per_liquidity_outside,
-    //         pool.seconds_per_liquidity_global,
-    //     ));
-    //     self.last_block_number = current_timestamp;
-    // }
 }
 
 #[cfg(test)]

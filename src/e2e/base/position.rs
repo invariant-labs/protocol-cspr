@@ -157,7 +157,7 @@ fn test_remove_position() {
             )
             .unwrap();
 
-        let position_state = invariant.get_position(1).unwrap();
+        let position_state = invariant.get_position(position_owner, 1).unwrap();
 
         assert_events!(
             invariant,
@@ -336,7 +336,7 @@ fn test_position_within_current_tick() {
         .unwrap();
 
     // Load states
-    let position_state = invariant.get_position(0).unwrap();
+    let position_state = invariant.get_position(position_owner, 0).unwrap();
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
@@ -450,7 +450,7 @@ fn test_position_below_current_tick() {
         .unwrap();
 
     // Load states
-    let position_state = invariant.get_position(0).unwrap();
+    let position_state = invariant.get_position(position_owner, 0).unwrap();
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();
@@ -563,7 +563,7 @@ fn test_position_above_current_tick() {
         .unwrap();
 
     // Load states
-    let position_state = invariant.get_position(0).unwrap();
+    let position_state = invariant.get_position(position_owner, 0).unwrap();
     let pool_state = invariant
         .get_pool(*token_x.address(), *token_y.address(), fee_tier)
         .unwrap();

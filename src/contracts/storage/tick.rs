@@ -1,7 +1,6 @@
 use crate::contracts::Pool;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
-// use crate::math::seconds_per_liquidity::SecondsPerLiquidity;
 use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
 use decimal::*;
 use odra::types::{U128, U256};
@@ -17,7 +16,6 @@ pub struct Tick {
     pub sqrt_price: SqrtPrice,
     pub fee_growth_outside_x: FeeGrowth,
     pub fee_growth_outside_y: FeeGrowth,
-    // pub seconds_per_liquidity_outside: SecondsPerLiquidity,
     pub seconds_outside: u64,
 }
 
@@ -31,7 +29,6 @@ impl Default for Tick {
             sqrt_price: SqrtPrice::from_integer(1),
             fee_growth_outside_x: FeeGrowth::new(U128::from(0)),
             fee_growth_outside_y: FeeGrowth::new(U128::from(0)),
-            // seconds_per_liquidity_outside: SecondsPerLiquidity::new(U128::from(0)),
             seconds_outside: 0u64,
         }
     }
@@ -57,10 +54,7 @@ impl Tick {
                 true => current_timestamp - pool.start_timestamp,
                 false => 0,
             },
-            // seconds_per_liquidity_outside: match below_current_tick {
-            //     true => pool.seconds_per_liquidity_global,
-            //     false => SecondsPerLiquidity::new(U128::from(0)),
-            // },
+
             ..Self::default()
         }
     }
@@ -78,14 +72,6 @@ impl Tick {
             .ok_or_else(|| err!("current_timestamp - pool.start_timestamp underflow"))?;
         self.seconds_outside = seconds_passed.wrapping_sub(self.seconds_outside);
 
-        // if !pool.liquidity.is_zero() {
-        //     ok_or_mark_trace!(pool.update_seconds_per_liquidity_global(current_timestamp))?;
-        // } else {
-        //     pool.last_timestamp = current_timestamp;
-        // }
-        // self.seconds_per_liquidity_outside = pool
-        //     .seconds_per_liquidity_global
-        //     .unchecked_sub(self.seconds_per_liquidity_outside);
         pool.last_timestamp = current_timestamp;
 
         // When going to higher tick net_liquidity should be added and for going lower subtracted

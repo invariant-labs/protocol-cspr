@@ -147,12 +147,12 @@ fn test_add_multiple_positions() {
     // Remove middle position
     {
         let position_index_to_remove = 2;
-        let positions_list_before = invariant.get_all_positions();
+        let positions_list_before = invariant.get_all_positions(positions_owner);
         let last_position = positions_list_before[positions_list_before.len() - 1];
 
         invariant.remove_position(position_index_to_remove).unwrap();
 
-        let positions_list_after = invariant.get_all_positions();
+        let positions_list_after = invariant.get_all_positions(positions_owner);
         let tested_position = positions_list_after[position_index_to_remove as usize];
 
         // Last position should be at removed index
@@ -179,7 +179,7 @@ fn test_add_multiple_positions() {
     }
     // Add position in place of the removed one
     {
-        let positions_list_before = invariant.get_all_positions();
+        let positions_list_before = invariant.get_all_positions(positions_owner);
 
         invariant
             .create_position(
@@ -192,35 +192,35 @@ fn test_add_multiple_positions() {
             )
             .unwrap();
 
-        let positions_list_after = invariant.get_all_positions();
+        let positions_list_after = invariant.get_all_positions(positions_owner);
         assert_eq!(positions_list_before.len() + 1, positions_list_after.len());
     }
     // Remove last position
     {
-        let last_position_index_before = invariant.get_all_positions().len() - 1;
+        let last_position_index_before = invariant.get_all_positions(positions_owner).len() - 1;
 
         invariant
             .remove_position(last_position_index_before as u32)
             .unwrap();
 
-        let last_position_index_after = invariant.get_all_positions().len() - 1;
+        let last_position_index_after = invariant.get_all_positions(positions_owner).len() - 1;
 
         assert_eq!(last_position_index_before - 1, last_position_index_after)
     }
     // Remove all positions
     {
-        let last_position_index = invariant.get_all_positions().len();
+        let last_position_index = invariant.get_all_positions(positions_owner).len();
 
         for i in (0..last_position_index).rev() {
             invariant.remove_position(i as u32).unwrap();
         }
 
-        let list_length = invariant.get_all_positions().len();
+        let list_length = invariant.get_all_positions(positions_owner).len();
         assert_eq!(list_length, 0);
     }
     // Add position to cleared list
     {
-        let list_length_before = invariant.get_all_positions().len();
+        let list_length_before = invariant.get_all_positions(positions_owner).len();
 
         invariant
             .create_position(
@@ -232,7 +232,7 @@ fn test_add_multiple_positions() {
                 SqrtPrice::max_instance(),
             )
             .unwrap();
-        let list_length_after = invariant.get_all_positions().len();
+        let list_length_after = invariant.get_all_positions(positions_owner).len();
         assert_eq!(list_length_after, list_length_before + 1);
     };
 }
@@ -333,12 +333,12 @@ fn test_only_owner_can_modify_position_list() {
     // Remove middle position
     {
         let position_index_to_remove = 2;
-        let positions_list_before = invariant.get_all_positions();
+        let positions_list_before = invariant.get_all_positions(positions_owner);
         let last_position = positions_list_before[positions_list_before.len() - 1];
 
         invariant.remove_position(position_index_to_remove).unwrap();
 
-        let positions_list_after = invariant.get_all_positions();
+        let positions_list_after = invariant.get_all_positions(positions_owner);
         let tested_position = positions_list_after[position_index_to_remove as usize];
 
         // Last position should be at removed index
@@ -346,7 +346,7 @@ fn test_only_owner_can_modify_position_list() {
     }
     // Add position in place of the removed one
     {
-        let positions_list_before = invariant.get_all_positions();
+        let positions_list_before = invariant.get_all_positions(positions_owner);
 
         invariant
             .create_position(
@@ -359,12 +359,12 @@ fn test_only_owner_can_modify_position_list() {
             )
             .unwrap();
 
-        let positions_list_after = invariant.get_all_positions();
+        let positions_list_after = invariant.get_all_positions(positions_owner);
         assert_eq!(positions_list_before.len() + 1, positions_list_after.len());
     }
     // Remove last position
     {
-        let last_position_index_before = invariant.get_all_positions().len() - 1;
+        let last_position_index_before = invariant.get_all_positions(positions_owner).len() - 1;
 
         let unauthorized_user = test_env::get_account(1);
         test_env::set_caller(unauthorized_user);
@@ -429,7 +429,7 @@ fn test_transfer_position_ownership() {
                 SqrtPrice::max_instance(),
             )
             .unwrap();
-        let list_length = invariant.get_all_positions().len();
+        let list_length = invariant.get_all_positions(positions_owner).len();
 
         assert_eq!(list_length, 1)
     }
@@ -471,11 +471,13 @@ fn test_transfer_position_ownership() {
     // Transfer first position
     {
         let transferred_index = 0;
-        let owner_list_before = invariant.get_all_positions();
+        let owner_list_before = invariant.get_all_positions(positions_owner);
         test_env::set_caller(recipient);
-        let recipient_list_before = invariant.get_all_positions();
+        let recipient_list_before = invariant.get_all_positions(recipient);
         test_env::set_caller(positions_owner);
-        let removed_position = invariant.get_position(transferred_index).unwrap();
+        let removed_position = invariant
+            .get_position(positions_owner, transferred_index)
+            .unwrap();
         let last_position_before = owner_list_before[owner_list_before.len() - 1];
 
         invariant
@@ -483,11 +485,15 @@ fn test_transfer_position_ownership() {
             .unwrap();
 
         test_env::set_caller(recipient);
-        let recipient_position = invariant.get_position(transferred_index).unwrap();
-        let recipient_list_after = invariant.get_all_positions();
+        let recipient_position = invariant
+            .get_position(recipient, transferred_index)
+            .unwrap();
+        let recipient_list_after = invariant.get_all_positions(recipient);
         test_env::set_caller(positions_owner);
-        let owner_first_position_after = invariant.get_position(transferred_index).unwrap();
-        let owner_list_after = invariant.get_all_positions();
+        let owner_first_position_after = invariant
+            .get_position(positions_owner, transferred_index)
+            .unwrap();
+        let owner_list_after = invariant.get_all_positions(positions_owner);
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
         assert_eq!(owner_list_before.len() - 1, owner_list_after.len());
@@ -505,9 +511,9 @@ fn test_transfer_position_ownership() {
     // Transfer middle position
     {
         let transferred_index = 1;
-        let owner_list_before = invariant.get_all_positions();
+        let owner_list_before = invariant.get_all_positions(positions_owner);
         test_env::set_caller(recipient);
-        let recipient_list_before = invariant.get_all_positions();
+        let recipient_list_before = invariant.get_all_positions(recipient);
         let last_position_before = owner_list_before[owner_list_before.len() - 1];
 
         test_env::set_caller(positions_owner);
@@ -515,11 +521,13 @@ fn test_transfer_position_ownership() {
             .transfer_position(transferred_index, recipient)
             .unwrap();
 
-        let owner_list_after = invariant.get_all_positions();
+        let owner_list_after = invariant.get_all_positions(positions_owner);
         test_env::set_caller(recipient);
-        let recipient_list_after = invariant.get_all_positions();
+        let recipient_list_after = invariant.get_all_positions(recipient);
         test_env::set_caller(positions_owner);
-        let owner_first_position_after = invariant.get_position(transferred_index).unwrap();
+        let owner_first_position_after = invariant
+            .get_position(positions_owner, transferred_index)
+            .unwrap();
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
         assert_eq!(owner_list_before.len() - 1, owner_list_after.len());
@@ -532,18 +540,22 @@ fn test_transfer_position_ownership() {
     }
     // Transfer last position
     {
-        let owner_list_before = invariant.get_all_positions();
+        let owner_list_before = invariant.get_all_positions(positions_owner);
         let transferred_index = (owner_list_before.len() - 1) as u32;
-        let removed_position = invariant.get_position(transferred_index).unwrap();
+        let removed_position = invariant
+            .get_position(positions_owner, transferred_index)
+            .unwrap();
 
         invariant
             .transfer_position(transferred_index, recipient)
             .unwrap();
 
         test_env::set_caller(recipient);
-        let recipient_list_after = invariant.get_all_positions();
+        let recipient_list_after = invariant.get_all_positions(recipient);
         let recipient_position_index = (recipient_list_after.len() - 1) as u32;
-        let recipient_position = invariant.get_position(recipient_position_index).unwrap();
+        let recipient_position = invariant
+            .get_position(recipient, recipient_position_index)
+            .unwrap();
 
         assert!(positions_equals(removed_position, recipient_position));
     }
@@ -551,20 +563,24 @@ fn test_transfer_position_ownership() {
     // Clear position
     {
         let transferred_index = 0;
-        let recipient_list_before = invariant.get_all_positions();
+        let recipient_list_before = invariant.get_all_positions(recipient);
         test_env::set_caller(positions_owner);
-        let removed_position = invariant.get_position(transferred_index).unwrap();
+        let removed_position = invariant
+            .get_position(positions_owner, transferred_index)
+            .unwrap();
 
         invariant
             .transfer_position(transferred_index, recipient)
             .unwrap();
 
         test_env::set_caller(recipient);
-        let recipient_list_after = invariant.get_all_positions();
+        let recipient_list_after = invariant.get_all_positions(recipient);
         let recipient_position_index = (recipient_list_after.len() - 1) as u32;
-        let recipient_position = invariant.get_position(recipient_position_index).unwrap();
+        let recipient_position = invariant
+            .get_position(recipient, recipient_position_index)
+            .unwrap();
         test_env::set_caller(positions_owner);
-        let owner_list_after = invariant.get_all_positions();
+        let owner_list_after = invariant.get_all_positions(positions_owner);
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() + 1);
         assert_eq!(0, owner_list_after.len());
@@ -576,10 +592,12 @@ fn test_transfer_position_ownership() {
     // Get back position
     {
         let transferred_index = 0;
-        let owner_list_before = invariant.get_all_positions();
+        let owner_list_before = invariant.get_all_positions(positions_owner);
         test_env::set_caller(recipient);
-        let recipient_list_before = invariant.get_all_positions();
-        let removed_position = invariant.get_position(transferred_index).unwrap();
+        let recipient_list_before = invariant.get_all_positions(recipient);
+        let removed_position = invariant
+            .get_position(recipient, transferred_index)
+            .unwrap();
         let last_position_before = recipient_list_before[recipient_list_before.len() - 1];
 
         invariant
@@ -587,13 +605,17 @@ fn test_transfer_position_ownership() {
             .unwrap();
 
         test_env::set_caller(positions_owner);
-        let owner_list_after = invariant.get_all_positions();
+        let owner_list_after = invariant.get_all_positions(positions_owner);
         test_env::set_caller(recipient);
-        let recipient_list_after = invariant.get_all_positions();
-        let recipient_first_position_after = invariant.get_position(transferred_index).unwrap();
+        let recipient_list_after = invariant.get_all_positions(recipient);
+        let recipient_first_position_after = invariant
+            .get_position(recipient, transferred_index)
+            .unwrap();
 
         test_env::set_caller(positions_owner);
-        let owner_new_position = invariant.get_position(transferred_index).unwrap();
+        let owner_new_position = invariant
+            .get_position(positions_owner, transferred_index)
+            .unwrap();
 
         assert_eq!(recipient_list_after.len(), recipient_list_before.len() - 1);
         assert_eq!(owner_list_before.len() + 1, owner_list_after.len());
@@ -665,7 +687,7 @@ fn test_only_owner_can_transfer_position() {
                 SqrtPrice::max_instance(),
             )
             .unwrap();
-        let list_length = invariant.get_all_positions().len();
+        let list_length = invariant.get_all_positions(position_owner).len();
 
         assert_eq!(list_length, 1)
     }
@@ -775,7 +797,7 @@ fn test_multiple_positions_on_same_tick() {
             )
             .unwrap();
 
-        let first_position = invariant.get_position(0).unwrap();
+        let first_position = invariant.get_position(positions_owner, 0).unwrap();
 
         invariant
             .create_position(
@@ -788,7 +810,7 @@ fn test_multiple_positions_on_same_tick() {
             )
             .unwrap();
 
-        let second_position = invariant.get_position(1).unwrap();
+        let second_position = invariant.get_position(positions_owner, 1).unwrap();
 
         invariant
             .create_position(
@@ -801,7 +823,7 @@ fn test_multiple_positions_on_same_tick() {
             )
             .unwrap();
 
-        let third_position = invariant.get_position(2).unwrap();
+        let third_position = invariant.get_position(positions_owner, 2).unwrap();
 
         assert!(first_position.lower_tick_index == second_position.lower_tick_index);
         assert!(first_position.upper_tick_index == second_position.upper_tick_index);
@@ -877,7 +899,7 @@ fn test_multiple_positions_on_same_tick() {
             )
             .unwrap();
 
-        let first_position = invariant.get_position(3).unwrap();
+        let first_position = invariant.get_position(positions_owner, 3).unwrap();
 
         // Check first position
         assert!(first_position.pool_key == pool_key);
@@ -901,7 +923,7 @@ fn test_multiple_positions_on_same_tick() {
             )
             .unwrap();
 
-        let second_position = invariant.get_position(4).unwrap();
+        let second_position = invariant.get_position(positions_owner, 4).unwrap();
 
         // Check second position
         assert!(second_position.pool_key == pool_key);
@@ -924,7 +946,7 @@ fn test_multiple_positions_on_same_tick() {
             )
             .unwrap();
 
-        let third_position = invariant.get_position(5).unwrap();
+        let third_position = invariant.get_position(positions_owner, 5).unwrap();
 
         // Check third position
         assert!(third_position.pool_key == pool_key);
