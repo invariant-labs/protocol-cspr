@@ -128,7 +128,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: odra
-          args: test -b casper
+          args: test -b casper -- --features base-e2e
 
   e2e_time_consuming:
     name: Time consuming e2e tests Casper backend
@@ -172,7 +172,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: odra
-          args: test -b casper -- --features time-consuming
+          args: test -b casper -- --features time-consuming-e2e
 
   build:
     name: Build contract
