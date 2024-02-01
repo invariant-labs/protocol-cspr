@@ -1,17 +1,30 @@
+import { CLPublicKey } from "casper-js-sdk";
 import { Client } from "./client";
-import { NETWORK_NAME, NODE_ADDRESS } from "./consts";
-import { getWasm, parseAccountKeys } from "./utils";
+import { KEYS_ALGO, KEYS_PATH, NETWORK_NAME, NODE_ADDRESS } from "./consts";
+import {
+  createAccountKeys,
+  getAccountInfo,
+  getWasm,
+  parseAccountKeys,
+  sleep,
+} from "./utils";
 
 const main = async () => {
   console.log("Init SDK!");
 
-  const OWNER_KEYS_PATH = "./casper_keys";
-  const KEYS_ALGO = "ed25519";
-
-  const CONTRACT_OWNER = parseAccountKeys(OWNER_KEYS_PATH, KEYS_ALGO);
-
+  const accountAddress = createAccountKeys();
+  const parsedAddress = parseAccountKeys(KEYS_PATH, KEYS_ALGO);
   const client = new Client(NODE_ADDRESS, NETWORK_NAME);
   console.log(client);
+
+  await sleep(10000);
+
+  const accountInfo = await getAccountInfo(
+    NODE_ADDRESS,
+    CLPublicKey.fromHex(accountAddress)
+  );
+
+  console.log(accountInfo);
 
   const invariantWasm = getWasm("invariant");
   const contractName = "Invariant";
@@ -19,9 +32,10 @@ const main = async () => {
   const installDeploy = client.install(
     contractName,
     "10000000000000",
-    CONTRACT_OWNER.publicKey,
+    // CLPublicKey.fromHex(accountAddress),
+    parsedAddress.publicKey,
     invariantWasm,
-    [CONTRACT_OWNER]
+    [parsedAddress]
   );
 
   console.log(`... contract installation deploy`);
@@ -57,6 +71,7 @@ const main = async () => {
   //   console.log(
   //     `----------------------------------------------------------------------------------------------------`
   //   );
+  process.exit(0);
 };
 
 main();
