@@ -17,7 +17,7 @@ fn test_create_pool() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -40,7 +40,7 @@ fn test_create_pool_with_same_tokens() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -61,7 +61,7 @@ fn test_create_pool_x_to_y_and_y_to_x() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -85,7 +85,7 @@ fn test_create_pool_fee_tier_not_added() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
@@ -102,7 +102,7 @@ fn test_create_pool_init_tick_not_divided_by_tick_spacing() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 3).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -123,7 +123,7 @@ fn test_create_pool_init_sqrt_price_minimal_difference_from_tick() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -147,7 +147,7 @@ fn test_create_pool_init_sqrt_price_has_closer_init_tick() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -181,7 +181,7 @@ fn test_create_pool_init_sqrt_price_has_closer_init_tick_spacing_over_one() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 3).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();

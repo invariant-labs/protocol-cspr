@@ -19,7 +19,7 @@ fn test_swap_route() {
     // Init basic dex and tokens
     let mint_amount = U256::from(10u128.pow(10));
     let fee = Percentage::from_scale(1, 2);
-    let mut invariant = InvariantDeployer::init(fee);
+    let mut invariant = InvariantDeployer::init(fee.get());
     let token_0 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
     let token_1 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
     let token_2 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);

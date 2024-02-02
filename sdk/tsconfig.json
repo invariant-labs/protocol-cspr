@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
+    "module": "CommonJS",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
     "rootDir": "./",
     "outDir": "./target",
-    "moduleResolution": "bundler",
+
+    "resolveJsonModule": true,
     "baseUrl": "./"
   }
 }

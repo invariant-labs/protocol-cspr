@@ -9,7 +9,7 @@ use odra::types::U128;
 fn test_change_protocol_fee() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let protocol_fee = invariant.get_protocol_fee();
     assert_eq!(protocol_fee, Percentage::new(U128::from(0)));
@@ -25,7 +25,7 @@ fn test_change_protocol_fee() {
 fn test_change_protocol_fee_not_admin() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let protocol_fee = invariant.get_protocol_fee();
     assert_eq!(protocol_fee, Percentage::new(U128::from(0)));

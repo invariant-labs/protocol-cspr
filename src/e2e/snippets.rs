@@ -5,10 +5,11 @@ use crate::{
     InvariantDeployer, InvariantRef,
 };
 use alloc::string::String;
+use decimal::*;
 use odra::types::U256;
 
 pub fn init(fee: Percentage, supply: U256) -> (InvariantRef, Erc20Ref, Erc20Ref) {
-    let invariant = InvariantDeployer::init(fee);
+    let invariant = InvariantDeployer::init(fee.get());
     let token_0 = Erc20Deployer::init(String::from(""), String::from(""), 0, &Some(supply));
     let token_1 = Erc20Deployer::init(String::from(""), String::from(""), 0, &Some(supply));
     if token_0.address() < token_1.address() {

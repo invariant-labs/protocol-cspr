@@ -290,7 +290,7 @@ fn test_cross_both_side_not_cross_case() {
     let mint_amount = U256::from(10u128.pow(10));
     let mut token_x = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
     let mut token_y = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2));
+    let mut invariant = InvariantDeployer::init(Percentage::from_scale(1, 2).get());
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
