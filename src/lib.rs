@@ -3,8 +3,8 @@
 extern crate alloc;
 
 pub mod contracts;
+pub mod erc20;
 pub mod math;
-pub mod token;
 
 use odra_modules::erc20::Erc20Ref;
 
