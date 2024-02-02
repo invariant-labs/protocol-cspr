@@ -329,7 +329,8 @@ impl Invariant {
 #[odra::module]
 impl Entrypoints for Invariant {
     #[odra(init)]
-    pub fn init(&mut self, protocol_fee: Percentage) {
+    pub fn init(&mut self, fee: U128) {
+        let protocol_fee = Percentage::new(fee);
         let caller = contract_env::caller();
 
         self.pool_keys.set(PoolKeys::default());
