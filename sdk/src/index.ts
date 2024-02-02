@@ -1,7 +1,7 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { ALICE, NETWORK_NAME, NETWORK_URL } from "./consts";
 import { Invariant } from "./invariant";
-import { getAccountInfo } from "./utils";
+import { getAccountInfo, getDeploy } from "./utils";
 
 const main = async () => {
   console.log("Init SDK!");
@@ -12,7 +12,10 @@ const main = async () => {
       await invariant.casperClient.balanceOfByPublicKey(ALICE.publicKey);
     console.log(aliceBalance.toBigInt());
 
-    await invariant.deploy(ALICE);
+    const txHash = await invariant.deploy(ALICE);
+
+    const deploy = await getDeploy(NETWORK_URL, txHash);
+    console.log(deploy);
 
     const accountInfo = await getAccountInfo(NETWORK_URL, ALICE.publicKey);
     console.log(accountInfo);
@@ -21,10 +24,7 @@ const main = async () => {
       (i: any) => i.name === "invariant"
     )?.key;
 
-    // const contractHash = `hash-${invariant.contract.contractHash}`;
-
-    // console.log(contractHash);
-    // invariant.contract.setContractHash(contractHash);
+    invariant.contract.setContractHash(invtHash);
 
     // const args = RuntimeArgs.fromMap({});
     // const query = invariant.contract.callEntrypoint(
@@ -32,7 +32,7 @@ const main = async () => {
     //   args,
     //   ALICE.publicKey,
     //   NETWORK_NAME,
-    //   "1000000000000000", // 1 CSPR (10^9 Motes)
+    //   "1000000000000", // 1 CSPR (10^9 Motes)
     //   [ALICE]
     // );
     // console.log(await invariant.casperClient.putDeploy(query));

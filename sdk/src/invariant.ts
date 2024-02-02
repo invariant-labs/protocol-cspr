@@ -29,7 +29,7 @@ export class Invariant {
     ]);
     const runtimeArguments = RuntimeArgs.fromMap({
       odra_cfg_package_hash_key_name: CLValueBuilder.string("invariant"),
-      odra_cfg_allow_key_override: CLValueBuilder.bool(false),
+      odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string("init"),
       fee: CLValueBuilder.u128(0),
@@ -47,12 +47,10 @@ export class Invariant {
     await this.rpc.deploy(deploy);
 
     await sleep(2500);
-    let result = await this.rpc.waitForDeploy(deploy, 100000);
-    console.log("Result = ", result);
-    console.log("Exec result = ", result.execution_results[0].result);
-    // const txHash = await this.casperClient.putDeploy(deploy);
-
-    return "";
+    const deployResult = await this.rpc.waitForDeploy(deploy, 100000);
+    console.log(deployResult.execution_results[0]);
+    console.log(deployResult.deploy.hash);
+    return deployResult.deploy.hash;
   }
 
   install(
