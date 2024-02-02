@@ -29,7 +29,7 @@ fn test_remove_position_from_empty_list() {
         0,
         &U256::from(initial_amount),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::from_scale(6, 3));
+    let mut invariant = InvariantDeployer::init(Percentage::from_scale(6, 3).get());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 3).unwrap();
 
@@ -71,7 +71,7 @@ fn test_add_multiple_positions() {
         0,
         &U256::from(initial_balance),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
@@ -257,7 +257,7 @@ fn test_only_owner_can_modify_position_list() {
         0,
         &U256::from(initial_balance),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
@@ -393,7 +393,7 @@ fn test_transfer_position_ownership() {
         0,
         &U256::from(initial_balance),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
@@ -651,7 +651,7 @@ fn test_only_owner_can_transfer_position() {
         0,
         &U256::from(initial_balance),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
@@ -755,7 +755,7 @@ fn test_multiple_positions_on_same_tick() {
         0,
         &U256::from(initial_balance),
     );
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 10).unwrap();
 

@@ -1,6 +1,4 @@
-use crate::math::percentage::Percentage;
 use crate::InvariantDeployer;
-use decimal::*;
 use odra::test_env;
 use odra::types::U128;
 
@@ -9,5 +7,5 @@ use odra::types::U128;
 fn init_invariant() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let _invariant = InvariantDeployer::init(Percentage::new(U128::from(10)));
+    let _invariant = InvariantDeployer::init(U128::from(10));
 }
