@@ -16,7 +16,7 @@ fn test_change_fee_reciever() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(5, 1), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
@@ -48,7 +48,7 @@ fn test_not_admin_change_fee_reciever() {
 
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
-    let mut invariant = InvariantDeployer::init(Percentage::new(U128::from(0)));
+    let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(5, 1), 1).unwrap();
     invariant.add_fee_tier(fee_tier).unwrap();
