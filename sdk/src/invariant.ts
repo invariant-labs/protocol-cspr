@@ -2,18 +2,21 @@ import {
   CLPublicKey,
   CLValueBuilder,
   CasperClient,
+  CasperServiceByJsonRPC,
   Contracts,
   DeployUtil,
   Keys,
   RuntimeArgs,
 } from "casper-js-sdk";
-import { getWasm } from "./utils";
+import { getWasm, sleep } from "./utils";
 
 export class Invariant {
+  rpc: CasperServiceByJsonRPC;
   casperClient: CasperClient;
   contract: Contracts.Contract;
 
   constructor(public nodeAddress: string, public networkName: string) {
+    this.rpc = new CasperServiceByJsonRPC(nodeAddress);
     this.casperClient = new CasperClient(nodeAddress);
     this.contract = new Contracts.Contract(this.casperClient);
   }
@@ -22,21 +25,31 @@ export class Invariant {
     const wasm = getWasm("invariant");
 
     const runtimeArguments = RuntimeArgs.fromMap({
-      fee: CLValueBuilder.u256(100_000_000),
+      odra_cfg_package_hash_key_name: CLValueBuilder.string("invariant"),
+      odra_cfg_allow_key_override: CLValueBuilder.bool(false),
+      odra_cfg_is_upgradable: CLValueBuilder.bool(true),
+      odra_cfg_constructor: CLValueBuilder.string("init"),
+      protocol_fee: CLValueBuilder.u128(100_000_000),
     });
 
-    const deploy = this.install(
+    const deploy = this.contract.install(
       wasm,
       runtimeArguments,
-      "10000000000",
+      "10000000000000",
       signer.publicKey,
       "casper-net-1",
       [signer]
     );
 
-    const txHash = await this.casperClient.putDeploy(deploy);
+    await this.rpc.deploy(deploy);
 
-    return txHash;
+    await sleep(2500);
+    let result = await this.rpc.waitForDeploy(deploy, 100000);
+    console.log("Result = ", result);
+    console.log("Exec result = ", result.execution_results[0].result);
+    // const txHash = await this.casperClient.putDeploy(deploy);
+
+    return "";
   }
 
   install(

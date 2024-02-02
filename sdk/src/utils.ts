@@ -19,7 +19,7 @@ export const getWasm = (fileName: "invariant" | "token"): Uint8Array => {
 
 export const getDeploy = async (NODE_URL: string, deployHash: string) => {
   const client = new CasperClient(NODE_URL);
-  await sleep(10000);
+  await sleep(1000);
   console.log("...... Casper client created ......");
   let i = 300;
   let counter = 1;
