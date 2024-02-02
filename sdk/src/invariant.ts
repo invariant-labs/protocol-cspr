@@ -8,7 +8,7 @@ import {
   Keys,
   RuntimeArgs,
 } from "casper-js-sdk";
-import { getAccountInfo, getWasm, sleep } from "./utils";
+import { getWasm, sleep } from "./utils";
 
 export class Invariant {
   rpc: CasperServiceByJsonRPC;
@@ -24,19 +24,15 @@ export class Invariant {
   async deploy(signer: Keys.AsymmetricKey): Promise<string> {
     const wasm = getWasm("invariant");
 
-    const protocolFeeBytes = new Uint8Array([
-      10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    ]);
-
     const runtimeArguments = RuntimeArgs.fromMap({
       odra_cfg_package_hash_key_name: CLValueBuilder.string("invariant"),
       odra_cfg_allow_key_override: CLValueBuilder.bool(false),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string("init"),
-      protocol_fee: CLValueBuilder.byteArray(protocolFeeBytes),
+      protocol_fee: CLValueBuilder.u128(100_000_000),
     });
 
-    const deploy = this.install(
+    const deploy = this.contract.install(
       wasm,
       runtimeArguments,
       "10000000000000",
@@ -46,12 +42,14 @@ export class Invariant {
     );
 
     await this.rpc.deploy(deploy);
-    await sleep(2500);
-    await this.rpc.waitForDeploy(deploy, 100000);
 
-    const txHash = await this.casperClient.putDeploy(deploy);
     await sleep(2500);
-    return txHash;
+    let result = await this.rpc.waitForDeploy(deploy, 100000);
+    console.log("Result = ", result);
+    console.log("Exec result = ", result.execution_results[0].result);
+    // const txHash = await this.casperClient.putDeploy(deploy);
+
+    return "";
   }
 
   install(
@@ -71,18 +69,5 @@ export class Invariant {
     const signedDeploy = deploy.sign(signingKeys);
 
     return signedDeploy;
-  }
-
-  async getContractHash(
-    network: string,
-    signer: Keys.AsymmetricKey
-  ): Promise<string> {
-    const accountInfo = await getAccountInfo(network, signer.publicKey);
-    console.log(accountInfo);
-
-    const invtHash = accountInfo!.namedKeys.find(
-      (i: any) => i.name === "invariant"
-    )?.key;
-    return invtHash;
   }
 }
