@@ -13,7 +13,13 @@ use traceable_result::*;
 
 #[decimal(28, U256)]
 #[derive(OdraType, Default, Debug, Copy, PartialEq, Eq, PartialOrd)]
+#[cfg_attr(
+    feature = "wasm",
+    derive(serde::Serialize, serde::Deserialize, tsify::Tsify),
+    tsify(into_wasm_abi, from_wasm_abi)
+)]
 pub struct FeeGrowth {
+    #[cfg_attr(feature = "wasm", tsify(type = "bigint"))]
     pub v: U128,
 }
 
