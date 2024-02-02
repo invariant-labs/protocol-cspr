@@ -17,11 +17,16 @@ export const getWasm = (fileName: "invariant" | "token"): Uint8Array => {
   );
 };
 
-export const getDeploy = async (nodeURL: string, deployHash: string) => {
-  const client = new CasperClient(nodeURL);
+export const getDeploy = async (NODE_URL: string, deployHash: string) => {
+  const client = new CasperClient(NODE_URL);
+  await sleep(10000);
+  console.log("...... Casper client created ......");
   let i = 300;
-  while (i !== 0) {
+  let counter = 1;
+  while (i != 0) {
     const [deploy, raw] = await client.getDeploy(deployHash);
+    console.log("...... Checking deployment status " + counter + "......");
+    counter += 1;
     if (raw.execution_results.length !== 0) {
       // @ts-ignore
       if (raw.execution_results[0].result.Success) {
@@ -52,25 +57,6 @@ export const getAccountInfo: any = async (
   const accountHash = publicKey.toAccountHashStr();
   const blockState = await client.getBlockState(stateRootHash, accountHash, []);
   return blockState.Account;
-};
-
-/**
- * Returns a value under an on-chain account's storage.
- * @param accountInfo - On-chain account's info.
- * @param namedKey - A named key associated with an on-chain account.
- */
-export const getAccountNamedKeyValue = (accountInfo: any, namedKey: string) => {
-  const found = accountInfo.namedKeys.find((i: any) => i.name === namedKey);
-  if (found) {
-    return found.key;
-  }
-  return undefined;
-};
-
-export const printHeader = (text: string) => {
-  console.log(`******************************************`);
-  console.log(`* ${text} *`);
-  console.log(`******************************************`);
 };
 
 export const parseAccountKeys = (
