@@ -1,43 +1,16 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import {
-  CLValueBuilder,
-  CasperClient,
-  Contracts,
-  RuntimeArgs,
-} from "casper-js-sdk";
 import { ALICE, NETWORK_NAME, NETWORK_URL } from "./consts";
 import { Invariant } from "./invariant";
-import { getAccountInfo, getWasm } from "./utils";
+import { getAccountInfo } from "./utils";
 
 const main = async () => {
   console.log("Init SDK!");
 
-  const casperClient = new CasperClient(NETWORK_URL);
-  const contract = new Contracts.Contract(casperClient);
-
-  const wasm = getWasm("invariant");
-  const runtimeArguments = RuntimeArgs.fromMap({
-    fee: CLValueBuilder.u256(100_000_000),
-  });
-
-  const deploy = contract.install(
-    wasm,
-    runtimeArguments,
-    "10000000000",
-    ALICE.publicKey,
-    NETWORK_NAME,
-    [ALICE]
-  );
-
-  await casperClient.putDeploy(deploy);
-
-  // ALICE.
-
   {
     const invariant = new Invariant(NETWORK_URL, NETWORK_NAME);
-    const AliceBalance: BigNumber =
+    const aliceBalance: BigNumber =
       await invariant.casperClient.balanceOfByPublicKey(ALICE.publicKey);
-    console.log(AliceBalance.toBigInt());
+    console.log(aliceBalance.toBigInt());
 
     await invariant.deploy(ALICE);
 
@@ -45,13 +18,13 @@ const main = async () => {
     console.log(accountInfo);
 
     const invtHash = accountInfo!.namedKeys.find(
-      (i: any) => i.name === "erc20_token_contract"
+      (i: any) => i.name === "invariant"
     )?.key;
 
-    const contractHash = `hash-${invariant.contract.contractHash}`;
+    // const contractHash = `hash-${invariant.contract.contractHash}`;
 
-    console.log(contractHash);
-    invariant.contract.setContractHash(contractHash);
+    // console.log(contractHash);
+    // invariant.contract.setContractHash(contractHash);
 
     // const args = RuntimeArgs.fromMap({});
     // const query = invariant.contract.callEntrypoint(

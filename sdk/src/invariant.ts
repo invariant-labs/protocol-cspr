@@ -24,15 +24,18 @@ export class Invariant {
   async deploy(signer: Keys.AsymmetricKey): Promise<string> {
     const wasm = getWasm("invariant");
 
+    const bytes = new Uint8Array([
+      10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]);
     const runtimeArguments = RuntimeArgs.fromMap({
       odra_cfg_package_hash_key_name: CLValueBuilder.string("invariant"),
       odra_cfg_allow_key_override: CLValueBuilder.bool(false),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string("init"),
-      protocol_fee: CLValueBuilder.u128(100_000_000),
+      fee: CLValueBuilder.u128(0),
     });
 
-    const deploy = this.contract.install(
+    const deploy = this.install(
       wasm,
       runtimeArguments,
       "10000000000000",
