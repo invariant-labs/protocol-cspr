@@ -6,47 +6,47 @@ import {
   Contracts,
   DeployUtil,
   Keys,
-  RuntimeArgs,
-} from "casper-js-sdk";
-import { getWasm, sleep } from "./utils";
+  RuntimeArgs
+} from 'casper-js-sdk'
+import { getWasm, sleep } from './utils'
 
 export class Invariant {
-  rpc: CasperServiceByJsonRPC;
-  casperClient: CasperClient;
-  contract: Contracts.Contract;
+  rpc: CasperServiceByJsonRPC
+  casperClient: CasperClient
+  contract: Contracts.Contract
 
   constructor(public nodeAddress: string, public networkName: string) {
-    this.rpc = new CasperServiceByJsonRPC(nodeAddress);
-    this.casperClient = new CasperClient(nodeAddress);
-    this.contract = new Contracts.Contract(this.casperClient);
+    this.rpc = new CasperServiceByJsonRPC(nodeAddress)
+    this.casperClient = new CasperClient(nodeAddress)
+    this.contract = new Contracts.Contract(this.casperClient)
   }
 
   async deploy(signer: Keys.AsymmetricKey): Promise<string> {
-    const wasm = getWasm("invariant");
+    const wasm = getWasm('invariant')
 
     const runtimeArguments = RuntimeArgs.fromMap({
-      odra_cfg_package_hash_key_name: CLValueBuilder.string("invariant"),
+      odra_cfg_package_hash_key_name: CLValueBuilder.string('invariant'),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
-      odra_cfg_constructor: CLValueBuilder.string("init"),
-      fee: CLValueBuilder.u128(0),
-    });
+      odra_cfg_constructor: CLValueBuilder.string('init'),
+      fee: CLValueBuilder.u128(0)
+    })
 
     const deploy = this.install(
       wasm,
       runtimeArguments,
-      "10000000000000",
+      '10000000000000',
       signer.publicKey,
-      "casper-net-1",
+      'casper-net-1',
       [signer]
-    );
+    )
 
-    await this.rpc.deploy(deploy);
+    await this.rpc.deploy(deploy)
 
-    await sleep(2500);
-    const deployResult = await this.rpc.waitForDeploy(deploy, 100000);
+    await sleep(2500)
+    const deployResult = await this.rpc.waitForDeploy(deploy, 100000)
 
-    return deployResult.deploy.hash;
+    return deployResult.deploy.hash
   }
 
   install(
@@ -61,11 +61,11 @@ export class Invariant {
       new DeployUtil.DeployParams(sender, chainName),
       DeployUtil.ExecutableDeployItem.newModuleBytes(wasm, args),
       DeployUtil.standardPayment(paymentAmount)
-    );
+    )
 
-    const signedDeploy = deploy.sign(signingKeys);
+    const signedDeploy = deploy.sign(signingKeys)
 
-    return signedDeploy;
+    return signedDeploy
   }
 
   async getContractHash(
@@ -73,22 +73,16 @@ export class Invariant {
     signer: Keys.AsymmetricKey,
     contractName: string
   ): Promise<string> {
-    const stateRootHash = await this.rpc.getStateRootHash();
-    const accountHash = signer.publicKey.toAccountHashStr();
-    const { Account } = await this.rpc.getBlockState(
-      stateRootHash,
-      accountHash,
-      []
-    );
+    const stateRootHash = await this.rpc.getStateRootHash()
+    const accountHash = signer.publicKey.toAccountHashStr()
+    const { Account } = await this.rpc.getBlockState(stateRootHash, accountHash, [])
 
-    const hash = Account!.namedKeys.find(
-      (i: any) => i.name === contractName
-    )?.key;
+    const hash = Account!.namedKeys.find((i: any) => i.name === contractName)?.key
 
     if (!hash) {
-      return "Contract not found!";
+      return 'Contract not found!'
     }
 
-    return hash;
+    return hash
   }
 }
