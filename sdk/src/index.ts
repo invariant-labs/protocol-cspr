@@ -7,7 +7,7 @@ import {
 } from "casper-js-sdk";
 import { ALICE, NETWORK_NAME, NETWORK_URL } from "./consts";
 import { Invariant } from "./invariant";
-import { getAccountInfo, getWasm } from "./utils";
+import { getWasm } from "./utils";
 
 const main = async () => {
   console.log("Init SDK!");
@@ -39,27 +39,21 @@ const main = async () => {
       await invariant.casperClient.balanceOfByPublicKey(ALICE.publicKey);
     console.log(AliceBalance.toBigInt());
 
-    await invariant.deploy(ALICE);
+    const txHash = await invariant.deploy(ALICE);
 
-    const accountInfo = await getAccountInfo(NETWORK_URL, ALICE.publicKey);
-    console.log(accountInfo);
+    // const deploy = await getDeploy(NETWORK_URL, txHash);
+    // console.log(deploy);
 
-    const invtHash = accountInfo!.namedKeys.find(
-      (i: any) => i.name === "erc20_token_contract"
-    )?.key;
-
-    const contractHash = `hash-${invariant.contract.contractHash}`;
-
-    console.log(contractHash);
-    invariant.contract.setContractHash(contractHash);
+    const invtHash = await invariant.getContractHash(NETWORK_URL, ALICE);
+    invariant.contract.setContractHash(invtHash);
 
     // const args = RuntimeArgs.fromMap({});
     // const query = invariant.contract.callEntrypoint(
-    //   "get_protocol_fee",
+    //   "getProtocolFee",
     //   args,
     //   ALICE.publicKey,
     //   NETWORK_NAME,
-    //   "1000000000000000", // 1 CSPR (10^9 Motes)
+    //   "100000000000", // 1 CSPR (10^9 Motes)
     //   [ALICE]
     // );
     // console.log(await invariant.casperClient.putDeploy(query));
