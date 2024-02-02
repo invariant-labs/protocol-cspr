@@ -32,7 +32,7 @@ export class Invariant {
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string("init"),
-      fee: CLValueBuilder.u128(0),
+      fee: CLValueBuilder.u128(bytes),
     });
 
     const deploy = this.install(
@@ -49,7 +49,7 @@ export class Invariant {
     await sleep(2500);
     const deployResult = await this.rpc.waitForDeploy(deploy, 100000);
     console.log(deployResult.execution_results[0]);
-    console.log(deployResult.deploy.hash);
+
     return deployResult.deploy.hash;
   }
 
@@ -70,5 +70,29 @@ export class Invariant {
     const signedDeploy = deploy.sign(signingKeys);
 
     return signedDeploy;
+  }
+
+  async getContractHash(
+    network: string,
+    signer: Keys.AsymmetricKey,
+    contractName: string
+  ): Promise<string> {
+    const stateRootHash = await this.rpc.getStateRootHash();
+    const accountHash = signer.publicKey.toAccountHashStr();
+    const { Account } = await this.rpc.getBlockState(
+      stateRootHash,
+      accountHash,
+      []
+    );
+
+    const hash = Account!.namedKeys.find(
+      (i: any) => i.name === contractName
+    )?.key;
+
+    if (!hash) {
+      return "Contract not found!";
+    }
+
+    return hash;
   }
 }

@@ -7,6 +7,7 @@
   "scripts": {
     "start": "npx tsc && node --experimental-wasm-modules target/src/index.js",
     "start:ts": "ts-node ./src/index.ts",
+    "wasm:strip": "cd src/contracts && wasm-strip invariant.wasm && wasm-strip token.wasm",
     "node:start": "casper-node-launcher-js node v1.5.3",
     "node:start:d": "casper-node-launcher-js node v1.5.3 --daemon",
     "node:stop": "casper-node-launcher-js stop"

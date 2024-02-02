@@ -49,13 +49,12 @@ export const getDeploy = async (NODE_URL: string, deployHash: string) => {
 };
 
 export const getAccountInfo: any = async (
-  nodeAddress: string,
-  publicKey: CLPublicKey
+  publicKey: CLPublicKey,
+  rpc: CasperServiceByJsonRPC
 ) => {
-  const client = new CasperServiceByJsonRPC(nodeAddress);
-  const stateRootHash = await client.getStateRootHash();
+  const stateRootHash = await rpc.getStateRootHash();
   const accountHash = publicKey.toAccountHashStr();
-  const blockState = await client.getBlockState(stateRootHash, accountHash, []);
+  const blockState = await rpc.getBlockState(stateRootHash, accountHash, []);
   return blockState.Account;
 };
 
@@ -105,4 +104,18 @@ export const createAccountKeys = () => {
   fs.writeFileSync(folder + "/private_key.pem", privateKeyInPem);
 
   return accountAddress;
+};
+
+export const getContractHash = async (
+  rpc: CasperServiceByJsonRPC,
+  signer: Keys.AsymmetricKey,
+  contractName: string
+): Promise<string> => {
+  const accountInfo = await getAccountInfo(signer.publicKey, rpc);
+  console.log(accountInfo);
+
+  const hash = accountInfo!.namedKeys.find(
+    (i: any) => i.name === contractName
+  )?.key;
+  return hash;
 };
