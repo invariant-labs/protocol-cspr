@@ -5,7 +5,7 @@ use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::token_amount::TokenAmount;
 use crate::FeeTier;
 use crate::SwapHop;
-use crate::{token::TokenDeployer, InvariantDeployer};
+use crate::{erc20::Erc20Deployer, InvariantDeployer};
 use alloc::string::String;
 use alloc::vec;
 use decimal::*;
@@ -17,12 +17,12 @@ fn test_swap_route() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
     // Init basic dex and tokens
-    let mint_amount = U256::from(10u128.pow(10));
+    let mint_amount = Some(U256::from(10u128.pow(10)));
     let fee = Percentage::from_scale(1, 2);
     let mut invariant = InvariantDeployer::init(fee.get());
-    let token_0 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let token_1 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let token_2 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    let token_0 = Erc20Deployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    let token_1 = Erc20Deployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    let token_2 = Erc20Deployer::init(String::from(""), String::from(""), 0, &mint_amount);
 
     let mut token_vector = [token_0, token_1, token_2];
     token_vector.sort_by(|a, b| a.address().cmp(b.address()));

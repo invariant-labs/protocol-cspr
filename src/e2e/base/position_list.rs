@@ -1,10 +1,10 @@
 use crate::contracts::{FeeTier, InvariantError, PoolKey};
 use crate::e2e::snippets::positions_equals;
+use crate::erc20::Erc20Deployer;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
 use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
-use crate::token::TokenDeployer;
 use crate::InvariantDeployer;
 use decimal::{Decimal, Factories};
 use odra::prelude::string::String;
@@ -17,17 +17,17 @@ fn test_remove_position_from_empty_list() {
     test_env::set_caller(user_without_any_positions);
 
     let initial_amount = 10u128.pow(10);
-    let token_x = TokenDeployer::init(
+    let token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_amount),
+        &Some(U256::from(initial_amount)),
     );
-    let token_y = TokenDeployer::init(
+    let token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_amount),
+        &Some(U256::from(initial_amount)),
     );
     let mut invariant = InvariantDeployer::init(Percentage::from_scale(6, 3).get());
 
@@ -59,17 +59,17 @@ fn test_add_multiple_positions() {
     let init_tick = -23028;
 
     let initial_balance = 10u128.pow(10);
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
@@ -245,17 +245,17 @@ fn test_only_owner_can_modify_position_list() {
     let init_tick = -23028;
     let initial_balance = 10u128.pow(10);
 
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
@@ -381,17 +381,17 @@ fn test_transfer_position_ownership() {
     let init_tick = -23028;
 
     let initial_balance = 10u128.pow(10);
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
@@ -639,17 +639,17 @@ fn test_only_owner_can_transfer_position() {
     let init_tick = -23028;
 
     let initial_balance = 10u128.pow(10);
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
@@ -743,17 +743,17 @@ fn test_multiple_positions_on_same_tick() {
     let init_tick = 0;
 
     let initial_balance = 100_000_000;
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(initial_balance),
+        &Some(U256::from(initial_balance)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 

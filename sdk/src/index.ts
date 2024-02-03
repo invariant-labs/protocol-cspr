@@ -1,5 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import { ALICE, NETWORK_NAME, NETWORK_URL } from './consts'
+import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
 import { getDeploy, sleep } from './utils'
 
@@ -40,6 +41,17 @@ const main = async () => {
     // );
     // console.log(await invariant.casperClient.putDeploy(query));
   }
+
+  const erc20 = new Erc20(NETWORK_URL, NETWORK_NAME)
+  const txHash = await erc20.deploy(ALICE, 'COIN', 'Coin', 6n, 1000000000000n)
+  const deploy = await getDeploy(NETWORK_URL, txHash)
+  console.log(deploy)
+
+  await sleep(2000)
+
+  const erc20Hash = await erc20.getContractHash(NETWORK_URL, ALICE, 'erc20')
+  console.log(erc20Hash)
+
   process.exit(0)
 }
 

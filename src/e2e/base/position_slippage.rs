@@ -1,11 +1,11 @@
 use crate::{
     contracts::{FeeTier, InvariantError, PoolKey},
+    erc20::Erc20Deployer,
     math::{
         liquidity::Liquidity,
         percentage::Percentage,
         sqrt_price::{calculate_sqrt_price, SqrtPrice},
     },
-    token::TokenDeployer,
     InvariantDeployer,
 };
 use alloc::string::String;
@@ -22,17 +22,17 @@ fn test_position_slippage_zero_slippage_and_inside_range() {
 
     let mint_amount = 10u128.pow(23);
 
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(mint_amount),
+        &Some(U256::from(mint_amount)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(mint_amount),
+        &Some(U256::from(mint_amount)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
@@ -137,17 +137,17 @@ fn test_position_slippage_below_range() {
 
     let mint_amount = 10u128.pow(23);
 
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(mint_amount),
+        &Some(U256::from(mint_amount)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(mint_amount),
+        &Some(U256::from(mint_amount)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
@@ -231,17 +231,17 @@ fn test_position_slippage_above_range() {
 
     let mint_amount = 10u128.pow(23);
 
-    let mut token_x = TokenDeployer::init(
+    let mut token_x = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(mint_amount),
+        &Some(U256::from(mint_amount)),
     );
-    let mut token_y = TokenDeployer::init(
+    let mut token_y = Erc20Deployer::init(
         String::from(""),
         String::from(""),
         0,
-        &U256::from(mint_amount),
+        &Some(U256::from(mint_amount)),
     );
     let mut invariant = InvariantDeployer::init(U128::from(0));
 

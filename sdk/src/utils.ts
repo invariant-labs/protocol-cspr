@@ -6,7 +6,7 @@ export const sleep = (ms: number) => {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export const getWasm = (fileName: 'invariant' | 'token'): Uint8Array => {
+export const getWasm = (fileName: 'invariant' | 'erc20'): Uint8Array => {
   return new Uint8Array(fs.readFileSync(`./src/contracts/${fileName}.wasm`, null).buffer)
 }
 
