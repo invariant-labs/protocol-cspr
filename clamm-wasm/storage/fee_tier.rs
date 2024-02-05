@@ -1,8 +1,10 @@
 use crate::errors::InvariantError;
 use crate::percentage::Percentage;
+use crate::{convert, resolve};
 use decimal::*;
 use odra::types::U128;
 use odra::OdraType;
+use wasm_bindgen::prelude::*;
 
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
@@ -37,4 +39,11 @@ impl FeeTier {
 
         Ok(Self { fee, tick_spacing })
     }
+}
+
+#[wasm_bindgen(js_name = "_newFeeTier")]
+pub fn new_fee_tier(js_fee: JsValue, js_tick_spacing: JsValue) -> Result<JsValue, JsValue> {
+    let fee: Percentage = convert!(js_fee)?;
+    let tick_spacing: u32 = convert!(js_tick_spacing)?;
+    resolve!(FeeTier::new(fee, tick_spacing))
 }

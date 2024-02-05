@@ -4,7 +4,9 @@ use traceable_result::*;
 use crate::consts::*;
 use crate::types::{liquidity::*, percentage::*, sqrt_price::*, token_amount::*};
 use crate::uints::{U384T, U448T};
+use js_sys::BigInt;
 use odra::types::U256;
+use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 use wasm_wrapper::wasm_wrapper;
 
@@ -282,7 +284,7 @@ fn get_next_sqrt_price_y_down(
     }
 }
 
-// #[wasm_wrapper]
+#[wasm_wrapper]
 pub fn calculate_amount_delta(
     current_tick_index: i32,
     current_sqrt_price: SqrtPrice,
@@ -354,7 +356,7 @@ pub fn is_enough_amount_to_change_price(
     Ok(starting_sqrt_price.ne(&next_sqrt_price))
 }
 
-// #[wasm_wrapper]
+#[wasm_wrapper]
 pub fn calculate_max_liquidity_per_tick(tick_spacing: u32) -> Liquidity {
     const MAX_TICKS_AMOUNT_SQRT_PRICE_LIMITED: u128 = 2 * MAX_TICK as u128 + 1;
     let ticks_amount_spacing_limited = MAX_TICKS_AMOUNT_SQRT_PRICE_LIMITED / tick_spacing as u128;
@@ -386,7 +388,7 @@ pub fn check_tick(tick_index: i32, tick_spacing: u32) -> TrackableResult<()> {
     Ok(())
 }
 
-// #[wasm_wrapper]
+#[wasm_wrapper]
 pub fn calculate_min_amount_out(
     expected_amount_out: TokenAmount,
     slippage: Percentage,

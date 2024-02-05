@@ -64,7 +64,7 @@ pub fn value_exported_function(
         }
         _ => {
             quote! {
-                BigInt::from(result.get())
+                BigInt::from(result.get().as_u128())
             }
         }
     };
