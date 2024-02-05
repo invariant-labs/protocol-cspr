@@ -2,10 +2,14 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { ALICE, NETWORK_NAME, NETWORK_URL } from "./consts";
 import { Invariant } from "./invariant";
 import { getDeploy, sleep } from "./utils";
-
 const main = async () => {
   console.log("Init SDK!");
-
+  // {
+  //   const sqrtPriceScale = getSqrtPriceScale();
+  //   const sqrtPriceDenominator = getSqrtPriceDenominator();
+  //   const amount: TokenAmount = { v: 100000000n };
+  //   console.log(sqrtPriceScale, sqrtPriceDenominator, amount);
+  // }
   {
     const invariant = new Invariant(NETWORK_URL, NETWORK_NAME);
     const aliceBalance: BigNumber =

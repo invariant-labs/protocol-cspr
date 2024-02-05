@@ -8,6 +8,8 @@
     "start": "npx tsc && node --experimental-wasm-modules target/src/index.js",
     "start:ts": "ts-node ./src/index.ts",
     "wasm:strip": "cd src/contracts && wasm-strip invariant.wasm && wasm-strip token.wasm",
+    "wasm:build": "cd ../clamm-wasm && wasm-pack build --out-dir ../sdk/invariant-cspr-wasm --out-name index && cd ../sdk && npm run wasm:package",
+    "wasm:package": "cd ./invariant-cspr-wasm && npm pkg set type='module'",
     "node:start": "casper-node-launcher-js node v1.5.3",
     "node:start:d": "casper-node-launcher-js node v1.5.3 --daemon",
     "node:stop": "casper-node-launcher-js stop"
@@ -16,6 +18,7 @@
     "axios": "^1.6.7",
     "casper-js-sdk": "^2.15.3",
     "chai": "^5.0.3",
+    "invariant-cspr-wasm": "file:invariant-cspr-wasm",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
@@ -23,13 +26,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "casper-node-launcher-js": "^0.0.3",
     "@ethersproject/bignumber": "^5.7.0",
-    "casper-js-sdk": "2.15.3",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
+    "casper-js-sdk": "2.15.3",
+    "casper-node-launcher-js": "^0.0.3",
     "chai": "^5.0.0",
     "eslint": "^8.56.0",
     "ts-mocha": "^10.0.0"
