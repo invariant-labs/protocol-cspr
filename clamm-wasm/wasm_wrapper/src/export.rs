@@ -64,6 +64,7 @@ pub fn value_exported_function(
         }
         _ => {
             quote! {
+                // TODO - add BitOr casting for values greater than 2^128 - 1
                 BigInt::from(result.get().as_u128())
             }
         }
