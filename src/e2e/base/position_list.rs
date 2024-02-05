@@ -1,10 +1,10 @@
 use crate::contracts::{FeeTier, InvariantError, PoolKey};
 use crate::e2e::snippets::positions_equals;
-use crate::erc20::Erc20Deployer;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
 use crate::math::sqrt_price::{calculate_sqrt_price, SqrtPrice};
+use crate::Erc20Deployer;
 use crate::InvariantDeployer;
 use decimal::{Decimal, Factories};
 use odra::prelude::string::String;

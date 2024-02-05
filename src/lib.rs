@@ -3,10 +3,9 @@
 extern crate alloc;
 
 pub mod contracts;
-pub mod erc20;
 pub mod math;
 
-use odra_modules::erc20::Erc20Ref;
+pub use odra_modules::erc20::{Erc20, Erc20Deployer, Erc20Ref};
 
 #[cfg(test)]
 pub mod e2e;

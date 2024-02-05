@@ -1,12 +1,11 @@
 use crate::{
     contracts::{FeeTier, InvariantError, PoolKey},
-    erc20::Erc20Deployer,
     math::{
         liquidity::Liquidity,
         percentage::Percentage,
         sqrt_price::{calculate_sqrt_price, SqrtPrice},
     },
-    InvariantDeployer,
+    Erc20Deployer, InvariantDeployer,
 };
 use alloc::string::String;
 use decimal::{Decimal, Factories};

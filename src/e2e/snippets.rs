@@ -1,9 +1,6 @@
 use crate::contracts::Position;
 use crate::math::percentage::Percentage;
-use crate::{
-    erc20::{Erc20Deployer, Erc20Ref},
-    InvariantDeployer, InvariantRef,
-};
+use crate::{Erc20Deployer, Erc20Ref, InvariantDeployer, InvariantRef};
 use alloc::string::String;
 use decimal::*;
 use odra::types::U256;

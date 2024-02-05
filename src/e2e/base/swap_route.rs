@@ -5,7 +5,7 @@ use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::token_amount::TokenAmount;
 use crate::FeeTier;
 use crate::SwapHop;
-use crate::{erc20::Erc20Deployer, InvariantDeployer};
+use crate::{Erc20Deployer, InvariantDeployer};
 use alloc::string::String;
 use alloc::vec;
 use decimal::*;

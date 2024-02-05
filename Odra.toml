@@ -4,4 +4,4 @@ fqn = "invariant::Invariant"
 
 [[contracts]]
 name = "erc20"
-fqn = "invariant::erc20::Erc20"
+fqn = "invariant::Erc20"

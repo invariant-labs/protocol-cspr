@@ -1,7 +1,6 @@
 use crate::contracts::InvariantError;
 use crate::contracts::PoolKey;
 use crate::e2e::snippets::init;
-use crate::erc20::Erc20Deployer;
 use crate::math::fee_growth::FeeGrowth;
 use crate::math::liquidity::Liquidity;
 use crate::math::percentage::Percentage;
@@ -10,6 +9,7 @@ use crate::math::sqrt_price::SqrtPrice;
 use crate::math::token_amount::TokenAmount;
 use crate::math::MAX_SQRT_PRICE;
 use crate::math::MIN_SQRT_PRICE;
+use crate::Erc20Deployer;
 use crate::FeeTier;
 use crate::InvariantDeployer;
 use alloc::string::String;
