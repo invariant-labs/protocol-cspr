@@ -3,5 +3,5 @@ name = "invariant"
 fqn = "invariant::Invariant"
 
 [[contracts]]
-name = "token"
-fqn = "invariant::token::Token"
+name = "erc20"
+fqn = "invariant::Erc20"

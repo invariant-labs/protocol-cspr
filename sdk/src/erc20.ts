@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import { Some } from '@casperlabs/ts-results'
 import {
   CLPublicKey,
   CLValueBuilder,
@@ -11,7 +12,7 @@ import {
 } from 'casper-js-sdk'
 import { getWasm } from './utils'
 
-export class Invariant {
+export class Erc20 {
   rpc: CasperServiceByJsonRPC
   casperClient: CasperClient
   contract: Contracts.Contract
@@ -22,15 +23,24 @@ export class Invariant {
     this.contract = new Contracts.Contract(this.casperClient)
   }
 
-  async deploy(signer: Keys.AsymmetricKey): Promise<string> {
-    const wasm = getWasm('invariant')
+  async deploy(
+    signer: Keys.AsymmetricKey,
+    symbol: string,
+    name: string,
+    decimals: bigint,
+    initial_supply: bigint
+  ): Promise<string> {
+    const wasm = getWasm('erc20')
 
     const runtimeArguments = RuntimeArgs.fromMap({
-      odra_cfg_package_hash_key_name: CLValueBuilder.string('invariant'),
+      odra_cfg_package_hash_key_name: CLValueBuilder.string('erc20'),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
-      fee: CLValueBuilder.u128(0)
+      symbol: CLValueBuilder.string(symbol),
+      name: CLValueBuilder.string(name),
+      decimals: CLValueBuilder.u8(Number(decimals)),
+      initial_supply: CLValueBuilder.option(Some(CLValueBuilder.u256(Number(initial_supply))))
     })
 
     const deploy = this.install(
