@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
   CLPublicKey,
   CLValueBuilder,
@@ -8,7 +9,7 @@ import {
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { getWasm, sleep } from './utils'
+import { getWasm } from './utils'
 
 export class Invariant {
   rpc: CasperServiceByJsonRPC
@@ -43,7 +44,6 @@ export class Invariant {
 
     await this.rpc.deploy(deploy)
 
-    await sleep(2500)
     const deployResult = await this.rpc.waitForDeploy(deploy, 100000)
 
     return deployResult.deploy.hash
