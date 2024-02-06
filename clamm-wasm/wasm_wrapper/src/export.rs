@@ -64,8 +64,14 @@ pub fn value_exported_function(
         }
         _ => {
             quote! {
-                // TODO - add BitOr casting for values greater than 2^128 - 1
-                BigInt::from(result.get().as_u128())
+                {
+                    let mut v = js_sys::BigInt::default();
+                    let result_bytes: alloc::vec::Vec<_> = result.get().as_ref().try_into().unwrap();
+                    for (index, &value) in result_bytes.iter().enumerate() {
+                        v = v | js_sys::BigInt::from(value) << (js_sys::BigInt::from(index) * js_sys::BigInt::from(64));
+                    }
+                    v
+                }
             }
         }
     };
