@@ -1,88 +1,84 @@
 /* eslint-disable camelcase */
 import {
-  CLPublicKey,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
   Contracts,
-  DeployUtil,
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { getWasm } from './utils'
+import { DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { Network } from './network'
+import { getDeploymentData } from './utils'
 
 export class Invariant {
-  rpc: CasperServiceByJsonRPC
-  casperClient: CasperClient
+  client: CasperClient
+  service: CasperServiceByJsonRPC
   contract: Contracts.Contract
 
-  constructor(public nodeAddress: string, public networkName: string) {
-    this.rpc = new CasperServiceByJsonRPC(nodeAddress)
-    this.casperClient = new CasperClient(nodeAddress)
-    this.contract = new Contracts.Contract(this.casperClient)
+  private constructor(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
+    this.client = client
+    this.service = service
+    this.contract = new Contracts.Contract(this.client)
+    this.contract.setContractHash(contractHash)
   }
 
-  async deploy(signer: Keys.AsymmetricKey): Promise<string> {
-    const wasm = getWasm('invariant')
+  static async deploy(
+    client: CasperClient,
+    service: CasperServiceByJsonRPC,
+    network: Network,
+    deployer: Keys.AsymmetricKey,
+    fee: bigint = 0n,
+    paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
+  ): Promise<string> {
+    const contract = new Contracts.Contract(client)
 
-    const runtimeArguments = RuntimeArgs.fromMap({
+    const wasm = await getDeploymentData('invariant')
+
+    const args = RuntimeArgs.fromMap({
       odra_cfg_package_hash_key_name: CLValueBuilder.string('invariant'),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
-      fee: CLValueBuilder.u128(0)
+      fee: CLValueBuilder.u128(Number(fee))
     })
 
-    const deploy = this.install(
+    const signedDeploy = contract.install(
       wasm,
-      runtimeArguments,
-      '10000000000000',
-      signer.publicKey,
-      'casper-net-1',
-      [signer]
+      args,
+      paymentAmount.toString(),
+      deployer.publicKey,
+      network.toString(),
+      [deployer]
     )
 
-    await this.rpc.deploy(deploy)
+    await service.deploy(signedDeploy)
 
-    const deployResult = await this.rpc.waitForDeploy(deploy, 100000)
+    const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
 
-    return deployResult.deploy.hash
-  }
-
-  install(
-    wasm: Uint8Array,
-    args: RuntimeArgs,
-    paymentAmount: string,
-    sender: CLPublicKey,
-    chainName: string,
-    signingKeys: Keys.AsymmetricKey[] = []
-  ) {
-    const deploy = DeployUtil.makeDeploy(
-      new DeployUtil.DeployParams(sender, chainName),
-      DeployUtil.ExecutableDeployItem.newModuleBytes(wasm, args),
-      DeployUtil.standardPayment(paymentAmount)
-    )
-
-    const signedDeploy = deploy.sign(signingKeys)
-
-    return signedDeploy
-  }
-
-  async getContractHash(
-    network: string,
-    signer: Keys.AsymmetricKey,
-    contractName: string
-  ): Promise<string> {
-    const stateRootHash = await this.rpc.getStateRootHash()
-    const accountHash = signer.publicKey.toAccountHashStr()
-    const { Account } = await this.rpc.getBlockState(stateRootHash, accountHash, [])
-
-    const hash = Account!.namedKeys.find((i: any) => i.name === contractName)?.key
-
-    if (!hash) {
-      return 'Contract not found!'
+    if (deploymentResult.execution_results[0].result.Failure) {
+      throw new Error(
+        deploymentResult.execution_results[0].result.Failure.error_message?.toString()
+      )
     }
 
-    return hash
+    const stateRootHash = await service.getStateRootHash()
+    const { Account } = await service.getBlockState(
+      stateRootHash,
+      deployer.publicKey.toAccountHashStr(),
+      []
+    )
+
+    const contractHash = Account!.namedKeys.find((i: any) => i.name === 'invariant')?.key
+
+    if (!contractHash) {
+      throw new Error('Contract not found')
+    }
+
+    return contractHash
+  }
+
+  static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
+    return new Invariant(client, service, contractHash)
   }
 }
