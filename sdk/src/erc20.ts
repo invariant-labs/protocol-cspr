@@ -141,6 +141,6 @@ export class Erc20 {
 
     const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
 
-    return parseInt(response.data._hex)
+    return BigInt(response.data._hex)
   }
 }
