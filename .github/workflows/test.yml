@@ -122,7 +122,7 @@ jobs:
       - name: Install cargo odra
         if: ${{ steps.check-odra-exists.outcome == 'failure' }}
         run: |
-          cargo +nightly-2023-04-20 install cargo-odra --locked
+          cargo +nightly-2023-04-20 install cargo-odra --locked --version 0.0.10
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
@@ -166,7 +166,7 @@ jobs:
       - name: Install cargo odra
         if: ${{ steps.check-odra-exists.outcome == 'failure' }}
         run: |
-          cargo +nightly-2023-04-20 install cargo-odra --locked
+          cargo +nightly-2023-04-20 install cargo-odra --locked --version 0.0.10
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
@@ -204,7 +204,7 @@ jobs:
 
       - name: Install cargo odra
         run: |
-          cargo +nightly-2023-04-20 install cargo-odra --locked
+          cargo +nightly-2023-04-20 install cargo-odra --locked --version 0.0.10
 
       - name: Build contract with casper backend
         uses: actions-rs/cargo@v1
