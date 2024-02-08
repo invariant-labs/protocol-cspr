@@ -14,10 +14,7 @@
   },
   "dependencies": {
     "@casperlabs/ts-results": "^3.3.5",
-    "@multiformats/blake2": "^2.0.2",
     "axios": "^1.6.7",
-    "blake2": "^5.0.0",
-    "blake2b": "^2.1.4",
     "blakejs": "^1.2.1",
     "casper-js-sdk": "^2.15.3",
     "chai": "^5.0.3",
@@ -29,7 +26,6 @@
   "license": "ISC",
   "devDependencies": {
     "@ethersproject/bignumber": "^5.7.0",
-    "@types/blake2": "^4.0.4",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
