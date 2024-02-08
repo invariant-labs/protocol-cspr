@@ -9,9 +9,9 @@ import {
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
 import { Network } from './network'
-import { getDeploymentData, sendTx } from './utils'
+import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
 
 const CONTRACT_NAME = 'erc20'
 
@@ -127,5 +127,20 @@ export class Erc20 {
         amount: CLValueBuilder.u256(Number(amount))
       }
     )
+  }
+
+  async name() {
+    const response = await this.contract.queryContractDictionary('state', hash('name'))
+
+    return response.data
+  }
+
+  async balance_of(address: CLPublicKey) {
+    const accountHash = hexToBytes(address.toAccountHashStr().replace('account-hash-', ''))
+    const balanceKey = new Uint8Array([...BALANCES, 0, ...accountHash])
+
+    const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
+
+    return parseInt(response.data._hex)
   }
 }

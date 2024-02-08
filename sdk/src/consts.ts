@@ -1,6 +1,6 @@
 import { Keys } from 'casper-js-sdk'
 import { FUNDED_KEYS } from 'casper-node-launcher-js'
-import { parseAccountKeys } from './utils'
+import { parseAccountKeys, stringToUint8Array } from './utils'
 
 export const LOCAL_NODE_URL = 'http://127.0.0.1:7777/rpc'
 export const TESTNET_NODE_URL = 'http://195.201.174.222:7777'
@@ -13,3 +13,5 @@ export const [ALICE, BOB, CHARLIE] = FUNDED_KEYS.map(k => k.private).map(key =>
 export const TEST = parseAccountKeys(KEYS_PATH, KEYS_ALGO)
 
 export const DEFAULT_PAYMENT_AMOUNT = 10000000000n
+
+export const BALANCES = stringToUint8Array('balances')

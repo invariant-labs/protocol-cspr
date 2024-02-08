@@ -1,4 +1,4 @@
-import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
+import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Erc20 } from './erc20'
 import { Network } from './network'
 import { createAccountKeys, initCasperClientAndService } from './utils'
@@ -11,7 +11,7 @@ const main = async () => {
     return
   }
 
-  const isLocal = false
+  const isLocal = true
 
   let account
   let network
@@ -42,8 +42,11 @@ const main = async () => {
   )
 
   const erc20 = await Erc20.load(client, service, erc20Hash)
+  console.log(await erc20.name())
 
-  await erc20.transfer(account, network, ALICE.publicKey, 2500000000n)
+  console.log(await erc20.balance_of(account.publicKey))
+  await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
+  console.log(await erc20.balance_of(account.publicKey))
 }
 
 main()
