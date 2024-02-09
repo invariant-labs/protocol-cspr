@@ -1,87 +1,85 @@
-import { CLPublicKey, CasperClient, CasperServiceByJsonRPC, Keys } from 'casper-js-sdk'
+import { blake2bHex } from 'blakejs'
+import {
+  CLValue,
+  CasperClient,
+  CasperServiceByJsonRPC,
+  Contracts,
+  GetDeployResult,
+  Keys,
+  RuntimeArgs
+} from 'casper-js-sdk'
 import fs from 'fs'
+import { readFile } from 'fs/promises'
 import path from 'path'
+import { Network } from './network'
+import { Algo } from './schema'
 
-export const sleep = (ms: number) => {
-  return new Promise(resolve => setTimeout(resolve, ms))
+export const initCasperClientAndService = (nodeUrl: string) => {
+  const client = new CasperClient(nodeUrl)
+  const service = new CasperServiceByJsonRPC(nodeUrl)
+  return { client, service }
 }
 
-export const getWasm = (fileName: 'invariant' | 'erc20'): Uint8Array => {
-  return new Uint8Array(fs.readFileSync(`./src/contracts/${fileName}.wasm`, null).buffer)
+export const sendTx = async (
+  contract: Contracts.Contract,
+  service: CasperServiceByJsonRPC,
+  paymentAmount: bigint,
+  account: Keys.AsymmetricKey,
+  network: Network,
+  entrypoint: string,
+  args: Record<string, CLValue>
+): Promise<GetDeployResult> => {
+  const txArgs = RuntimeArgs.fromMap(args)
+
+  const deploy = contract.callEntrypoint(
+    entrypoint,
+    txArgs,
+    account.publicKey,
+    network,
+    paymentAmount.toString(),
+    [account]
+  )
+
+  await service.deploy(deploy)
+  return await service.waitForDeploy(deploy, 100000)
 }
 
-export const getDeploy = async (NODE_URL: string, deployHash: string) => {
-  const client = new CasperClient(NODE_URL)
-  await sleep(1000)
-  console.log('...... Casper client created ......')
-  let i = 300
-  let counter = 1
-  while (i != 0) {
-    const [deploy, raw] = await client.getDeploy(deployHash)
-    console.log('...... Checking deployment status ' + counter + '......')
-    counter += 1
-    if (raw.execution_results.length !== 0) {
-      // @ts-ignore
-      if (raw.execution_results[0].result.Success) {
-        return deploy
-      } else {
-        // @ts-ignore
-        throw Error(
-          'Contract execution: ' +
-            // @ts-ignore
-            raw.execution_results[0].result.Failure.error_message
-        )
-      }
-    } else {
-      i--
-      await sleep(1000)
-      continue
-    }
+export const getDeploymentData = async (contractName: string): Promise<Buffer> => {
+  try {
+    const wasm = await readFile(`./contracts/${contractName}.wasm`)
+
+    return wasm
+  } catch (error) {
+    throw new Error(`${contractName}.wasm not found.`)
   }
-  throw Error('Timeout after ' + i + "s. Something's wrong")
 }
 
-export const getAccountInfo: any = async (publicKey: CLPublicKey, rpc: CasperServiceByJsonRPC) => {
-  const stateRootHash = await rpc.getStateRootHash()
-  const accountHash = publicKey.toAccountHashStr()
-  const blockState = await rpc.getBlockState(stateRootHash, accountHash, [])
-  return blockState.Account
-}
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-export const parseAccountKeys = (keys_path: string, algo: string): Keys.AsymmetricKey => {
-  let ACCOUNT_KEYS
-  if (algo == 'ed25519') {
-    ACCOUNT_KEYS = Keys.Ed25519.loadKeyPairFromPrivateFile(`${keys_path}/public_key.pem`)
-  } else if (algo == 'secp256K1') {
-    ACCOUNT_KEYS = Keys.Secp256K1.loadKeyPairFromPrivateFile(`${keys_path}/public_key.pem`)
+export const parseAccountKeys = (keysPath: string, algo: Algo): Keys.AsymmetricKey => {
+  let accountKeys
+
+  if (algo == Algo.ed25519) {
+    accountKeys = Keys.Ed25519.loadKeyPairFromPrivateFile(`${keysPath}/private_key.pem`)
+  } else if (algo == Algo.secp256K1) {
+    accountKeys = Keys.Secp256K1.loadKeyPairFromPrivateFile(`${keysPath}/private_key.pem`)
   } else {
-    console.log('Invalid keys crypto algorithm provided')
-    process.exit(1)
+    throw new Error(`${algo} is invalid algorithm`)
   }
 
-  return ACCOUNT_KEYS
+  return accountKeys
 }
 
 export const createAccountKeys = () => {
-  // Generating keys
   const edKeyPair = Keys.Ed25519.new()
-  const { publicKey, privateKey } = edKeyPair
+  const { publicKey } = edKeyPair
 
-  // Create a hexadecimal representation of the public key
   const accountAddress = publicKey.toHex()
 
-  // Get the account hash (Uint8Array) from the public key
-  const accountHash = publicKey.toAccountHash()
-
-  // Store keys as PEM files
   const publicKeyInPem = edKeyPair.exportPublicKeyInPem()
   const privateKeyInPem = edKeyPair.exportPrivateKeyInPem()
 
   const folder = path.join('./', 'casper_keys')
-
-  if (!fs.existsSync(folder)) {
-    const tempDir = fs.mkdirSync(folder)
-  }
 
   fs.writeFileSync(folder + '/public_key.pem', publicKeyInPem)
   fs.writeFileSync(folder + '/private_key.pem', privateKeyInPem)
@@ -89,14 +87,22 @@ export const createAccountKeys = () => {
   return accountAddress
 }
 
-export const getContractHash = async (
-  rpc: CasperServiceByJsonRPC,
-  signer: Keys.AsymmetricKey,
-  contractName: string
-): Promise<string> => {
-  const accountInfo = await getAccountInfo(signer.publicKey, rpc)
-  console.log(accountInfo)
+export const hash = (input: string | Uint8Array) => {
+  return blake2bHex(input, undefined, 32)
+}
 
-  const hash = accountInfo!.namedKeys.find((i: any) => i.name === contractName)?.key
-  return hash
+export const stringToUint8Array = (str: string) => {
+  return new TextEncoder().encode(str)
+}
+
+export const uint8ArrayToString = (uintArray: Uint8Array) => {
+  return new TextDecoder().decode(uintArray)
+}
+
+export const hexToBytes = (hex: string) => {
+  return new Uint8Array(hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || [])
+}
+
+export const bytesToHex = (bytes: Uint8Array) => {
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
 }

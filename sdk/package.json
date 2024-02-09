@@ -7,13 +7,17 @@
   "scripts": {
     "start": "npx tsc && node --experimental-wasm-modules target/src/index.js",
     "start:ts": "ts-node ./src/index.ts",
-    "wasm:strip": "cd src/contracts && wasm-strip invariant.wasm && wasm-strip token.wasm",
+    "lint": "eslint . --ext .ts",
+    "build": "npx tsc",
+    "wasm:strip": "cd src/contracts && wasm-strip invariant.wasm && wasm-strip erc20.wasm",
     "node:start": "casper-node-launcher-js node v1.5.3",
     "node:start:d": "casper-node-launcher-js node v1.5.3 --daemon",
     "node:stop": "casper-node-launcher-js stop"
   },
   "dependencies": {
+    "@casperlabs/ts-results": "^3.3.5",
     "axios": "^1.6.7",
+    "blakejs": "^1.2.1",
     "casper-js-sdk": "^2.15.3",
     "chai": "^5.0.3",
     "ts-node": "^10.9.2",
@@ -23,13 +27,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "casper-node-launcher-js": "^0.0.3",
     "@ethersproject/bignumber": "^5.7.0",
-    "casper-js-sdk": "2.15.3",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "@typescript-eslint/eslint-plugin": "^6.16.0",
     "@typescript-eslint/parser": "^6.16.0",
+    "casper-js-sdk": "2.15.3",
+    "casper-node-launcher-js": "^0.0.3",
     "chai": "^5.0.0",
     "eslint": "^8.56.0",
     "ts-mocha": "^10.0.0"

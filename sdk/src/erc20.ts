@@ -6,93 +6,145 @@ import {
   CasperClient,
   CasperServiceByJsonRPC,
   Contracts,
-  DeployUtil,
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { getWasm } from './utils'
+import { BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { Network } from './network'
+import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
+
+const CONTRACT_NAME = 'erc20'
 
 export class Erc20 {
-  rpc: CasperServiceByJsonRPC
-  casperClient: CasperClient
+  client: CasperClient
+  service: CasperServiceByJsonRPC
   contract: Contracts.Contract
+  paymentAmount: bigint
 
-  constructor(public nodeAddress: string, public networkName: string) {
-    this.rpc = new CasperServiceByJsonRPC(nodeAddress)
-    this.casperClient = new CasperClient(nodeAddress)
-    this.contract = new Contracts.Contract(this.casperClient)
+  private constructor(
+    client: CasperClient,
+    service: CasperServiceByJsonRPC,
+    contractHash: string,
+    paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
+  ) {
+    this.client = client
+    this.service = service
+    this.contract = new Contracts.Contract(this.client)
+    this.contract.setContractHash(contractHash)
+    this.paymentAmount = paymentAmount
   }
 
-  async deploy(
-    signer: Keys.AsymmetricKey,
-    symbol: string,
-    name: string,
-    decimals: bigint,
-    initial_supply: bigint
+  static async deploy(
+    client: CasperClient,
+    service: CasperServiceByJsonRPC,
+    network: Network,
+    deployer: Keys.AsymmetricKey,
+    initial_supply: bigint = 0n,
+    name: string = '',
+    symbol: string = '',
+    decimals: bigint = 0n,
+    paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
   ): Promise<string> {
-    const wasm = getWasm('erc20')
+    const contract = new Contracts.Contract(client)
 
-    const runtimeArguments = RuntimeArgs.fromMap({
-      odra_cfg_package_hash_key_name: CLValueBuilder.string('erc20'),
+    const wasm = await getDeploymentData(CONTRACT_NAME)
+
+    const args = RuntimeArgs.fromMap({
+      odra_cfg_package_hash_key_name: CLValueBuilder.string(CONTRACT_NAME),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
-      symbol: CLValueBuilder.string(symbol),
+      initial_supply: CLValueBuilder.option(Some(CLValueBuilder.u256(Number(initial_supply)))),
       name: CLValueBuilder.string(name),
-      decimals: CLValueBuilder.u8(Number(decimals)),
-      initial_supply: CLValueBuilder.option(Some(CLValueBuilder.u256(Number(initial_supply))))
+      symbol: CLValueBuilder.string(symbol),
+      decimals: CLValueBuilder.u8(Number(decimals))
     })
 
-    const deploy = this.install(
+    const signedDeploy = contract.install(
       wasm,
-      runtimeArguments,
-      '10000000000000',
-      signer.publicKey,
-      'casper-net-1',
-      [signer]
+      args,
+      paymentAmount.toString(),
+      deployer.publicKey,
+      network.toString(),
+      [deployer]
     )
 
-    await this.rpc.deploy(deploy)
+    await service.deploy(signedDeploy)
 
-    const deployResult = await this.rpc.waitForDeploy(deploy, 100000)
+    const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
 
-    return deployResult.deploy.hash
-  }
-
-  install(
-    wasm: Uint8Array,
-    args: RuntimeArgs,
-    paymentAmount: string,
-    sender: CLPublicKey,
-    chainName: string,
-    signingKeys: Keys.AsymmetricKey[] = []
-  ) {
-    const deploy = DeployUtil.makeDeploy(
-      new DeployUtil.DeployParams(sender, chainName),
-      DeployUtil.ExecutableDeployItem.newModuleBytes(wasm, args),
-      DeployUtil.standardPayment(paymentAmount)
-    )
-
-    const signedDeploy = deploy.sign(signingKeys)
-
-    return signedDeploy
-  }
-
-  async getContractHash(
-    network: string,
-    signer: Keys.AsymmetricKey,
-    contractName: string
-  ): Promise<string> {
-    const stateRootHash = await this.rpc.getStateRootHash()
-    const accountHash = signer.publicKey.toAccountHashStr()
-    const { Account } = await this.rpc.getBlockState(stateRootHash, accountHash, [])
-
-    const hash = Account!.namedKeys.find((i: any) => i.name === contractName)?.key
-
-    if (!hash) {
-      return 'Contract not found!'
+    if (deploymentResult.execution_results[0].result.Failure) {
+      throw new Error(
+        deploymentResult.execution_results[0].result.Failure.error_message?.toString()
+      )
     }
 
-    return hash
+    const stateRootHash = await service.getStateRootHash()
+    const { Account } = await service.getBlockState(
+      stateRootHash,
+      deployer.publicKey.toAccountHashStr(),
+      []
+    )
+
+    if (!Account) {
+      throw new Error('Account not found in block state')
+    }
+
+    const contractPackageHash = Account.namedKeys.find((i: any) => i.name === CONTRACT_NAME)?.key
+
+    if (!contractPackageHash) {
+      throw new Error('Contract package not found in account named keys')
+    }
+
+    const { ContractPackage } = await service.getBlockState(stateRootHash, contractPackageHash, [])
+
+    if (!ContractPackage) {
+      throw new Error('Contract package not found in block state')
+    }
+
+    return ContractPackage.versions[0].contractHash.replace('contract-', '')
+  }
+
+  static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
+    return new Erc20(client, service, 'hash-' + contractHash)
+  }
+
+  async setContractHash(contractHash: string) {
+    this.contract.setContractHash('hash-' + contractHash)
+  }
+
+  async transfer(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    recipient: CLPublicKey,
+    amount: bigint
+  ) {
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'transfer',
+      {
+        recipient: CLValueBuilder.key(recipient),
+        amount: CLValueBuilder.u256(Number(amount))
+      }
+    )
+  }
+
+  async name() {
+    const response = await this.contract.queryContractDictionary('state', hash('name'))
+
+    return response.data
+  }
+
+  async balance_of(address: CLPublicKey) {
+    const accountHash = hexToBytes(address.toAccountHashStr().replace('account-hash-', ''))
+    const balanceKey = new Uint8Array([...BALANCES, 0, ...accountHash])
+
+    const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
+
+    return BigInt(response.data._hex)
   }
 }

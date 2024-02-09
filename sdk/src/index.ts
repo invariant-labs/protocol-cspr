@@ -1,58 +1,52 @@
-import { BigNumber } from '@ethersproject/bignumber'
-import { ALICE, NETWORK_NAME, NETWORK_URL } from './consts'
+import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Erc20 } from './erc20'
-import { Invariant } from './invariant'
-import { getDeploy, sleep } from './utils'
+import { Network } from './network'
+import { createAccountKeys, initCasperClientAndService } from './utils'
 
 const main = async () => {
-  console.log('Init SDK!')
+  const createKeys = false
 
-  {
-    const invariant = new Invariant(NETWORK_URL, NETWORK_NAME)
-    const aliceBalance: BigNumber = await invariant.casperClient.balanceOfByPublicKey(
-      ALICE.publicKey
-    )
-    console.log(aliceBalance.toBigInt())
-
-    const txHash = await invariant.deploy(ALICE)
-
-    const deploy = await getDeploy(NETWORK_URL, txHash)
-    console.log(deploy)
-
-    await sleep(2000)
-
-    const invtHash = await invariant.getContractHash(NETWORK_URL, ALICE, 'invariant')
-
-    invariant.contract.setContractHash(invtHash)
-
-    await sleep(1000)
-
-    // const fetchedConfig = await invariant.contract.queryContractData([
-    //   "config",
-    // ]);
-    // const args = RuntimeArgs.fromMap({});
-    // const query = invariant.contract.callEntrypoint(
-    //   "get_protocol_fee",
-    //   args,
-    //   ALICE.publicKey,
-    //   NETWORK_NAME,
-    //   "1000000000", // 1 CSPR (10^9 Motes)
-    //   [ALICE]
-    // );
-    // console.log(await invariant.casperClient.putDeploy(query));
+  if (createKeys) {
+    createAccountKeys()
+    return
   }
 
-  const erc20 = new Erc20(NETWORK_URL, NETWORK_NAME)
-  const txHash = await erc20.deploy(ALICE, 'COIN', 'Coin', 6n, 1000000000000n)
-  const deploy = await getDeploy(NETWORK_URL, txHash)
-  console.log(deploy)
+  const isLocal = true
 
-  await sleep(2000)
+  let account
+  let network
+  let nodeUrl
 
-  const erc20Hash = await erc20.getContractHash(NETWORK_URL, ALICE, 'erc20')
-  console.log(erc20Hash)
+  if (isLocal) {
+    account = ALICE
+    network = Network.Local
+    nodeUrl = LOCAL_NODE_URL
+  } else {
+    account = TEST
+    network = Network.Testnet
+    nodeUrl = TESTNET_NODE_URL
+  }
 
-  process.exit(0)
+  const { client, service } = initCasperClientAndService(nodeUrl)
+
+  const erc20Hash = await Erc20.deploy(
+    client,
+    service,
+    network,
+    account,
+    1000000000000n,
+    'COIN',
+    'Coin',
+    6n,
+    150000000000n
+  )
+
+  const erc20 = await Erc20.load(client, service, erc20Hash)
+  console.log(await erc20.name())
+
+  console.log(await erc20.balance_of(account.publicKey))
+  await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
+  console.log(await erc20.balance_of(account.publicKey))
 }
 
 main()
