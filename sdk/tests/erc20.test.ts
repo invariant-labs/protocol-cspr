@@ -20,7 +20,7 @@ describe('erc20', () => {
     )
 
     const erc20 = await Erc20.load(client, service, erc20Hash)
-    expect(await erc20.name()).toEqual('Coin')
+    expect(await erc20.name()).toEqual('Coin_a')
     expect(await erc20.symbol()).toEqual('COIN')
     expect(await erc20.decimals()).toEqual(6n)
   })
