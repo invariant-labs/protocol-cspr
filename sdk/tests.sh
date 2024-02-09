@@ -1,5 +1,5 @@
 npm run node:start &
-sleep 1
+sleep 2
 npm run test &
 test_pid=$!
 
