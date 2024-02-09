@@ -139,6 +139,18 @@ export class Erc20 {
     return response.data
   }
 
+  async symbol() {
+    const response = await this.contract.queryContractDictionary('state', hash('symbol'))
+
+    return response.data
+  }
+
+  async decimals() {
+    const response = await this.contract.queryContractDictionary('state', hash('decimals'))
+
+    return BigInt(response.data)
+  }
+
   async balance_of(address: CLPublicKey) {
     const accountHash = hexToBytes(address.toAccountHashStr().replace('account-hash-', ''))
     const balanceKey = new Uint8Array([...BALANCES, 0, ...accountHash])
