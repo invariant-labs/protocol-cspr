@@ -12,6 +12,7 @@ import fs from 'fs'
 import { readFile } from 'fs/promises'
 import path from 'path'
 import { Network } from './network'
+import { Algo } from './schema'
 
 export const initCasperClientAndService = (nodeUrl: string) => {
   const client = new CasperClient(nodeUrl)
@@ -55,12 +56,12 @@ export const getDeploymentData = async (contractName: string): Promise<Buffer> =
 
 export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-export const parseAccountKeys = (keysPath: string, algo: string): Keys.AsymmetricKey => {
+export const parseAccountKeys = (keysPath: string, algo: Algo): Keys.AsymmetricKey => {
   let accountKeys
 
-  if (algo == 'ed25519') {
+  if (algo == Algo.ed25519) {
     accountKeys = Keys.Ed25519.loadKeyPairFromPrivateFile(`${keysPath}/private_key.pem`)
-  } else if (algo == 'secp256K1') {
+  } else if (algo == Algo.secp256K1) {
     accountKeys = Keys.Secp256K1.loadKeyPairFromPrivateFile(`${keysPath}/private_key.pem`)
   } else {
     throw new Error(`${algo} is invalid algorithm`)
@@ -99,23 +100,9 @@ export const uint8ArrayToString = (uintArray: Uint8Array) => {
 }
 
 export const hexToBytes = (hex: string) => {
-  const bytes = []
-
-  for (let c = 0; c < hex.length; c += 2) {
-    bytes.push(parseInt(hex.substr(c, 2), 16))
-  }
-
-  return bytes
+  return new Uint8Array(hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || [])
 }
 
 export const bytesToHex = (bytes: Uint8Array) => {
-  const hex = []
-
-  for (let i = 0; i < bytes.length; i++) {
-    const current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i]
-    hex.push((current >>> 4).toString(16))
-    hex.push((current & 0xf).toString(16))
-  }
-
-  return hex.join('')
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
 }

@@ -109,6 +109,10 @@ export class Erc20 {
     return new Erc20(client, service, 'hash-' + contractHash)
   }
 
+  async setContractHash(contractHash: string) {
+    this.contract.setContractHash('hash-' + contractHash)
+  }
+
   async transfer(
     account: Keys.AsymmetricKey,
     network: Network,
