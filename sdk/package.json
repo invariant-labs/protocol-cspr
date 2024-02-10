@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .ts",
     "build": "npx tsc",
     "test": "jest",
-    "wasm:strip": "cd src/contracts && wasm-strip invariant.wasm && wasm-strip erc20.wasm",
+    "wasm:strip": "cd contracts && wasm-strip invariant.wasm && wasm-strip erc20.wasm",
     "node:start": "casper-node-launcher-js node v1.5.3",
     "node:start:d": "casper-node-launcher-js node v1.5.3 --daemon",
     "node:stop": "casper-node-launcher-js stop"
