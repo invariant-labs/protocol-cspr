@@ -220,6 +220,7 @@ pub trait Entrypoints {
     ///
     /// # External contracts
     /// - odra::Erc20
+    #[allow(clippy::too_many_arguments)]
     fn create_position(
         &mut self,
         token_0: Address,
@@ -289,6 +290,7 @@ pub trait Entrypoints {
     /// - Fails if the price has reached the specified limit.
     /// - Fails if the user would receive zero tokens.
     /// - Fails if pool does not exist
+    #[allow(clippy::too_many_arguments)]
     fn quote(
         &self,
         token_0: Address,
@@ -327,6 +329,7 @@ pub trait Entrypoints {
     ///
     /// # External contracts
     /// - odra::Erc20
+    #[allow(clippy::too_many_arguments)]
     fn swap(
         &mut self,
         token_0: Address,
