@@ -39,7 +39,9 @@ fn test_position_slippage_zero_slippage_and_inside_range() {
         fee: Percentage::from_scale(6, 3),
         tick_spacing: 10,
     };
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
@@ -154,7 +156,9 @@ fn test_position_slippage_below_range() {
         fee: Percentage::from_scale(6, 3),
         tick_spacing: 10,
     };
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
@@ -248,7 +252,9 @@ fn test_position_slippage_above_range() {
         fee: Percentage::from_scale(6, 3),
         tick_spacing: 10,
     };
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();

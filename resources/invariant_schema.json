@@ -17,8 +17,12 @@
       "is_mutable": true,
       "args": [
         {
-          "name": "fee_tier",
-          "ty": "Any"
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         }
       ],
       "return_ty": {

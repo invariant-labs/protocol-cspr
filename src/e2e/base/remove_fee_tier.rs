@@ -14,7 +14,9 @@ fn test_remove_fee_tier() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
 
@@ -42,7 +44,9 @@ fn test_remove_fee_tier_not_admin() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
 

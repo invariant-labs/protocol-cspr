@@ -20,7 +20,9 @@ fn test_create_pool() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
@@ -43,7 +45,9 @@ fn test_create_pool_with_same_tokens() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
@@ -64,7 +68,9 @@ fn test_create_pool_x_to_y_and_y_to_x() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
@@ -105,7 +111,9 @@ fn test_create_pool_init_tick_not_divided_by_tick_spacing() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 3).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
@@ -126,7 +134,9 @@ fn test_create_pool_init_sqrt_price_minimal_difference_from_tick() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
@@ -150,7 +160,9 @@ fn test_create_pool_init_sqrt_price_has_closer_init_tick() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
@@ -184,7 +196,9 @@ fn test_create_pool_init_sqrt_price_has_closer_init_tick_spacing_over_one() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 3).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);

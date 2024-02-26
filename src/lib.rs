@@ -339,7 +339,9 @@ impl Entrypoints for Invariant {
             protocol_fee,
         })
     }
-    pub fn add_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
+    pub fn add_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError> {
+        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
+
         let caller = contract_env::caller();
         let config = self.config.get().unwrap_or_revert();
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();

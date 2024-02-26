@@ -19,7 +19,9 @@ fn test_change_fee_reciever() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(5, 1), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);
@@ -51,7 +53,9 @@ fn test_not_admin_change_fee_reciever() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(5, 1), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let exist = invariant.fee_tier_exist(fee_tier);
     assert!(exist);

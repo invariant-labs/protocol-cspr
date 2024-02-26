@@ -21,7 +21,9 @@ fn test_create_position() {
     let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
 
     let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -86,7 +88,9 @@ fn test_remove_position() {
 
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -299,7 +303,9 @@ fn test_position_within_current_tick() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 4).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -413,7 +419,9 @@ fn test_position_below_current_tick() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 4).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -527,7 +535,9 @@ fn test_position_above_current_tick() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 4).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(

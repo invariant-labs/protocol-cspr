@@ -34,7 +34,9 @@ fn test_swap_route() {
 
     // Add fee tier
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
+        invariant
+            .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+            .unwrap();
         let exist = invariant.fee_tier_exist(fee_tier);
         assert!(exist);
     }

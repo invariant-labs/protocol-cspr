@@ -25,7 +25,9 @@ fn test_basic_slippage() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
+        invariant
+            .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+            .unwrap();
         let exist = invariant.fee_tier_exist(fee_tier);
         assert!(exist);
 
@@ -108,7 +110,9 @@ fn test_swap_close_to_limit() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
+        invariant
+            .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+            .unwrap();
         let exist = invariant.fee_tier_exist(fee_tier);
         assert!(exist);
 
@@ -189,7 +193,9 @@ fn test_swap_exact_limit() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
+        invariant
+            .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+            .unwrap();
         let exist = invariant.fee_tier_exist(fee_tier);
         assert!(exist);
 

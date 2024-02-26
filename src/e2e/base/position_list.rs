@@ -33,7 +33,9 @@ fn test_remove_position_from_empty_list() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 3).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = -23028;
 
@@ -75,7 +77,9 @@ fn test_add_multiple_positions() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -261,7 +265,9 @@ fn test_only_owner_can_modify_position_list() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -397,7 +403,9 @@ fn test_transfer_position_ownership() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -655,7 +663,9 @@ fn test_only_owner_can_transfer_position() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
@@ -759,7 +769,9 @@ fn test_multiple_positions_on_same_tick() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 10).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(

@@ -24,7 +24,9 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
+        invariant
+            .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+            .unwrap();
         let exist = invariant.fee_tier_exist(fee_tier);
         assert!(exist);
 
@@ -279,7 +281,9 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
     }
     // Readd fee tier and create same pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
+        invariant
+            .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+            .unwrap();
         let exist = invariant.fee_tier_exist(fee_tier);
         assert!(exist);
 

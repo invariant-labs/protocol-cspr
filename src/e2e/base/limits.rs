@@ -26,7 +26,9 @@ fn test_limits_big_deposit_x_and_swap_y() {
         fee: Percentage::from_scale(6, 3),
         tick_spacing: 1,
     };
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
@@ -127,7 +129,9 @@ fn test_limits_big_deposit_y_and_swap_x() {
         fee: Percentage::from_scale(6, 3),
         tick_spacing: 1,
     };
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
@@ -226,7 +230,9 @@ fn test_limits_big_deposit_both_tokens() {
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
@@ -302,7 +308,9 @@ fn test_deposit_limits_at_upper_limit() {
     token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = get_max_tick(1);
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
@@ -360,7 +368,9 @@ fn test_limits_big_deposit_and_swaps() {
     token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
@@ -451,7 +461,9 @@ fn test_limits_full_range_with_max_liquidity() {
     token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.v, fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = get_max_tick(1);
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
