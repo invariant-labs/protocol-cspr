@@ -14,11 +14,11 @@ fn test_change_protocol_fee() {
     let protocol_fee = invariant.get_protocol_fee();
     assert_eq!(protocol_fee, Percentage::new(U128::from(0)));
 
-    let new_fee = Percentage::new(U128::from(1));
+    let new_fee = Percentage::new(U128::from(1)).get();
     invariant.change_protocol_fee(new_fee).unwrap();
 
     let protocol_fee = invariant.get_protocol_fee();
-    assert_eq!(protocol_fee, new_fee);
+    assert_eq!(protocol_fee.get(), new_fee);
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn test_change_protocol_fee_not_admin() {
     let protocol_fee = invariant.get_protocol_fee();
     assert_eq!(protocol_fee, Percentage::new(U128::from(0)));
 
-    let new_fee = Percentage::new(U128::from(1));
+    let new_fee = Percentage::new(U128::from(1)).get();
     test_env::set_caller(test_env::get_account(1));
     let result = invariant.change_protocol_fee(new_fee);
 

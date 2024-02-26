@@ -24,8 +24,11 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
@@ -34,16 +37,19 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
             .create_pool(
                 pool_key.token_x,
                 pool_key.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
     }
     // Remove fee tier
     {
-        invariant.remove_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .remove_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(!exist);
     }
     // Attempt to create same pool again
@@ -51,10 +57,11 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
         let init_tick = 0;
         let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
         let result = invariant.create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         );
         assert_eq!(result, Err(InvariantError::FeeTierNotFound));
@@ -72,7 +79,12 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
         let liquidity = Liquidity::from_integer(1000000);
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage_limit_lower = pool_before.sqrt_price;
@@ -80,17 +92,25 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick,
                 upper_tick,
-                liquidity,
-                slippage_limit_lower,
-                slippage_limit_upper,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
             )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let pos = invariant.get_all_positions(deployer);
@@ -109,17 +129,36 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
         token_x.approve(invariant.address(), &amount);
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
         invariant
-            .swap(pool_key, true, swap_amount, true, slippage)
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let expected_tick = -20;
@@ -168,7 +207,13 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
     {
         let new_receiver = test_env::get_account(2);
         invariant
-            .change_fee_receiver(pool_key, new_receiver)
+            .change_fee_receiver(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                new_receiver,
+            )
             .unwrap();
     }
     // Withdraw protocol fee
@@ -177,7 +222,14 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
         test_env::set_caller(protocol_fee_receiver);
         let receiver_x_before = token_x.balance_of(&protocol_fee_receiver);
         let receiver_y_before = token_y.balance_of(&protocol_fee_receiver);
-        invariant.withdraw_protocol_fee(pool_key).unwrap();
+        invariant
+            .withdraw_protocol_fee(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
+            .unwrap();
         let receiver_x_after = token_x.balance_of(&protocol_fee_receiver);
         let receiver_y_after = token_y.balance_of(&protocol_fee_receiver);
 
@@ -200,7 +252,12 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
     // Get pool
     {
         invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
     }
     // Get pools
@@ -223,7 +280,12 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
         let liquidity = Liquidity::from_integer(1000000);
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage_limit_lower = pool_before.sqrt_price;
@@ -231,17 +293,25 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick,
                 upper_tick,
-                liquidity,
-                slippage_limit_lower,
-                slippage_limit_upper,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
             )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         assert_eq!(pool_after.liquidity, liquidity);
@@ -279,17 +349,21 @@ fn test_interaction_with_pool_on_removed_fee_tier() {
     }
     // Readd fee tier and create same pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
         let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
         let result = invariant.create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         );
         assert_eq!(result, Err(InvariantError::PoolAlreadyExist));

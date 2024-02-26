@@ -22,20 +22,22 @@ fn test_limits_big_deposit_x_and_swap_y() {
     token_x.approve(invariant.address(), &U256::max_value());
     token_y.approve(invariant.address(), &U256::max_value());
 
-    let fee_tier = FeeTier {
-        fee: Percentage::from_scale(6, 3),
-        tick_spacing: 1,
-    };
-    invariant.add_fee_tier(fee_tier).unwrap();
+    let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         )
         .unwrap();
@@ -43,7 +45,12 @@ fn test_limits_big_deposit_x_and_swap_y() {
     let lower_tick = -(fee_tier.tick_spacing as i32);
     let upper_tick = 0;
     let pool = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     let liquidity_delta = get_liquidity_by_y(
@@ -56,17 +63,19 @@ fn test_limits_big_deposit_x_and_swap_y() {
     .unwrap()
     .l;
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let slippage_limit_lower = pool.sqrt_price;
     let slippage_limit_upper = pool.sqrt_price;
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             lower_tick,
             upper_tick,
-            liquidity_delta,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity_delta.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 
@@ -93,11 +102,14 @@ fn test_limits_big_deposit_x_and_swap_y() {
 
     invariant
         .swap(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             true,
-            TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
+            TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()).get(),
             true,
-            sqrt_price_limit,
+            sqrt_price_limit.get(),
         )
         .unwrap();
 
@@ -123,20 +135,22 @@ fn test_limits_big_deposit_y_and_swap_x() {
     token_x.approve(invariant.address(), &U256::max_value());
     token_y.approve(invariant.address(), &U256::max_value());
 
-    let fee_tier = FeeTier {
-        fee: Percentage::from_scale(6, 3),
-        tick_spacing: 1,
-    };
-    invariant.add_fee_tier(fee_tier).unwrap();
+    let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         )
         .unwrap();
@@ -144,7 +158,12 @@ fn test_limits_big_deposit_y_and_swap_x() {
     let lower_tick = 0;
     let upper_tick = fee_tier.tick_spacing as i32;
     let pool = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     let liquidity_delta = get_liquidity_by_x(
@@ -162,12 +181,15 @@ fn test_limits_big_deposit_y_and_swap_x() {
     let slippage_limit_upper = pool.sqrt_price;
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             lower_tick,
             upper_tick,
-            liquidity_delta,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity_delta.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 
@@ -194,11 +216,14 @@ fn test_limits_big_deposit_y_and_swap_x() {
 
     invariant
         .swap(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             false,
-            TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
+            TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()).get(),
             true,
-            sqrt_price_limit,
+            sqrt_price_limit.get(),
         )
         .unwrap();
 
@@ -225,17 +250,21 @@ fn test_limits_big_deposit_both_tokens() {
     token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         )
         .unwrap();
@@ -243,7 +272,12 @@ fn test_limits_big_deposit_both_tokens() {
     let lower_tick = -(fee_tier.tick_spacing as i32);
     let upper_tick = fee_tier.tick_spacing as i32;
     let pool = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
     let liquidity_delta = get_liquidity_by_x(
         TokenAmount::new(U256::from_dec_str(limit_amount).unwrap()),
@@ -262,17 +296,19 @@ fn test_limits_big_deposit_both_tokens() {
     )
     .unwrap();
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let slippage_limit_lower = pool.sqrt_price;
     let slippage_limit_upper = pool.sqrt_price;
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             lower_tick,
             upper_tick,
-            liquidity_delta,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity_delta.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 
@@ -302,22 +338,32 @@ fn test_deposit_limits_at_upper_limit() {
     token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = get_max_tick(1);
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         )
         .unwrap();
 
     let pool = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
     assert_eq!(pool.current_tick_index, init_tick);
     assert_eq!(pool.sqrt_price, calculate_sqrt_price(init_tick).unwrap());
@@ -339,12 +385,15 @@ fn test_deposit_limits_at_upper_limit() {
     let slippage_limit_upper = pool.sqrt_price;
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             0,
             MAX_TICK,
-            liquidity_delta,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity_delta.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 }
@@ -360,16 +409,21 @@ fn test_limits_big_deposit_and_swaps() {
     token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = 0;
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         )
         .unwrap();
@@ -378,7 +432,12 @@ fn test_limits_big_deposit_and_swaps() {
     let lower_tick = -(fee_tier.tick_spacing as i32);
     let upper_tick = fee_tier.tick_spacing as i32;
     let pool = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     let liquidity_delta = get_liquidity_by_x(
@@ -399,17 +458,19 @@ fn test_limits_big_deposit_and_swaps() {
     )
     .unwrap();
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let slippage_limit_lower = pool.sqrt_price;
     let slippage_limit_upper = pool.sqrt_price;
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             lower_tick,
             upper_tick,
-            liquidity_delta,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity_delta.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 
@@ -434,7 +495,16 @@ fn test_limits_big_deposit_and_swaps() {
         };
 
         invariant
-            .swap(pool_key, i % 2 == 0, swap_amount, true, sqrt_price_limit)
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                i % 2 == 0,
+                swap_amount.get(),
+                true,
+                sqrt_price_limit.get(),
+            )
             .unwrap();
     }
 }
@@ -451,38 +521,50 @@ fn test_limits_full_range_with_max_liquidity() {
     token_y.approve(invariant.address(), &U256::max_value());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 1).unwrap();
-    invariant.add_fee_tier(fee_tier).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = get_max_tick(1);
     let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            init_sqrt_price,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            init_sqrt_price.get(),
             init_tick,
         )
         .unwrap();
 
     let pool = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
     assert_eq!(pool.current_tick_index, init_tick);
     assert_eq!(pool.sqrt_price, calculate_sqrt_price(init_tick).unwrap());
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let liquidity_delta = Liquidity::new(U256::from_dec_str(liquidity_limit_amount).unwrap());
     let slippage_limit_lower = pool.sqrt_price;
     let slippage_limit_upper = pool.sqrt_price;
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             -MAX_TICK,
             MAX_TICK,
-            liquidity_delta,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity_delta.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 
