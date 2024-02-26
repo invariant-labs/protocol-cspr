@@ -9,18 +9,27 @@ import {
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT } from './consts'
 import { Network } from './network'
-import { getDeploymentData } from './utils'
+import { getDeploymentData, hash, sendTx } from './utils'
+
+const CONTRACT_NAME = 'invariant'
 
 export class Invariant {
   client: CasperClient
   service: CasperServiceByJsonRPC
   contract: Contracts.Contract
+  paymentAmount: bigint
 
-  private constructor(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
+  private constructor(
+    client: CasperClient,
+    service: CasperServiceByJsonRPC,
+    contractHash: string,
+    paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
+  ) {
     this.client = client
     this.service = service
     this.contract = new Contracts.Contract(this.client)
     this.contract.setContractHash(contractHash)
+    this.paymentAmount = paymentAmount
   }
 
   static async deploy(
@@ -33,10 +42,10 @@ export class Invariant {
   ): Promise<string> {
     const contract = new Contracts.Contract(client)
 
-    const wasm = await getDeploymentData('invariant')
+    const wasm = await getDeploymentData(CONTRACT_NAME)
 
     const args = RuntimeArgs.fromMap({
-      odra_cfg_package_hash_key_name: CLValueBuilder.string('invariant'),
+      odra_cfg_package_hash_key_name: CLValueBuilder.string(CONTRACT_NAME),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
@@ -69,16 +78,56 @@ export class Invariant {
       []
     )
 
-    const contractHash = Account!.namedKeys.find((i: any) => i.name === 'invariant')?.key
-
-    if (!contractHash) {
-      throw new Error('Contract not found')
+    if (!Account) {
+      throw new Error('Account not found in block state')
     }
 
-    return contractHash
+    const contractPackageHash = Account.namedKeys.find((i: any) => i.name === CONTRACT_NAME)?.key
+
+    if (!contractPackageHash) {
+      throw new Error('Contract package not found in account named keys')
+    }
+
+    const { ContractPackage } = await service.getBlockState(stateRootHash, contractPackageHash, [])
+
+    if (!ContractPackage) {
+      throw new Error('Contract package not found in block state')
+    }
+
+    return ContractPackage.versions[0].contractHash.replace('contract-', '')
   }
 
   static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
-    return new Invariant(client, service, contractHash)
+    return new Invariant(client, service, 'hash-' + contractHash)
+  }
+
+  async setContractHash(contractHash: string) {
+    this.contract.setContractHash('hash-' + contractHash)
+  }
+
+  async addFeeTier(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    fee: bigint,
+    tickSpacing: bigint
+  ) {
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'add_fee_tier',
+      {
+        fee: CLValueBuilder.u128(Number(fee)),
+        tickSpacing: CLValueBuilder.u32(Number(tickSpacing))
+      }
+    )
+  }
+
+  async getProtocolFee() {
+    const response = await this.contract.queryContractDictionary('state', hash('get_protocol_fee'))
+
+    return response.data
   }
 }
