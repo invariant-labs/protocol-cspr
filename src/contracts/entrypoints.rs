@@ -1,42 +1,45 @@
 use super::{FeeTier, InvariantError, Pool, PoolKey, Position, Tick};
 use crate::{
-    math::{
-        liquidity::Liquidity, percentage::Percentage, sqrt_price::SqrtPrice,
-        token_amount::TokenAmount,
-    },
+    math::{percentage::Percentage, token_amount::TokenAmount},
     CalculateSwapResult, QuoteResult, SwapHop,
 };
 
-use odra::{prelude::vec::Vec, types::Address};
+use odra::{
+    prelude::vec::Vec,
+    types::{Address, U128, U256},
+};
 
 pub trait Entrypoints {
     /// Allows admin to add a custom fee tier.
     ///
     /// # Parameters
-    /// - `fee_tier`: A struct identifying the pool fee and tick spacing.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     ///
     /// # Errors
     /// - Fails if an unauthorized user attempts to create a fee tier.
     /// - Fails if the tick spacing is invalid.
     /// - Fails if the fee tier already exists.
     /// - Fails if fee is invalid
-    fn add_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError>;
+    fn add_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError>;
 
     /// Query of whether the fee tier exists.
     ///
     /// # Parameters
-    /// - `fee_tier`: A struct identifying the pool fee and tick spacing.
-    fn fee_tier_exist(&self, fee_tier: FeeTier) -> bool;
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
+    fn fee_tier_exist(&self, fee: U128, tick_spacing: u32) -> bool;
 
     /// Removes an existing fee tier.
     ///
     /// # Parameters
-    /// - `fee_tier`: A struct identifying the pool fee and tick spacing.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     ///
     /// # Errors
     /// - Fails if an unauthorized user attempts to remove a fee tier.
     /// - Fails if fee tier does not exist
-    fn remove_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError>;
+    fn remove_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError>;
 
     /// Retrieves available fee tiers
     fn get_fee_tiers(&self) -> Vec<FeeTier>;
@@ -48,7 +51,8 @@ pub trait Entrypoints {
     /// # Parameters
     /// - `token_0`: The address of the first token.
     /// - `token_1`: The address of the second token.
-    /// - `fee_tier`: A struct identifying the pool fee and tick spacing.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     /// - `init_sqrt_price`: The square root of the price for the initial pool related to `init_tick`.
     /// - `init_tick`: The initial tick at which the pool will be created.
     ///
@@ -62,8 +66,9 @@ pub trait Entrypoints {
         &mut self,
         token_0: Address,
         token_1: Address,
-        fee_tier: FeeTier,
-        init_sqrt_price: SqrtPrice,
+        fee: U128,
+        tick_spacing: u32,
+        init_sqrt_price: U128,
         init_tick: i32,
     ) -> Result<(), InvariantError>;
 
@@ -72,7 +77,8 @@ pub trait Entrypoints {
     /// # Parameters
     /// - `token_0`: The address of the first token.
     /// - `token_1`: The address of the second token.
-    /// - `fee_tier`: A struct identifying the pool fee and tick spacing.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     ///
     /// # Errors
     /// - Fails if there is no pool associated with created key
@@ -80,7 +86,8 @@ pub trait Entrypoints {
         &self,
         token_0: Address,
         token_1: Address,
-        fee_tier: FeeTier,
+        fee: U128,
+        tick_spacing: u32,
     ) -> Result<Pool, InvariantError>;
 
     /// Retrieves listed pools
@@ -92,14 +99,23 @@ pub trait Entrypoints {
     /// Allows an fee receiver to withdraw collected fees.
     ///
     /// # Parameters
-    /// - `pool_key`: A unique key that identifies the specified pool.
+    /// - `token_0`: The address of the first token.
+    /// - `token_1`: The address of the second token.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     ///
     /// # Errors
     /// - Reverts the call when the caller is an unauthorized receiver.
     ///
     /// # External contracts
     /// - odra::Erc20
-    fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError>;
+    fn withdraw_protocol_fee(
+        &mut self,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
+    ) -> Result<(), InvariantError>;
 
     /// Allows an admin to adjust the protocol fee.
     ///
@@ -108,38 +124,64 @@ pub trait Entrypoints {
     ///
     /// # Errors
     /// - Reverts the call when the caller is an unauthorized user.
-    fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError>;
+    fn change_protocol_fee(&mut self, protocol_fee: U128) -> Result<(), InvariantError>;
 
     /// Allows admin to change current fee receiver.
     ///
     /// # Parameters
-    /// - `pool_key`: A unique key that identifies the specified pool.
+    /// - `token_0`: The address of the first token.
+    /// - `token_1`: The address of the second token.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     /// - `fee_receiver`: An `AccountId` identifying the user authorized to claim fees.
     ///
     /// # Errors
     /// - Reverts the call when the caller is an unauthorized user.
     fn change_fee_receiver(
         &mut self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         fee_receiver: Address,
     ) -> Result<(), InvariantError>;
 
     /// Checks if the tick at a specified index is initialized.
     ///
     /// # Parameters
-    /// - `key`: A unique key that identifies the specified pool.
+    /// - `token_0`: The address of the first token.
+    /// - `token_1`: The address of the second token.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     /// - `index`: The tick index in the tickmap.
-    fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool;
+    fn is_tick_initialized(
+        &self,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
+        index: i32,
+    ) -> bool;
 
     /// Retrieves information about a tick at a specified index.
     ///
     /// # Parameters
-    /// - `key`: A unique key that identifies the specified pool.
+    /// - `token_0`: The address of the first token.
+    /// - `token_1`: The address of the second token.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     /// - `index`: The tick index in the tickmap.
     ///
     /// # Errors
     /// - Fails if tick cannot be found
-    fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError>;
+    fn get_tick(
+        &self,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
+        index: i32,
+    ) -> Result<Tick, InvariantError>;
 
     /// Allows an authorized user (owner of the position) to claim collected fees.
     ///
@@ -156,7 +198,10 @@ pub trait Entrypoints {
     /// Opens a position.
     ///
     /// # Parameters
-    /// - `pool_key`: A unique key that identifies the specified pool.
+    /// - `token_0`: The address of the first token.
+    /// - `token_1`: The address of the second token.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     /// - `lower_tick`: The index of the lower tick for opening the position.
     /// - `upper_tick`: The index of the upper tick for opening the position.
     /// - `liquidity_delta`: The desired liquidity provided by the user in the specified range.
@@ -177,12 +222,15 @@ pub trait Entrypoints {
     /// - odra::Erc20
     fn create_position(
         &mut self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         lower_tick: i32,
         upper_tick: i32,
-        liquidity_delta: Liquidity,
-        slippage_limit_lower: SqrtPrice,
-        slippage_limit_upper: SqrtPrice,
+        liquidity_delta: U256,
+        slippage_limit_lower: U128,
+        slippage_limit_upper: U128,
     ) -> Result<Position, InvariantError>;
 
     /// Transfers a position between users.
@@ -227,7 +275,10 @@ pub trait Entrypoints {
     /// Simulates the swap without its execution.
     ///
     /// # Parameters
-    /// - `pool_key`: A unique key that identifies the specified pool.
+    /// - `token_0`: The address of the first token.
+    /// - `token_1`: The address of the second token.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     /// - `x_to_y`: A boolean specifying the swap direction.
     /// - `amount`: The amount of tokens that the user wants to swap.
     /// - `by_amount_in`: A boolean specifying whether the user provides the amount to swap or expects the amount out.
@@ -240,17 +291,23 @@ pub trait Entrypoints {
     /// - Fails if pool does not exist
     fn quote(
         &self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         x_to_y: bool,
-        amount: TokenAmount,
+        amount: U256,
         by_amount_in: bool,
-        sqrt_price_limit: SqrtPrice,
+        sqrt_price_limit: U256,
     ) -> Result<QuoteResult, InvariantError>;
 
     /// Performs a single swap based on the provided parameters.
     ///
     /// # Parameters
-    /// - `pool_key`: A unique key that identifies the specified pool.
+    /// - `token_0`: The address of the first token.
+    /// - `token_1`: The address of the second token.
+    /// - `fee`: A value identifying the pool fee determined in percentages.
+    /// - `tick_spacing`: The tick spacing for the specified fee tier.
     /// - `x_to_y`: A boolean specifying the swap direction.
     /// - `amount`: TokenAmount that the user wants to swap.
     /// - `by_amount_in`: A boolean specifying whether the user provides the amount to swap or expects the amount out.
@@ -272,11 +329,14 @@ pub trait Entrypoints {
     /// - odra::Erc20
     fn swap(
         &mut self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         x_to_y: bool,
-        amount: TokenAmount,
+        amount: U256,
         by_amount_in: bool,
-        sqrt_price_limit: SqrtPrice,
+        sqrt_price_limit: U256,
     ) -> Result<CalculateSwapResult, InvariantError>;
 
     /// Simulates multiple swaps without its execution.
@@ -291,7 +351,7 @@ pub trait Entrypoints {
     /// - Fails if pool does not exist
     fn quote_route(
         &mut self,
-        amount_in: TokenAmount,
+        amount_in: U256,
         swaps: Vec<SwapHop>,
     ) -> Result<TokenAmount, InvariantError>;
 
@@ -318,9 +378,9 @@ pub trait Entrypoints {
     /// - odra::Erc20
     fn swap_route(
         &mut self,
-        amount_in: TokenAmount,
-        expected_amount_out: TokenAmount,
-        slippage: Percentage,
+        amount_in: U256,
+        expected_amount_out: U256,
+        slippage: U128,
         swaps: Vec<SwapHop>,
     ) -> Result<(), InvariantError>;
 }
