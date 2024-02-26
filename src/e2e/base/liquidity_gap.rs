@@ -26,8 +26,11 @@ fn liquidity_gap() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
@@ -36,8 +39,9 @@ fn liquidity_gap() {
             .create_pool(
                 pool_key.token_x,
                 pool_key.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -55,7 +59,12 @@ fn liquidity_gap() {
         let liquidity = Liquidity::from_integer(20_006_000);
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage_limit_lower = pool_before.sqrt_price;
@@ -63,17 +72,25 @@ fn liquidity_gap() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick,
                 upper_tick,
-                liquidity,
-                slippage_limit_lower,
-                slippage_limit_upper,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
             )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         assert_eq!(pool_after.liquidity, liquidity)
@@ -93,15 +110,38 @@ fn liquidity_gap() {
         let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
         let target_sqrt_price = invariant
-            .quote(pool_key, true, swap_amount, true, slippage)
+            .quote(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
             .unwrap()
             .target_sqrt_price;
         invariant
-            .swap(pool_key, true, swap_amount, true, target_sqrt_price)
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                target_sqrt_price.get(),
+            )
             .unwrap();
 
         let pool = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let expected_price = calculate_sqrt_price(-10).unwrap();
@@ -138,7 +178,16 @@ fn liquidity_gap() {
     {
         let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(U256::from(1));
-        let result = invariant.swap(pool_key, true, swap_amount, true, slippage);
+        let result = invariant.swap(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            true,
+            swap_amount.get(),
+            true,
+            slippage.get(),
+        );
         assert_eq!(result, Err(InvariantError::NoGainSwap));
     }
     // Open second position non-adjacent to the previous one, consequently creating a gap in liquidity
@@ -155,7 +204,12 @@ fn liquidity_gap() {
         token_y.approve(invariant.address(), &liquidity_delta.get());
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage_limit_lower = pool_before.sqrt_price;
@@ -163,12 +217,15 @@ fn liquidity_gap() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick_after_swap,
                 upper_tick_after_swap,
-                liquidity_delta,
-                slippage_limit_lower,
-                slippage_limit_upper,
+                liquidity_delta.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
             )
             .unwrap();
     }
@@ -184,15 +241,38 @@ fn liquidity_gap() {
         let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
         let target_sqrt_price = invariant
-            .quote(pool_key, true, swap_amount, true, slippage)
+            .quote(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
             .unwrap()
             .target_sqrt_price;
         invariant
-            .swap(pool_key, true, swap_amount, true, target_sqrt_price)
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                target_sqrt_price.get(),
+            )
             .unwrap();
 
         let pool = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         assert_eq!(pool.current_tick_index, -60);

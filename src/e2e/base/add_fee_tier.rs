@@ -16,15 +16,21 @@ fn test_add_multiple_fee_tiers() {
     let second_fee_tier = FeeTier::new(Percentage::new(U128::from(20)), 2).unwrap();
     let third_fee_tier = FeeTier::new(Percentage::new(U128::from(30)), 3).unwrap();
 
-    invariant.add_fee_tier(first_fee_tier).unwrap();
-    invariant.add_fee_tier(second_fee_tier).unwrap();
-    invariant.add_fee_tier(third_fee_tier).unwrap();
+    invariant
+        .add_fee_tier(first_fee_tier.fee.get(), first_fee_tier.tick_spacing)
+        .unwrap();
+    invariant
+        .add_fee_tier(second_fee_tier.fee.get(), second_fee_tier.tick_spacing)
+        .unwrap();
+    invariant
+        .add_fee_tier(third_fee_tier.fee.get(), third_fee_tier.tick_spacing)
+        .unwrap();
 
-    let exist = invariant.fee_tier_exist(first_fee_tier);
+    let exist = invariant.fee_tier_exist(first_fee_tier.fee.get(), first_fee_tier.tick_spacing);
     assert!(exist);
-    let exist = invariant.fee_tier_exist(second_fee_tier);
+    let exist = invariant.fee_tier_exist(second_fee_tier.fee.get(), second_fee_tier.tick_spacing);
     assert!(exist);
-    let exist = invariant.fee_tier_exist(third_fee_tier);
+    let exist = invariant.fee_tier_exist(third_fee_tier.fee.get(), third_fee_tier.tick_spacing);
     assert!(exist);
 
     let fee_tiers = invariant.get_fee_tiers();
@@ -42,9 +48,11 @@ fn test_add_existing_fee_tier() {
 
     let first_fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
-    invariant.add_fee_tier(first_fee_tier).unwrap();
+    invariant
+        .add_fee_tier(first_fee_tier.fee.get(), first_fee_tier.tick_spacing)
+        .unwrap();
 
-    let result = invariant.add_fee_tier(first_fee_tier);
+    let result = invariant.add_fee_tier(first_fee_tier.fee.get(), first_fee_tier.tick_spacing);
     assert_eq!(result, Err(InvariantError::FeeTierAlreadyExist));
 }
 
@@ -57,7 +65,7 @@ fn test_add_fee_tier_not_admin() {
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
     test_env::set_caller(not_admin);
-    let result = invariant.add_fee_tier(fee_tier);
+    let result = invariant.add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing);
 
     assert_eq!(result, Err(InvariantError::NotAdmin));
 }
@@ -69,5 +77,7 @@ fn test_add_fee_tier_zero_fee() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
     let first_fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
 
-    invariant.add_fee_tier(first_fee_tier).unwrap();
+    invariant
+        .add_fee_tier(first_fee_tier.fee.get(), first_fee_tier.tick_spacing)
+        .unwrap();
 }

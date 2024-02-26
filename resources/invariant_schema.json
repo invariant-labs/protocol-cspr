@@ -17,8 +17,12 @@
       "is_mutable": true,
       "args": [
         {
-          "name": "fee_tier",
-          "ty": "Any"
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         }
       ],
       "return_ty": {
@@ -33,8 +37,12 @@
       "is_mutable": false,
       "args": [
         {
-          "name": "fee_tier",
-          "ty": "Any"
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         }
       ],
       "return_ty": "Bool"
@@ -44,8 +52,12 @@
       "is_mutable": true,
       "args": [
         {
-          "name": "fee_tier",
-          "ty": "Any"
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         }
       ],
       "return_ty": {
@@ -76,12 +88,16 @@
           "ty": "Key"
         },
         {
-          "name": "fee_tier",
-          "ty": "Any"
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         },
         {
           "name": "init_sqrt_price",
-          "ty": "Any"
+          "ty": "U128"
         },
         {
           "name": "init_tick",
@@ -108,8 +124,12 @@
           "ty": "Key"
         },
         {
-          "name": "fee_tier",
-          "ty": "Any"
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         }
       ],
       "return_ty": {
@@ -138,8 +158,20 @@
       "is_mutable": true,
       "args": [
         {
-          "name": "pool_key",
-          "ty": "Any"
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         }
       ],
       "return_ty": {
@@ -155,7 +187,7 @@
       "args": [
         {
           "name": "protocol_fee",
-          "ty": "Any"
+          "ty": "U128"
         }
       ],
       "return_ty": {
@@ -170,8 +202,20 @@
       "is_mutable": true,
       "args": [
         {
-          "name": "pool_key",
-          "ty": "Any"
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         },
         {
           "name": "fee_receiver",
@@ -190,8 +234,20 @@
       "is_mutable": false,
       "args": [
         {
-          "name": "key",
-          "ty": "Any"
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         },
         {
           "name": "index",
@@ -205,8 +261,20 @@
       "is_mutable": false,
       "args": [
         {
-          "name": "key",
-          "ty": "Any"
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         },
         {
           "name": "index",
@@ -246,8 +314,20 @@
       "is_mutable": true,
       "args": [
         {
-          "name": "pool_key",
-          "ty": "Any"
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         },
         {
           "name": "lower_tick",
@@ -259,15 +339,15 @@
         },
         {
           "name": "liquidity_delta",
-          "ty": "Any"
+          "ty": "U256"
         },
         {
           "name": "slippage_limit_lower",
-          "ty": "Any"
+          "ty": "U128"
         },
         {
           "name": "slippage_limit_upper",
-          "ty": "Any"
+          "ty": "U128"
         }
       ],
       "return_ty": {
@@ -356,8 +436,20 @@
       "is_mutable": false,
       "args": [
         {
-          "name": "pool_key",
-          "ty": "Any"
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         },
         {
           "name": "x_to_y",
@@ -365,7 +457,7 @@
         },
         {
           "name": "amount",
-          "ty": "Any"
+          "ty": "U256"
         },
         {
           "name": "by_amount_in",
@@ -373,7 +465,7 @@
         },
         {
           "name": "sqrt_price_limit",
-          "ty": "Any"
+          "ty": "U128"
         }
       ],
       "return_ty": {
@@ -388,8 +480,20 @@
       "is_mutable": true,
       "args": [
         {
-          "name": "pool_key",
-          "ty": "Any"
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
         },
         {
           "name": "x_to_y",
@@ -397,7 +501,7 @@
         },
         {
           "name": "amount",
-          "ty": "Any"
+          "ty": "U256"
         },
         {
           "name": "by_amount_in",
@@ -405,7 +509,7 @@
         },
         {
           "name": "sqrt_price_limit",
-          "ty": "Any"
+          "ty": "U128"
         }
       ],
       "return_ty": {
@@ -421,7 +525,7 @@
       "args": [
         {
           "name": "amount_in",
-          "ty": "Any"
+          "ty": "U256"
         },
         {
           "name": "swaps",
@@ -443,15 +547,15 @@
       "args": [
         {
           "name": "amount_in",
-          "ty": "Any"
+          "ty": "U256"
         },
         {
           "name": "expected_amount_out",
-          "ty": "Any"
+          "ty": "U256"
         },
         {
           "name": "slippage",
-          "ty": "Any"
+          "ty": "U128"
         },
         {
           "name": "swaps",

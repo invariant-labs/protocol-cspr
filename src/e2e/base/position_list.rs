@@ -32,17 +32,20 @@ fn test_remove_position_from_empty_list() {
     let mut invariant = InvariantDeployer::init(Percentage::from_scale(6, 3).get());
 
     let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 3).unwrap();
-
-    invariant.add_fee_tier(fee_tier).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     let init_tick = -23028;
 
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            calculate_sqrt_price(init_tick).unwrap(),
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            calculate_sqrt_price(init_tick).unwrap().get(),
             init_tick,
         )
         .unwrap();
@@ -74,15 +77,19 @@ fn test_add_multiple_positions() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            calculate_sqrt_price(init_tick).unwrap(),
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            calculate_sqrt_price(init_tick).unwrap().get(),
             init_tick,
         )
         .unwrap();
@@ -90,56 +97,72 @@ fn test_add_multiple_positions() {
     token_x.approve(invariant.address(), &U256::from(initial_balance));
     token_y.approve(invariant.address(), &U256::from(initial_balance));
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let tick_indexes = [-9780, -42, 0, 9, 276, 32343, -50001];
     let liquidity_delta = Liquidity::from_integer(1_000_000);
     let pool_state = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     // Open four positions
     {
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[2],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[4],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
     }
@@ -183,12 +206,15 @@ fn test_add_multiple_positions() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[2],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -224,12 +250,15 @@ fn test_add_multiple_positions() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
         let list_length_after = invariant.get_all_positions(positions_owner).len();
@@ -260,15 +289,19 @@ fn test_only_owner_can_modify_position_list() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            calculate_sqrt_price(init_tick).unwrap(),
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            calculate_sqrt_price(init_tick).unwrap().get(),
             init_tick,
         )
         .unwrap();
@@ -276,56 +309,72 @@ fn test_only_owner_can_modify_position_list() {
     token_x.approve(invariant.address(), &U256::from(initial_balance));
     token_y.approve(invariant.address(), &U256::from(initial_balance));
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let tick_indexes = [-9780, -42, 0, 9, 276, 32343, -50001];
     let liquidity_delta = Liquidity::from_integer(1_000_000);
     let pool_state = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     // Open four positions
     {
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[2],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[4],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
     }
@@ -350,12 +399,15 @@ fn test_only_owner_can_modify_position_list() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[2],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -396,15 +448,19 @@ fn test_transfer_position_ownership() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            calculate_sqrt_price(init_tick).unwrap(),
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            calculate_sqrt_price(init_tick).unwrap().get(),
             init_tick,
         )
         .unwrap();
@@ -412,21 +468,28 @@ fn test_transfer_position_ownership() {
     token_x.approve(invariant.address(), &U256::from(initial_balance));
     token_y.approve(invariant.address(), &U256::from(initial_balance));
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let tick_indexes = [-9780, -42, 0, 9, 276, 32343, -50001];
     let liquidity_delta = Liquidity::from_integer(1_000_000);
     let pool_state = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
     {
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
         let list_length = invariant.get_all_positions(positions_owner).len();
@@ -439,32 +502,41 @@ fn test_transfer_position_ownership() {
     {
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[2],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[3],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
     }
@@ -654,15 +726,19 @@ fn test_only_owner_can_transfer_position() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 3).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            calculate_sqrt_price(init_tick).unwrap(),
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            calculate_sqrt_price(init_tick).unwrap().get(),
             init_tick,
         )
         .unwrap();
@@ -670,21 +746,28 @@ fn test_only_owner_can_transfer_position() {
     token_x.approve(invariant.address(), &U256::from(initial_balance));
     token_y.approve(invariant.address(), &U256::from(initial_balance));
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     let tick_indexes = [-9780, -42, 0, 9, 276, 32343, -50001];
     let liquidity_delta = Liquidity::from_integer(1_000_000);
     let pool_state = invariant
-        .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
     {
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
         let list_length = invariant.get_all_positions(position_owner).len();
@@ -696,32 +779,41 @@ fn test_only_owner_can_transfer_position() {
     {
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[0],
                 tick_indexes[1],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[2],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 tick_indexes[1],
                 tick_indexes[3],
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
     }
@@ -758,15 +850,19 @@ fn test_multiple_positions_on_same_tick() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
 
     let fee_tier = FeeTier::new(Percentage::from_scale(2, 4), 10).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
 
     invariant
         .create_pool(
-            *token_x.address(),
-            *token_y.address(),
-            fee_tier,
-            calculate_sqrt_price(init_tick).unwrap(),
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            calculate_sqrt_price(init_tick).unwrap().get(),
             init_tick,
         )
         .unwrap();
@@ -774,7 +870,6 @@ fn test_multiple_positions_on_same_tick() {
     token_x.approve(invariant.address(), &U256::from(initial_balance));
     token_y.approve(invariant.address(), &U256::from(initial_balance));
 
-    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Three position on same lower and upper tick
     {
         let lower_tick_index = -10;
@@ -783,17 +878,25 @@ fn test_multiple_positions_on_same_tick() {
         let liquidity_delta = Liquidity::new(U256::from(100));
 
         let pool_state = invariant
-            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick_index,
                 upper_tick_index,
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -801,12 +904,15 @@ fn test_multiple_positions_on_same_tick() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick_index,
                 upper_tick_index,
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -814,12 +920,15 @@ fn test_multiple_positions_on_same_tick() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick_index,
                 upper_tick_index,
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -832,10 +941,31 @@ fn test_multiple_positions_on_same_tick() {
 
         // Load states
         let pool_state = invariant
-            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
-        let lower_tick = invariant.get_tick(pool_key, lower_tick_index).unwrap();
-        let upper_tick = invariant.get_tick(pool_key, upper_tick_index).unwrap();
+        let lower_tick = invariant
+            .get_tick(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                lower_tick_index,
+            )
+            .unwrap();
+        let upper_tick = invariant
+            .get_tick(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                upper_tick_index,
+            )
+            .unwrap();
         let expected_liquidity = Liquidity::new(liquidity_delta.get() * 3);
         let zero_fee = FeeGrowth::new(U128::from(0));
 
@@ -885,17 +1015,25 @@ fn test_multiple_positions_on_same_tick() {
         let liquidity_delta = Liquidity::new(U256::from(100));
 
         let pool_state = invariant
-            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick_index,
                 upper_tick_index,
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -914,12 +1052,15 @@ fn test_multiple_positions_on_same_tick() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick_index,
                 upper_tick_index,
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -937,12 +1078,15 @@ fn test_multiple_positions_on_same_tick() {
         let upper_tick_index = 20;
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick_index,
                 upper_tick_index,
-                liquidity_delta,
-                pool_state.sqrt_price,
-                SqrtPrice::max_instance(),
+                liquidity_delta.get(),
+                pool_state.sqrt_price.get(),
+                SqrtPrice::max_instance().get(),
             )
             .unwrap();
 
@@ -958,15 +1102,70 @@ fn test_multiple_positions_on_same_tick() {
 
         // Load states
         let pool_state = invariant
-            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
-        let tick_n20 = invariant.get_tick(pool_key, -20).unwrap();
-        let tick_n10 = invariant.get_tick(pool_key, -10).unwrap();
-        let tick_10 = invariant.get_tick(pool_key, 10).unwrap();
-        let tick_20 = invariant.get_tick(pool_key, 20).unwrap();
-        let tick_n20_bit = invariant.is_tick_initialized(pool_key, -20);
-        let tick_n10_bit = invariant.is_tick_initialized(pool_key, -10);
-        let tick_20_bit = invariant.is_tick_initialized(pool_key, 20);
+        let tick_n20 = invariant
+            .get_tick(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                -20,
+            )
+            .unwrap();
+        let tick_n10 = invariant
+            .get_tick(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                -10,
+            )
+            .unwrap();
+        let tick_10 = invariant
+            .get_tick(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                10,
+            )
+            .unwrap();
+        let tick_20 = invariant
+            .get_tick(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                20,
+            )
+            .unwrap();
+        let tick_n20_bit = invariant.is_tick_initialized(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            -20,
+        );
+        let tick_n10_bit = invariant.is_tick_initialized(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            -10,
+        );
+        let tick_20_bit = invariant.is_tick_initialized(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            20,
+        );
 
         let expected_active_liquidity = Liquidity::new(U256::from(400));
 

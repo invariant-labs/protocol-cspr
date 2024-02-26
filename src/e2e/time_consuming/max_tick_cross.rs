@@ -25,8 +25,11 @@ fn test_max_tick_cross() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
@@ -35,8 +38,9 @@ fn test_max_tick_cross() {
             .create_pool(
                 pool_key.token_x,
                 pool_key.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -50,7 +54,12 @@ fn test_max_tick_cross() {
 
         for i in (-2500..20).step_by(10) {
             let pool = invariant
-                .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+                .get_pool(
+                    pool_key.token_x,
+                    pool_key.token_y,
+                    fee_tier.fee.get(),
+                    fee_tier.tick_spacing,
+                )
                 .unwrap();
 
             let slippage_limit_lower = pool.sqrt_price;
@@ -58,18 +67,26 @@ fn test_max_tick_cross() {
 
             invariant
                 .create_position(
-                    pool_key,
+                    pool_key.token_x,
+                    pool_key.token_y,
+                    fee_tier.fee.get(),
+                    fee_tier.tick_spacing,
                     i,
                     i + 10,
-                    liquidity,
-                    slippage_limit_lower,
-                    slippage_limit_upper,
+                    liquidity.get(),
+                    slippage_limit_lower.get(),
+                    slippage_limit_upper.get(),
                 )
                 .unwrap();
         }
 
         let pool = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
         assert_eq!(pool.liquidity, liquidity)
     }
@@ -79,17 +96,36 @@ fn test_max_tick_cross() {
         let amount = U256::from(1_162_500);
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
         let quote_result = invariant
-            .quote(pool_key, true, swap_amount, true, slippage)
+            .quote(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
             .unwrap();
 
         let pool_after_quote = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let crosses_after_quote =
@@ -98,11 +134,25 @@ fn test_max_tick_cross() {
         assert_eq!(quote_result.ticks.len() - 1, 218);
 
         let result = invariant
-            .swap(pool_key, true, swap_amount, true, slippage)
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let crosses = ((pool_after.current_tick_index - pool_before.current_tick_index) / 10).abs();
