@@ -59,11 +59,8 @@ const main = async () => {
   )
 
   const invariant = await Invariant.load(client, service, invariantHash)
-  console.log(invariant)
   await invariant.changeProtocolFee(account, network, 100n)
-  // const queryResult = await invariant.getProtocolFee(account, network)
-
-  console.log()
+  await invariant.addFeeTier(account, network, 100n, 100n)
 }
 
 main()

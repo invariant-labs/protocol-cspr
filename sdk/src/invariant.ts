@@ -150,14 +150,4 @@ export class Invariant {
   //     {}
   //   )
   // }
-
-  // async getProtocolFee() {
-  //   this.contract.queryContractData(['get_protocol_fee'], this.client)
-  // }
-
-  // async getProtocolFee() {
-  //   const response = await this.contract.queryContractDictionary('state', hash('get_protocol_fee'))
-
-  //   return response.data
-  // }
 }
