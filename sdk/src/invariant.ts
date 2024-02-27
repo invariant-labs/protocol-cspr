@@ -139,17 +139,17 @@ export class Invariant {
     )
   }
 
-  async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
-    return await sendTx(
-      this.contract,
-      this.service,
-      this.paymentAmount,
-      account,
-      network,
-      'get_protocol_fee',
-      {}
-    )
-  }
+  // async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
+  //   return await sendTx(
+  //     this.contract,
+  //     this.service,
+  //     this.paymentAmount,
+  //     account,
+  //     network,
+  //     'get_protocol_fee',
+  //     {}
+  //   )
+  // }
 
   // async getProtocolFee() {
   //   this.contract.queryContractData(['get_protocol_fee'], this.client)
