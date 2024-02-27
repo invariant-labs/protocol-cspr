@@ -52,6 +52,7 @@ export class Invariant {
       fee: CLValueBuilder.u128(Number(fee))
     })
 
+    console.log('Step 1')
     const signedDeploy = contract.install(
       wasm,
       args,
@@ -61,16 +62,21 @@ export class Invariant {
       [deployer]
     )
 
+    console.log('Step 2')
     await service.deploy(signedDeploy)
 
+    console.log('Step 3')
     const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
 
+    console.log('Step 4')
+    console.log(deploymentResult.execution_results[0])
     if (deploymentResult.execution_results[0].result.Failure) {
       throw new Error(
         deploymentResult.execution_results[0].result.Failure.error_message?.toString()
       )
     }
 
+    console.log('Step 5')
     const stateRootHash = await service.getStateRootHash()
     const { Account } = await service.getBlockState(
       stateRootHash,
@@ -78,6 +84,7 @@ export class Invariant {
       []
     )
 
+    console.log('Step 6')
     if (!Account) {
       throw new Error('Account not found in block state')
     }

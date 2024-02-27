@@ -1,5 +1,4 @@
-import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
-import { Erc20 } from './erc20'
+import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
 import { createAccountKeys, initCasperClientAndService } from './utils'
@@ -9,10 +8,11 @@ const main = async () => {
 
   if (createKeys) {
     createAccountKeys()
+    console.log('Account keys generated')
     return
   }
 
-  const isLocal = true
+  const isLocal = false
 
   let account
   let network
@@ -28,26 +28,28 @@ const main = async () => {
     nodeUrl = TESTNET_NODE_URL
   }
 
+  console.log('key:', account.accountHex())
+
   const { client, service } = initCasperClientAndService(nodeUrl)
 
-  const erc20Hash = await Erc20.deploy(
-    client,
-    service,
-    network,
-    account,
-    1000000000000n,
-    'COIN',
-    'Coin',
-    6n,
-    150000000000n
-  )
+  // const erc20Hash = await Erc20.deploy(
+  //   client,
+  //   service,
+  //   network,
+  //   account,
+  //   1000000000000n,
+  //   'COIN',
+  //   'Coin',
+  //   6n,
+  //   150000000000n
+  // )
 
-  const erc20 = await Erc20.load(client, service, erc20Hash)
-  console.log(await erc20.name())
+  // const erc20 = await Erc20.load(client, service, erc20Hash)
+  // console.log(await erc20.name())
 
-  console.log(await erc20.balance_of(account.publicKey))
-  await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
-  console.log(await erc20.balance_of(account.publicKey))
+  // console.log(await erc20.balance_of(account.publicKey))
+  // await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
+  // console.log(await erc20.balance_of(account.publicKey))
 
   const invariantHash = await Invariant.deploy(
     client,
@@ -55,8 +57,9 @@ const main = async () => {
     network,
     account,
     0n,
-    10000000000000n
+    1000000000000n
   )
+  // 2 500 000 000
 
   const invariant = await Invariant.load(client, service, invariantHash)
   await invariant.changeProtocolFee(account, network, 100n)
