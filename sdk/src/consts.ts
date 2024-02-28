@@ -13,5 +13,8 @@ export const [ALICE, BOB, CHARLIE] = FUNDED_KEYS.map(k => k.private).map(key =>
 export const TEST = parseAccountKeys(KEYS_PATH, Algo.ed25519)
 
 export const DEFAULT_PAYMENT_AMOUNT = 10000000000n
+export const TESTNET_DEPLOY_AMOUNT = 947800000000n
+export const TESTNET_INVARIANT_HASH =
+  '8e49c00837475090db92faaa453d668b9d36b938f954e5fa870d7960916e7727'
 
 export const BALANCES = stringToUint8Array('balances')

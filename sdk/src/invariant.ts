@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import { BigNumber } from '@ethersproject/bignumber'
 import {
   CLValueBuilder,
   CasperClient,
@@ -7,7 +8,7 @@ import {
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './network'
 import { getDeploymentData, sendTx } from './utils'
 
@@ -71,6 +72,12 @@ export class Invariant {
     console.log('Step 4')
     console.log(deploymentResult.execution_results[0])
     if (deploymentResult.execution_results[0].result.Failure) {
+      {
+        console.log(deploymentResult.execution_results[0].result.Failure.effect)
+        for (const v of deploymentResult.execution_results[0].result.Failure.effect.transforms) {
+          console.log(v)
+        }
+      }
       throw new Error(
         deploymentResult.execution_results[0].result.Failure.error_message?.toString()
       )
@@ -133,28 +140,34 @@ export class Invariant {
   }
 
   async changeProtocolFee(account: Keys.AsymmetricKey, network: Network, protocolFee: bigint) {
+    const txArgs = RuntimeArgs.fromMap({
+      protocol_fee: CLValueBuilder.u128(BigNumber.from(protocolFee))
+    })
+
+    const deploy = this.contract.callEntrypoint(
+      'change_protocol_fee',
+      txArgs,
+      account.publicKey,
+      network,
+      DEFAULT_PAYMENT_AMOUNT.toString(),
+      [account]
+    )
+
+    deploy.sign([account])
+    await deploy.send(TESTNET_NODE_URL)
+    await this.service.deploy(deploy)
+    return await this.service.waitForDeploy(deploy, 100000)
+  }
+
+  async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
     return await sendTx(
       this.contract,
       this.service,
       this.paymentAmount,
       account,
       network,
-      'change_protocol_fee',
-      {
-        protocol_fee: CLValueBuilder.u128(Number(protocolFee))
-      }
+      'get_protocol_fee',
+      {}
     )
   }
-
-  // async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
-  //   return await sendTx(
-  //     this.contract,
-  //     this.service,
-  //     this.paymentAmount,
-  //     account,
-  //     network,
-  //     'get_protocol_fee',
-  //     {}
-  //   )
-  // }
 }
