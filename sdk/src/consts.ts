@@ -1,5 +1,5 @@
 import { FUNDED_KEYS } from 'casper-node-launcher-js'
-import { Keys } from '../casper-js-sdk-2.15.3/src'
+import { Keys } from 'casper-js-sdk'
 import { Algo } from './schema'
 import { parseAccountKeys, stringToUint8Array } from './utils'
 

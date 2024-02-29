@@ -10,7 +10,7 @@ import {
   GetDeployResult,
   Keys,
   RuntimeArgs
-} from '../casper-js-sdk-2.15.3/src'
+} from 'casper-js-sdk'
 import { Network } from './network'
 import { Algo } from './schema'
 

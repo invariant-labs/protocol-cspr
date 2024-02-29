@@ -8,7 +8,7 @@ import {
   Contracts,
   Keys,
   RuntimeArgs
-} from '../casper-js-sdk-2.15.3/src'
+} from 'casper-js-sdk'
 import { BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
 import { Network } from './network'
 import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
