@@ -159,7 +159,7 @@ export class Invariant {
     return await this.service.waitForDeploy(deploy, 100000)
   }
 
-  async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
+  async getProtocolFee() {
     // const key = blake2b('config').toString()
     // const stateRootHash = await this.service.getStateRootHash()
     // const key = '7071474438b622de882472abc92f9d7e1fd3456e19b46f0117fe607b9d819679'
@@ -186,9 +186,9 @@ export class Invariant {
 
   async queryFields() {
     {
-      const key = hash('tmp')
-      const stateRootHash = await this.service.getStateRootHash()
-      console.log(stateRootHash)
+      // const key = hash('tmp')
+      // const stateRootHash = await this.service.getStateRootHash()
+      // console.log(stateRootHash)
       // const response = await this.contract.queryContractDictionary(
       //   'state',
       //   key,
