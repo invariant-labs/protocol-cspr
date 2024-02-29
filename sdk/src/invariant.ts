@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import { BigNumber } from '@ethersproject/bignumber'
+import { blake2b } from 'blakejs'
 import {
   CLValueBuilder,
   CasperClient,
@@ -160,6 +161,17 @@ export class Invariant {
   }
 
   async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
+    const key = blake2b('config').toString()
+    console.log(key)
+    const stateRootHash = await this.service.getStateRootHash()
+    console.log(stateRootHash)
+    const response = await this.contract.queryContractDictionary(
+      'state',
+      key,
+      stateRootHash,
+      this.client
+    )
+    console.log(response)
     return await sendTx(
       this.contract,
       this.service,

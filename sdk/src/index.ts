@@ -55,8 +55,9 @@ const main = async () => {
   // console.log('Invariant deployed:', invariantHash)
   const invariant = await Invariant.load(client, service, TESTNET_INVARIANT_HASH)
   console.log('Invariant loaded', invariant)
+
   await invariant.getProtocolFee(account, network)
-  await invariant.changeProtocolFee(account, network, 100n)
+  // await invariant.changeProtocolFee(account, network, 100n)
   // await invariant.addFeeTier(account, network, 100n, 100n)
 }
 
