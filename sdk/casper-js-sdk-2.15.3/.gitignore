@@ -1,0 +1,12 @@
+node_modules
+
+# Output
+/docs/
+/dist/
+
+.eslintcache
+.nyc_output
+
+.DS_Store
+
+.env

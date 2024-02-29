@@ -1,4 +1,7 @@
 import { blake2bHex } from 'blakejs'
+import fs from 'fs'
+import { readFile } from 'fs/promises'
+import path from 'path'
 import {
   CLValue,
   CasperClient,
@@ -7,10 +10,7 @@ import {
   GetDeployResult,
   Keys,
   RuntimeArgs
-} from 'casper-js-sdk'
-import fs from 'fs'
-import { readFile } from 'fs/promises'
-import path from 'path'
+} from '../casper-js-sdk-2.15.3/src'
 import { Network } from './network'
 import { Algo } from './schema'
 
