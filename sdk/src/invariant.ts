@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import { BigNumber } from '@ethersproject/bignumber'
-import { blake2b } from 'blakejs'
 import {
   CLValueBuilder,
   CasperClient,
@@ -11,7 +10,7 @@ import {
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './network'
-import { getDeploymentData, sendTx } from './utils'
+import { getDeploymentData, hash, sendTx } from './utils'
 
 const CONTRACT_NAME = 'invariant'
 
@@ -161,10 +160,12 @@ export class Invariant {
   }
 
   async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
-    const key = blake2b('config').toString()
-    console.log(key)
+    // const key = blake2b('config').toString()
+    // const stateRootHash = await this.service.getStateRootHash()
+    // const key = '7071474438b622de882472abc92f9d7e1fd3456e19b46f0117fe607b9d819679'
+    const key = hash('tmp')
     const stateRootHash = await this.service.getStateRootHash()
-    console.log(stateRootHash)
+
     const response = await this.contract.queryContractDictionary(
       'state',
       key,
@@ -172,14 +173,53 @@ export class Invariant {
       this.client
     )
     console.log(response)
-    return await sendTx(
-      this.contract,
-      this.service,
-      this.paymentAmount,
-      account,
-      network,
-      'get_protocol_fee',
-      {}
-    )
+    // return await sendTx(
+    //   this.contract,
+    //   this.service,
+    //   this.paymentAmount,
+    //   account,
+    //   network,
+    //   'get_protocol_fee',
+    //   {}
+    // )
+  }
+
+  async queryFields() {
+    {
+      const key = hash('tmp')
+      const stateRootHash = await this.service.getStateRootHash()
+      console.log(stateRootHash)
+      // const response = await this.contract.queryContractDictionary(
+      //   'state',
+      //   key,
+      //   stateRootHash,
+      //   this.client
+      // )
+      // console.log(response)
+    }
+    {
+      const key = hash('tmp_address')
+      const stateRootHash = await this.service.getStateRootHash()
+      console.log(stateRootHash)
+      const response = await this.contract.queryContractDictionary(
+        'state',
+        key,
+        stateRootHash,
+        this.client
+      )
+      console.log(response)
+    }
+    // {
+    //   const key = hash('tmp_percentage')
+    //   const stateRootHash = await this.service.getStateRootHash()
+    //   console.log(stateRootHash)
+    //   const response = await this.contract.queryContractDictionary(
+    //     'state',
+    //     key,
+    //     stateRootHash,
+    //     this.client
+    //   )
+    //   console.log(response)
+    // }
   }
 }

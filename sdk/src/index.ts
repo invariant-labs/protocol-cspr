@@ -1,4 +1,4 @@
-import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_INVARIANT_HASH, TESTNET_NODE_URL } from './consts'
+import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
 import { createAccountKeys, initCasperClientAndService } from './utils'
@@ -49,14 +49,20 @@ const main = async () => {
   // await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
   // console.log(await erc20.balance_of(account.publicKey))
 
-  // const invariantHash = await Invariant.deploy(client, service, network, account, 0n, 714370067990n)
+  // const invariantHash = await Invariant.deploy(client, service, network, account, 0n, 537395207813n)
   // // 2 500 000 000
 
   // console.log('Invariant deployed:', invariantHash)
-  const invariant = await Invariant.load(client, service, TESTNET_INVARIANT_HASH)
+  // HASH => 06466707c7d88d3835e1691bc8958b0e9c044631c5fd29d076b90be6c1e8f1a4 - with only tmp as U256
+  const invariant = await Invariant.load(
+    client,
+    service,
+    'bac526f448c0d376c93517ebfca3f9ceb8916b868120a2a68e917a8c11295df1'
+  )
   console.log('Invariant loaded', invariant)
 
-  await invariant.getProtocolFee(account, network)
+  // hash-bac526f448c0d376c93517ebfca3f9ceb8916b868120a2a68e917a8c11295df1
+  await invariant.queryFields()
   // await invariant.changeProtocolFee(account, network, 100n)
   // await invariant.addFeeTier(account, network, 100n, 100n)
 }
