@@ -187,7 +187,7 @@ export class Invariant {
 
     const structName = lowerCaseFirstLetter(unwrap(stringResult, 'Couldnt parse string'))
 
-    // One additional byte is left on the beggining of the remainder
+    // One additional byte is left on the beggining of the bytes remainder
     const updatedRemainder = stringRemainder!.slice(1, stringRemainder!.length)
 
     const { result: addressResult, remainder: addressRemainder } =
