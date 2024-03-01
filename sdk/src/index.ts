@@ -49,7 +49,7 @@ const main = async () => {
   // await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
   // console.log(await erc20.balance_of(account.publicKey))
 
-  // const invariantHash = await Invariant.deploy(client, service, network, account, 0n, 453732049230n)
+  // const invariantHash = await Invariant.deploy(client, service, network, account, 0n, 357986471289n)
   // // 2 500 000 000
 
   // console.log('Invariant deployed:', invariantHash)
@@ -58,13 +58,14 @@ const main = async () => {
     service,
     'd262e503c5203e302ecfc8a31126a9c29783254116f6312d28200a44c1ce1c73'
   )
+
   console.log('Invariant loaded', invariant)
 
   // INVARIANT QUERIES HASH: hash-bac526f448c0d376c93517ebfca3f9ceb8916b868120a2a68e917a8c11295df1
   // INVARIANT QUERIES HASH * CHANGE PROTOCOL FEE ENTRYPOINT: hash-d262e503c5203e302ecfc8a31126a9c29783254116f6312d28200a44c1ce1c73
-  // await invariant.queryFields()
+  await invariant.queryFields()
 
-  await invariant.changeProtocolFee(account, network, 100n)
+  // await invariant.changeProtocolFee(account, network, 100n)
   // await invariant.addFeeTier(account, network, 100n, 100n)
 }
 

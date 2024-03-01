@@ -1,2 +1,2 @@
-export * from './services';
 export * from './lib';
+export * from './services';

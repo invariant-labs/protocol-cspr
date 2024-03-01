@@ -186,8 +186,18 @@ export class Invariant {
 
   async queryFields() {
     {
-      // const key = hash('tmp')
-      // const stateRootHash = await this.service.getStateRootHash()
+      const key = hash('tmp')
+      const stateRootHash = await this.service.getStateRootHash()
+      {
+        const response = await this.client.nodeClient.getDictionaryItemByName(
+          stateRootHash,
+          this.contract.contractHash!,
+          'state',
+          key
+        )
+        console.log('raw struct response:', response)
+      }
+
       // console.log(stateRootHash)
       // const response = await this.contract.queryContractDictionary(
       //   'state',
@@ -197,18 +207,32 @@ export class Invariant {
       // )
       // console.log(response)
     }
-    {
-      const key = hash('tmp_address')
-      const stateRootHash = await this.service.getStateRootHash()
-      console.log(stateRootHash)
-      const response = await this.contract.queryContractDictionary(
-        'state',
-        key,
-        stateRootHash,
-        this.client
-      )
-      console.log(response)
-    }
+    // {
+    //   const key = hash('tmp_address')
+    //   const stateRootHash = await this.service.getStateRootHash()
+    //   // console.log(stateRootHash)
+    //   console.log('Before query')
+    //   {
+    //     const response = await this.client.nodeClient.getDictionaryItemByName(
+    //       stateRootHash,
+    //       this.contract.contractHash!,
+    //       'state',
+    //       key
+    //     )
+    //     console.log('raw response:', response)
+    //   }
+
+    //   {
+    //     const response = await this.contract.queryContractDictionary(
+    //       'state',
+    //       key,
+    //       stateRootHash,
+    //       this.client
+    //     )
+    //     console.log('After query')
+    //     console.log('response: ', response)
+    //   }
+    // }
     // {
     //   const key = hash('tmp_percentage')
     //   const stateRootHash = await this.service.getStateRootHash()

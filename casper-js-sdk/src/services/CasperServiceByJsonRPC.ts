@@ -1,14 +1,14 @@
 import { BigNumber } from '@ethersproject/bignumber';
-import { RequestManager, HTTPTransport, Client } from '@open-rpc/client-js';
+import { Client, HTTPTransport, RequestManager } from '@open-rpc/client-js';
 import { TypedJSON, jsonMember, jsonObject } from 'typedjson';
 
 import {
-  DeployUtil,
-  encodeBase16,
   CLPublicKey,
   CLValue,
+  DeployUtil,
   StoredValue,
-  Transfers
+  Transfers,
+  encodeBase16
 } from '..';
 
 import ProviderTransport, {
@@ -953,6 +953,10 @@ export class CasperServiceByJsonRPC {
     dictionaryItemKey: string,
     props?: RpcRequestProps & { rawData?: boolean }
   ): Promise<StoredValue> {
+    console.log('---------------------');
+    console.log('Nested Log');
+    console.log('---------------------');
+
     const rawData = props?.rawData ?? false;
 
     const res = await this.client.request(
@@ -971,6 +975,11 @@ export class CasperServiceByJsonRPC {
       },
       props?.timeout
     );
+
+    console.log('---------------------');
+    console.log('Nested raw response:', res);
+    console.log('---------------------');
+
     if (res.error) {
       return res;
     } else {

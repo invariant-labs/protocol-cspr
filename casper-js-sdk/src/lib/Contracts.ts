@@ -1,10 +1,10 @@
-import { CLPublicKey, CLValue, CLValueBuilder, CLTypeBuilder } from '../index';
-import * as DeployUtil from './DeployUtil';
-import { CasperClient } from './CasperClient';
-import { Deploy } from './DeployUtil';
-import { RuntimeArgs } from './RuntimeArgs';
-import { AsymmetricKey } from './Keys';
 import { DEFAULT_DEPLOY_TTL } from '../constants';
+import { CLPublicKey, CLTypeBuilder, CLValue, CLValueBuilder } from '../index';
+import { CasperClient } from './CasperClient';
+import * as DeployUtil from './DeployUtil';
+import { Deploy } from './DeployUtil';
+import { AsymmetricKey } from './Keys';
+import { RuntimeArgs } from './RuntimeArgs';
 
 /**
  * Convert a contract hash hexadecimal string to a byte array
@@ -171,6 +171,8 @@ export class Contract {
     stateRootHash?: string,
     casperClient?: CasperClient
   ): Promise<CLValue> {
+    console.log('Inside query log');
+
     this.checkSetup();
 
     const client = casperClient || this.casperClient;
@@ -185,6 +187,8 @@ export class Contract {
       dictionaryName,
       dictionaryItemKey
     );
+
+    console.log('Stored Value:', storedValue);
 
     if (storedValue && storedValue.CLValue?.isCLValue) {
       return storedValue.CLValue;
