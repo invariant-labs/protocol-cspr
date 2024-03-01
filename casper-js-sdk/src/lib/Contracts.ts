@@ -171,8 +171,6 @@ export class Contract {
     stateRootHash?: string,
     casperClient?: CasperClient
   ): Promise<CLValue> {
-    console.log('Inside query log');
-
     this.checkSetup();
 
     const client = casperClient || this.casperClient;
@@ -187,8 +185,6 @@ export class Contract {
       dictionaryName,
       dictionaryItemKey
     );
-
-    console.log('Stored Value:', storedValue);
 
     if (storedValue && storedValue.CLValue?.isCLValue) {
       return storedValue.CLValue;
