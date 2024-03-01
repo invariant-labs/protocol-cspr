@@ -1,7 +1,20 @@
 use odra::types::casper_types::bytesrepr::FromBytes;
 use odra::types::Address;
+use odra::types::U128;
 use odra::types::U256;
+use odra::OdraType;
 extern crate hex;
+
+#[derive(OdraType, Eq, PartialEq, Debug)]
+pub struct FeeTier {
+    pub fee: Percentage,
+    pub tick_spacing: u32,
+}
+
+#[derive(OdraType, Eq, PartialEq, Debug)]
+pub struct Percentage {
+    v: U128,
+}
 
 fn main() {
     {
@@ -51,6 +64,42 @@ fn main() {
         println!("v: {:?}", v);
 
         // Check if all bytes were used.
+        // assert!(bytes.is_empty());
+    }
+    // Fee tiers
+    {
+        let bytes = hex::decode("0800000046656554696572730100000007000000466565546965720a00000050657263656e7461676501640a000000").unwrap();
+
+        // This is how you would normally deserialize bytes to InvariantConfig.
+        // let (cfg, rem) = InvariantConfig::from_bytes(&bytes).unwrap();
+
+        // This is how to do it manually.
+        let (str, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("str: {:?}", str);
+        println!("Bytes = {:?}", bytes);
+        assert_eq!(str, "FeeTiers");
+        let (count, mut bytes) = u32::from_bytes(bytes).unwrap();
+
+        // let mut result = Vec::new();
+        // for _ in 0..count {
+        //     let (value, remainder) = FeeTier::from_bytes(bytes).unwrap();
+        //     result.push(value);
+        //     bytes = remainder;
+        // }
+        for _ in 0..count {
+            let (value, remainder) = String::from_bytes(bytes).unwrap();
+            println!("Value = {:?}", value);
+            let (value, remainder) = String::from_bytes(remainder).unwrap();
+            println!("Value = {:?}", value);
+            println!("Remainder = {:?}", remainder);
+            let (value, remainder) = U128::from_bytes(remainder).unwrap();
+            println!("Value = {:?}", value);
+            println!("Remainder = {:?}", remainder);
+            let (value, remainder) = u32::from_bytes(remainder).unwrap();
+            println!("Value = {:?}", value);
+            println!("Remainder = {:?}", remainder);
+        }
+        // println!("result: {:?}", result);
         // assert!(bytes.is_empty());
     }
 }

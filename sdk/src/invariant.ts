@@ -3,7 +3,9 @@ import { BigNumber } from '@ethersproject/bignumber'
 import {
   CLAccountHashBytesParser,
   CLStringBytesParser,
+  CLU128BytesParser,
   CLU256BytesParser,
+  CLU32BytesParser,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
@@ -56,7 +58,6 @@ export class Invariant {
       fee: CLValueBuilder.u128(Number(fee))
     })
 
-    console.log('Step 1')
     const signedDeploy = contract.install(
       wasm,
       args,
@@ -66,27 +67,24 @@ export class Invariant {
       [deployer]
     )
 
-    console.log('Step 2')
     await service.deploy(signedDeploy)
 
-    console.log('Step 3')
     const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
 
-    console.log('Step 4')
-    console.log(deploymentResult.execution_results[0])
     if (deploymentResult.execution_results[0].result.Failure) {
-      {
-        console.log(deploymentResult.execution_results[0].result.Failure.effect)
-        for (const v of deploymentResult.execution_results[0].result.Failure.effect.transforms) {
-          console.log(v)
-        }
-      }
+      console.log('----------')
+      console.log(
+        'Required deploy fee: ',
+        deploymentResult.execution_results[0].result.Failure!.effect.transforms[0].transform
+          .WriteCLValue.parsed
+      )
+      console.log('----------')
+
       throw new Error(
         deploymentResult.execution_results[0].result.Failure.error_message?.toString()
       )
     }
 
-    console.log('Step 5')
     const stateRootHash = await service.getStateRootHash()
     const { Account } = await service.getBlockState(
       stateRootHash,
@@ -94,7 +92,6 @@ export class Invariant {
       []
     )
 
-    console.log('Step 6')
     if (!Account) {
       throw new Error('Account not found in block state')
     }
@@ -217,5 +214,65 @@ export class Invariant {
       }
     }
     return config
+  }
+
+  async getFeeTiers() {
+    const key = hash('fee_tiers')
+    const stateRootHash = await this.service.getStateRootHash()
+    console.log(stateRootHash)
+    const response = await this.client.nodeClient.getDictionaryItemBytesByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key
+    )
+
+    const bytes = new Uint8Array(
+      String(response)
+        .match(/.{1,2}/g)!
+        .map((byte: string) => parseInt(byte, 16))
+    )
+
+    const stringParser = new CLStringBytesParser()
+    const u32Parser = new CLU32BytesParser()
+    const u128Parser = new CLU128BytesParser()
+
+    const { remainder: stringRemainder } = stringParser.fromBytesWithRemainder(bytes)
+
+    const { result: resul2, remainder: remainder2 } = u32Parser.fromBytesWithRemainder(
+      stringRemainder!
+    )
+    const feeTierCount = BigInt(unwrap(resul2, 'Couldnt parse u32'))
+    const feeTiers = []
+
+    for (let i = 0; i < feeTierCount; i++) {
+      const { remainder: feeTierBytes } = stringParser.fromBytesWithRemainder(remainder2!)
+
+      const { result: feeTypeBytes, remainder: feeTypeRemainder } =
+        stringParser.fromBytesWithRemainder(feeTierBytes!)
+
+      const feeType = lowerCaseFirstLetter(unwrap(feeTypeBytes, 'Couldnt parse string'))
+
+      const { result: feeBytes, remainder: feeRemainder } = u128Parser.fromBytesWithRemainder(
+        feeTypeRemainder!
+      )
+
+      const fee = BigInt(unwrap(feeBytes, 'Couldnt parse u128'))
+
+      const { result: tickSpacingBytes, remainder } = u32Parser.fromBytesWithRemainder(
+        feeRemainder!
+      )
+
+      if (remainder!.length != 0) {
+        throw new Error('There are remaining bytes left')
+      }
+
+      const tickSpacing = BigInt(unwrap(tickSpacingBytes, 'Couldnt parse u32'))
+
+      const feeTier = { [feeType]: fee, tickSpacing }
+      feeTiers.push(feeTier)
+    }
+
+    console.log(feeTiers)
   }
 }
