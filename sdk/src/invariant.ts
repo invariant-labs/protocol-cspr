@@ -1,6 +1,9 @@
 /* eslint-disable camelcase */
 import { BigNumber } from '@ethersproject/bignumber'
 import {
+  CLAccountHashBytesParser,
+  CLStringBytesParser,
+  CLU256BytesParser,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
@@ -10,7 +13,7 @@ import {
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './network'
-import { getDeploymentData, hash, sendTx } from './utils'
+import { bytesToHex, getDeploymentData, hash, sendTx, unwrap } from './utils'
 
 const CONTRACT_NAME = 'invariant'
 
@@ -159,91 +162,58 @@ export class Invariant {
     return await this.service.waitForDeploy(deploy, 100000)
   }
 
-  async getProtocolFee() {
-    // const key = blake2b('config').toString()
-    // const stateRootHash = await this.service.getStateRootHash()
-    // const key = '7071474438b622de882472abc92f9d7e1fd3456e19b46f0117fe607b9d819679'
-    const key = hash('tmp')
+  async getInvariantConfig() {
+    const key = hash('config')
     const stateRootHash = await this.service.getStateRootHash()
-
-    const response = await this.contract.queryContractDictionary(
-      'state',
-      key,
+    const response = await this.client.nodeClient.getDictionaryItemBytesByName(
       stateRootHash,
-      this.client
+      this.contract.contractHash!,
+      'state',
+      key
     )
-    console.log(response)
-    // return await sendTx(
-    //   this.contract,
-    //   this.service,
-    //   this.paymentAmount,
-    //   account,
-    //   network,
-    //   'get_protocol_fee',
-    //   {}
-    // )
-  }
 
-  async queryFields() {
-    {
-      const key = hash('tmp')
-      const stateRootHash = await this.service.getStateRootHash()
-      {
-        const response = await this.client.nodeClient.getDictionaryItemStructByName(
-          stateRootHash,
-          this.contract.contractHash!,
-          'state',
-          key
-        )
-        console.log('response:', response)
-      }
+    const bytes = new Uint8Array(
+      String(response)
+        .match(/.{1,2}/g)!
+        .map((byte: string) => parseInt(byte, 16))
+    )
 
-      // console.log(stateRootHash)
-      // const response = await this.contract.queryContractDictionary(
-      //   'state',
-      //   key,
-      //   stateRootHash,
-      //   this.client
-      // )
-      // console.log(response)
+    const stringParser = new CLStringBytesParser()
+    const u256Parser = new CLU256BytesParser()
+    const addressParser = new CLAccountHashBytesParser()
+
+    const { result: stringResult, remainder: stringRemainder } =
+      stringParser.fromBytesWithRemainder(bytes)
+
+    const structName = unwrap(stringResult, 'Couldnt parse string')
+
+    // One additional byte is left on the beggining of the remainder
+    const updatedRemainder = stringRemainder!.slice(1, stringRemainder!.length)
+
+    const { result: addressResult, remainder: addressRemainder } =
+      addressParser.fromBytesWithRemainder(updatedRemainder!)
+
+    const adminAddress = bytesToHex(unwrap(addressResult, 'Couldnt parse address'))
+
+    const { result: percentageResult, remainder: percentageRemainder } =
+      stringParser.fromBytesWithRemainder(addressRemainder!)
+
+    const protocolFeeType = unwrap(percentageResult, 'Couldnt parse percentage')
+
+    const { result, remainder } = u256Parser.fromBytesWithRemainder(percentageRemainder!)
+
+    const protocolFee = BigInt(unwrap(result, 'Couldnt parse u256'))
+
+    if (remainder!.length != 0) {
+      throw new Error('There are remaining bytes left')
     }
-    // {
-    //   const key = hash('tmp_address')
-    //   const stateRootHash = await this.service.getStateRootHash()
-    //   // console.log(stateRootHash)
-    //   console.log('Before query')
-    //   {
-    //     const response = await this.client.nodeClient.getDictionaryItemByName(
-    //       stateRootHash,
-    //       this.contract.contractHash!,
-    //       'state',
-    //       key
-    //     )
-    //     console.log('raw response:', response)
-    //   }
 
-    //   {
-    //     const response = await this.contract.queryContractDictionary(
-    //       'state',
-    //       key,
-    //       stateRootHash,
-    //       this.client
-    //     )
-    //     console.log('After query')
-    //     console.log('response: ', response)
-    //   }
-    // }
-    // {
-    //   const key = hash('tmp_percentage')
-    //   const stateRootHash = await this.service.getStateRootHash()
-    //   console.log(stateRootHash)
-    //   const response = await this.contract.queryContractDictionary(
-    //     'state',
-    //     key,
-    //     stateRootHash,
-    //     this.client
-    //   )
-    //   console.log(response)
-    // }
+    const config = {
+      [structName as string]: {
+        admin: adminAddress,
+        protocolFee: { [protocolFeeType as string]: protocolFee }
+      }
+    }
+    return config
   }
 }

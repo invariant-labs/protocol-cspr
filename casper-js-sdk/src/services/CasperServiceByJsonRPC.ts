@@ -4,8 +4,6 @@ import { TypedJSON, jsonMember, jsonObject } from 'typedjson';
 
 import {
   CLPublicKey,
-  CLStringBytesParser,
-  CLU256BytesParser,
   CLValue,
   DeployUtil,
   StoredValue,
@@ -997,15 +995,13 @@ export class CasperServiceByJsonRPC {
    * @param props optional request props
    * @returns A `Promise` resolving to a `StoredValue` containing the item
    */
-  public async getDictionaryItemStructByName(
+  public async getDictionaryItemBytesByName(
     stateRootHash: string,
     contractHash: string,
     dictionaryName: string,
     dictionaryItemKey: string,
     props?: RpcRequestProps & { rawData?: boolean }
   ): Promise<StoredValue> {
-    const rawData = props?.rawData ?? false;
-
     const res = await this.client.request(
       {
         method: 'state_get_dictionary_item',
@@ -1027,52 +1023,8 @@ export class CasperServiceByJsonRPC {
       return res;
     } else {
       const storedValueJson = res.stored_value;
-
-      const type = storedValueJson['CLValue'].cl_type;
       const bytes = storedValueJson['CLValue'].bytes;
-      const isParsed = storedValueJson['CLValue'].parsed;
-
-      if (type === 'Any' && isParsed === null) {
-        const parsedBytes = new Uint8Array(
-          bytes.match(/.{1,2}/g)!.map((byte: string) => parseInt(byte, 16))
-        );
-
-        const stringParser = new CLStringBytesParser();
-        const valueParser = new CLU256BytesParser();
-
-        const {
-          result: strResult,
-          remainder: remainingBytes
-        } = stringParser.fromBytesWithRemainder(parsedBytes);
-
-        if (strResult.err) {
-          throw new Error('Couldnt parse bytes to string');
-        }
-
-        const {
-          result: vResult,
-          remainder
-        } = valueParser.fromBytesWithRemainder(remainingBytes!);
-
-        if (vResult.err) {
-          throw new Error('Couldnt parse bytes to U256');
-        }
-
-        if (remainder!.length != 0) {
-          throw new Error('Remaining bytes after parsing U256');
-        }
-
-        const key = strResult.val.data;
-        const value = BigInt(vResult.val.data._hex);
-        return { [key]: value };
-      }
-
-      if (!rawData) {
-        const serializer = new TypedJSON(StoredValue);
-        return serializer.parse(storedValueJson)!;
-      }
-
-      return storedValueJson;
+      return bytes;
     }
   }
 }

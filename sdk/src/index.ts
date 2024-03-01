@@ -59,14 +59,19 @@ const main = async () => {
     'd262e503c5203e302ecfc8a31126a9c29783254116f6312d28200a44c1ce1c73'
   )
 
-  console.log('Invariant loaded', invariant)
+  console.log('Invariant loaded')
 
-  // INVARIANT QUERIES HASH: hash-bac526f448c0d376c93517ebfca3f9ceb8916b868120a2a68e917a8c11295df1
   // INVARIANT QUERIES HASH * CHANGE PROTOCOL FEE ENTRYPOINT: hash-d262e503c5203e302ecfc8a31126a9c29783254116f6312d28200a44c1ce1c73
-  await invariant.queryFields()
-
-  // await invariant.changeProtocolFee(account, network, 100n)
-  // await invariant.addFeeTier(account, network, 100n, 100n)
+  {
+    await invariant.changeProtocolFee(account, network, 200n)
+    const config = await invariant.getInvariantConfig()
+    console.log(config.InvariantConfig.protocolFee.Percentage)
+  }
+  {
+    await invariant.changeProtocolFee(account, network, 99n)
+    const config = await invariant.getInvariantConfig()
+    console.log(config)
+  }
 }
 
 main()

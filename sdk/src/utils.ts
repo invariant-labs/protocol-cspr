@@ -1,11 +1,13 @@
 import { blake2bHex } from 'blakejs'
 import {
+  CLErrorCodes,
   CLValue,
   CasperClient,
   CasperServiceByJsonRPC,
   Contracts,
   GetDeployResult,
   Keys,
+  Result,
   RuntimeArgs
 } from 'casper-js-sdk'
 import fs from 'fs'
@@ -105,4 +107,11 @@ export const hexToBytes = (hex: string) => {
 
 export const bytesToHex = (bytes: Uint8Array) => {
   return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+export const unwrap = (value: Result<CLValue, CLErrorCodes>, err?: string) => {
+  if (value.err) {
+    throw new Error(err || 'Couldnt unwrap result')
+  }
+  return (value.val as any).data
 }
