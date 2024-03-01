@@ -189,13 +189,13 @@ export class Invariant {
       const key = hash('tmp')
       const stateRootHash = await this.service.getStateRootHash()
       {
-        const response = await this.client.nodeClient.getDictionaryItemByName(
+        const response = await this.client.nodeClient.getDictionaryItemStructByName(
           stateRootHash,
           this.contract.contractHash!,
           'state',
           key
         )
-        console.log('raw struct response:', response)
+        console.log('response:', response)
       }
 
       // console.log(stateRootHash)

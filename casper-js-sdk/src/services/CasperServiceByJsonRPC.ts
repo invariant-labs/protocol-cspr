@@ -979,6 +979,55 @@ export class CasperServiceByJsonRPC {
     } else {
       const storedValueJson = res.stored_value;
 
+      if (!rawData) {
+        const serializer = new TypedJSON(StoredValue);
+        return serializer.parse(storedValueJson)!;
+      }
+
+      return storedValueJson;
+    }
+  }
+  /**
+   * Get a dictionary item by its name from within a contract
+   * @param stateRootHash The state root hash at which the item will be queried
+   * @param contractHash The contract hash of the contract that stores the queried dictionary
+   * @param dictionaryName The name of the dictionary
+   * @param dictionaryItemKey The key at which the item is stored
+   * @param opts.rawData Returns rawData if true, otherwise return parsed data
+   * @param props optional request props
+   * @returns A `Promise` resolving to a `StoredValue` containing the item
+   */
+  public async getDictionaryItemStructByName(
+    stateRootHash: string,
+    contractHash: string,
+    dictionaryName: string,
+    dictionaryItemKey: string,
+    props?: RpcRequestProps & { rawData?: boolean }
+  ): Promise<StoredValue> {
+    const rawData = props?.rawData ?? false;
+
+    const res = await this.client.request(
+      {
+        method: 'state_get_dictionary_item',
+        params: {
+          state_root_hash: stateRootHash,
+          dictionary_identifier: {
+            ContractNamedKey: {
+              key: contractHash,
+              dictionary_name: dictionaryName,
+              dictionary_item_key: dictionaryItemKey
+            }
+          }
+        }
+      },
+      props?.timeout
+    );
+
+    if (res.error) {
+      return res;
+    } else {
+      const storedValueJson = res.stored_value;
+
       const type = storedValueJson['CLValue'].cl_type;
       const bytes = storedValueJson['CLValue'].bytes;
       const isParsed = storedValueJson['CLValue'].parsed;
