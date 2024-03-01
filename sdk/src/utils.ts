@@ -115,3 +115,5 @@ export const unwrap = (value: Result<CLValue, CLErrorCodes>, err?: string) => {
   }
   return (value.val as any).data
 }
+
+export const lowerCaseFirstLetter = (v: string): string => v.charAt(0).toLowerCase() + v.slice(1)

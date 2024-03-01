@@ -13,7 +13,7 @@ import {
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './network'
-import { bytesToHex, getDeploymentData, hash, sendTx, unwrap } from './utils'
+import { bytesToHex, getDeploymentData, hash, lowerCaseFirstLetter, sendTx, unwrap } from './utils'
 
 const CONTRACT_NAME = 'invariant'
 
@@ -185,7 +185,7 @@ export class Invariant {
     const { result: stringResult, remainder: stringRemainder } =
       stringParser.fromBytesWithRemainder(bytes)
 
-    const structName = unwrap(stringResult, 'Couldnt parse string')
+    const structName = lowerCaseFirstLetter(unwrap(stringResult, 'Couldnt parse string'))
 
     // One additional byte is left on the beggining of the remainder
     const updatedRemainder = stringRemainder!.slice(1, stringRemainder!.length)
@@ -198,7 +198,9 @@ export class Invariant {
     const { result: percentageResult, remainder: percentageRemainder } =
       stringParser.fromBytesWithRemainder(addressRemainder!)
 
-    const protocolFeeType = unwrap(percentageResult, 'Couldnt parse percentage')
+    const protocolFeeType = lowerCaseFirstLetter(
+      unwrap(percentageResult, 'Couldnt parse percentage')
+    )
 
     const { result, remainder } = u256Parser.fromBytesWithRemainder(percentageRemainder!)
 
@@ -209,9 +211,9 @@ export class Invariant {
     }
 
     const config = {
-      [structName as string]: {
+      [structName]: {
         admin: adminAddress,
-        protocolFee: { [protocolFeeType as string]: protocolFee }
+        protocolFee: { [protocolFeeType]: protocolFee }
       }
     }
     return config

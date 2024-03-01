@@ -65,12 +65,12 @@ const main = async () => {
   {
     await invariant.changeProtocolFee(account, network, 200n)
     const config = await invariant.getInvariantConfig()
-    console.log(config.InvariantConfig.protocolFee.Percentage)
+    console.log(config.invariantConfig.protocolFee.percentage)
   }
   {
     await invariant.changeProtocolFee(account, network, 99n)
     const config = await invariant.getInvariantConfig()
-    console.log(config)
+    console.log(config.invariantConfig.protocolFee.percentage)
   }
 }
 
