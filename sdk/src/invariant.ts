@@ -73,11 +73,13 @@ export class Invariant {
 
     if (deploymentResult.execution_results[0].result.Failure) {
       console.log('----------')
-      console.log(
-        'Required deploy fee: ',
-        deploymentResult.execution_results[0].result.Failure!.effect.transforms[0].transform
-          .WriteCLValue.parsed
-      )
+      // console.log(
+      //   'Required deploy fee: ',
+      //   deploymentResult.execution_results[0].result.Failure!.effect.transforms
+      // )
+      for (const v of deploymentResult.execution_results[0].result.Failure!.effect.transforms) {
+        console.log(v)
+      }
       console.log('----------')
 
       throw new Error(
@@ -219,7 +221,7 @@ export class Invariant {
   async getFeeTiers() {
     const key = hash('fee_tiers')
     const stateRootHash = await this.service.getStateRootHash()
-    console.log(stateRootHash)
+    console.log('State root hash: ', stateRootHash)
     const response = await this.client.nodeClient.getDictionaryItemBytesByName(
       stateRootHash,
       this.contract.contractHash!,
@@ -274,5 +276,17 @@ export class Invariant {
     }
 
     console.log(feeTiers)
+  }
+
+  async getPool() {
+    const key = '8993177b688dbcd454730d11f28d54508151536789928beb4deff08cc5a3e786'
+    const stateRootHash = await this.service.getStateRootHash()
+    const response = await this.client.nodeClient.getDictionaryItemBytesByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key
+    )
+    console.log(response)
   }
 }

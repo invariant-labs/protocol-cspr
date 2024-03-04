@@ -6,6 +6,7 @@ pub mod contracts;
 pub mod math;
 
 use odra::types::casper_types::account::AccountHash;
+use odra::types::casper_types::{Contract, ContractPackageHash};
 pub use odra_modules::erc20::{Erc20, Erc20Deployer, Erc20Ref};
 
 #[cfg(test)]
@@ -23,11 +24,11 @@ use math::get_tick_at_sqrt_price;
 use math::liquidity::Liquidity;
 use math::token_amount::TokenAmount;
 use math::{MAX_SQRT_PRICE, MIN_SQRT_PRICE};
-use odra::contract_env;
 use odra::prelude::vec;
 use odra::prelude::vec::Vec;
 use odra::types::event::OdraEvent;
 use odra::types::{Address, U128, U256};
+use odra::{contract_env, Mapping};
 use odra::{OdraType, UnwrapOrRevert, Variable};
 use traceable_result::*;
 
@@ -60,12 +61,14 @@ pub struct SwapHop {
 #[odra::module]
 pub struct Invariant {
     positions: Positions,
-    pools: Pools,
+    // pools: Pools,
     tickmap: Tickmap,
     ticks: Ticks,
     fee_tiers: Variable<FeeTiers>,
     pool_keys: Variable<PoolKeys>,
     config: Variable<InvariantConfig>,
+    pools: Mapping<PoolKey, Option<Pool>>,
+    nested_pools: Pools,
 }
 
 impl Invariant {
@@ -361,9 +364,38 @@ impl Entrypoints for Invariant {
         self.fee_tiers.set(FeeTiers::default());
 
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
-        let fee_tier = FeeTier::new(Percentage::new(U128::from(100)), 10).unwrap();
+        let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
+        let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
+
+        let fee_tier = FeeTier {
+            fee: Percentage { v: U128::from(100) },
+            tick_spacing: 10,
+        };
+
         fee_tiers.add(fee_tier).unwrap();
         self.fee_tiers.set(fee_tiers);
+
+        let init_sqrt_price = SqrtPrice::new(U128::from(1000000000000000000000000u128));
+        let init_tick = 0;
+        let current_timestamp = odra::contract_env::get_block_time();
+
+        let mut pool_keys = self.pool_keys.get().unwrap_or_revert();
+
+        let pool_key = PoolKey::new(token_0, token_1, fee_tier).unwrap();
+
+        let pool = Pool::create(
+            init_sqrt_price,
+            init_tick,
+            current_timestamp,
+            fee_tier.tick_spacing,
+            caller,
+        )
+        .unwrap();
+
+        self.pools.set(&pool_key, Some(pool));
+        self.nested_pools.add(pool_key, &pool).unwrap();
+
+        pool_keys.add(pool_key).unwrap();
 
         self.config.set(InvariantConfig {
             admin: caller,
