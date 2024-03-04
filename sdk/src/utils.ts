@@ -11,8 +11,8 @@ import {
 import fs from 'fs'
 import { readFile } from 'fs/promises'
 import path from 'path'
-import { Network } from './network'
-import { Algo } from './schema'
+import { Network } from './network.js'
+import { Algo } from './schema.js'
 
 export const initCasperClientAndService = (nodeUrl: string) => {
   const client = new CasperClient(nodeUrl)

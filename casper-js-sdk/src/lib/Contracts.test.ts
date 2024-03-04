@@ -1,9 +1,9 @@
-import { expect } from 'chai';
 import * as ed25519 from '@noble/ed25519';
+import { expect } from 'chai';
 
-import { decodeBase64 } from '../../src/lib';
-import { byteHash } from '../../src/lib/ByteConverters';
-import { Ed25519 } from '../../src/lib/Keys';
+import { decodeBase64 } from '.';
+import { byteHash } from './ByteConverters';
+import { Ed25519 } from './Keys';
 
 describe('byteHash', () => {
   it('should compute the same hash as Scala', () => {

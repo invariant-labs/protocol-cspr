@@ -1,8 +1,8 @@
 import * as ed25519 from '@noble/ed25519';
-import * as secp256k1 from '@noble/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
+import * as secp256k1 from '@noble/secp256k1';
 
-import { CLPublicKey } from './CLValue/';
+import { CLPublicKey } from './CLValue';
 import { AsymmetricKey } from './Keys';
 
 /**

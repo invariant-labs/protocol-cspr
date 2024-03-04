@@ -1,7 +1,7 @@
-import { ALICE, LOCAL_NODE_URL } from '../src/consts'
-import { Erc20 } from '../src/erc20'
-import { Network } from '../src/network'
-import { initCasperClientAndService } from '../src/utils'
+import { ALICE, LOCAL_NODE_URL } from '../src/consts.js'
+import { Erc20 } from '../src/erc20.js'
+import { Network } from '../src/network.js'
+import { initCasperClientAndService } from '../src/utils.js'
 
 describe('erc20', () => {
   it('should get metadata', async () => {

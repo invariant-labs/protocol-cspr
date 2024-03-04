@@ -7,9 +7,9 @@ import {
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { DEFAULT_PAYMENT_AMOUNT } from './consts'
-import { Network } from './network'
-import { getDeploymentData, sendTx } from './utils'
+import { DEFAULT_PAYMENT_AMOUNT } from './consts.js'
+import { Network } from './network.js'
+import { getDeploymentData, sendTx } from './utils.js'
 
 const CONTRACT_NAME = 'invariant'
 

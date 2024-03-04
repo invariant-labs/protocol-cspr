@@ -1,7 +1,7 @@
-import { expect } from 'chai';
 import * as ed25519 from '@noble/ed25519';
+import { expect } from 'chai';
 
-import { Args, PublicKeyArg, UInt64Arg } from '../../src/lib/Serialization';
+import { Args, PublicKeyArg, UInt64Arg } from './Serialization';
 
 describe('PublicKeyArg', () => {
   it('should serialize as 32 bytes with content using little endiannes', () => {

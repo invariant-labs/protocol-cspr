@@ -9,9 +9,9 @@ import {
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
-import { Network } from './network'
-import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
+import { BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts.js'
+import { Network } from './network.js'
+import { getDeploymentData, hash, hexToBytes, sendTx } from './utils.js'
 
 const CONTRACT_NAME = 'erc20'
 
