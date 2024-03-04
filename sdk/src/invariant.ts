@@ -167,6 +167,7 @@ export class Invariant {
   async getInvariantConfig() {
     const key = hash('config')
     const stateRootHash = await this.service.getStateRootHash()
+
     const response = await this.client.nodeClient.getDictionaryItemBytesByName(
       stateRootHash,
       this.contract.contractHash!,
@@ -224,7 +225,6 @@ export class Invariant {
   async getFeeTiers() {
     const key = hash('fee_tiers')
     const stateRootHash = await this.service.getStateRootHash()
-    console.log('State root hash: ', stateRootHash)
     const response = await this.client.nodeClient.getDictionaryItemBytesByName(
       stateRootHash,
       this.contract.contractHash!,
@@ -232,12 +232,13 @@ export class Invariant {
       key
     )
 
-    console.log(response)
     const bytes = new Uint8Array(
       String(response)
         .match(/.{1,2}/g)!
         .map((byte: string) => parseInt(byte, 16))
     )
+
+    console.log(bytes)
 
     const stringParser = new CLStringBytesParser()
     const u32Parser = new CLU32BytesParser()
