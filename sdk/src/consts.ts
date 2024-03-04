@@ -1,5 +1,5 @@
-import { FUNDED_KEYS } from 'casper-node-launcher-js'
 import { Keys } from 'casper-js-sdk'
+import { FUNDED_KEYS } from 'casper-node-launcher-js'
 import { Algo } from './schema'
 import { parseAccountKeys, stringToUint8Array } from './utils'
 
@@ -15,6 +15,6 @@ export const TEST = parseAccountKeys(KEYS_PATH, Algo.ed25519)
 export const DEFAULT_PAYMENT_AMOUNT = 10000000000n
 export const TESTNET_DEPLOY_AMOUNT = 947800000000n
 export const TESTNET_INVARIANT_HASH =
-  '8e49c00837475090db92faaa453d668b9d36b938f954e5fa870d7960916e7727'
+  'fb0a6c4c0d6b5a45b52fe7a05bbc3ffe87bfa4ea57f2b9722e179b4660a8b810'
 
 export const BALANCES = stringToUint8Array('balances')

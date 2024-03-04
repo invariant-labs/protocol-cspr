@@ -2,10 +2,16 @@
 import { BigNumber } from '@ethersproject/bignumber'
 import {
   CLAccountHashBytesParser,
+  CLBoolBytesParser,
+  CLI32BytesParser,
+  CLOptionBytesParser,
+  CLOptionType,
   CLStringBytesParser,
+  CLTypeBuilder,
   CLU128BytesParser,
   CLU256BytesParser,
   CLU32BytesParser,
+  CLU64BytesParser,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
@@ -72,11 +78,8 @@ export class Invariant {
     const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
 
     if (deploymentResult.execution_results[0].result.Failure) {
+      // Shows the required deploy fee in case of failure
       console.log('----------')
-      // console.log(
-      //   'Required deploy fee: ',
-      //   deploymentResult.execution_results[0].result.Failure!.effect.transforms
-      // )
       for (const v of deploymentResult.execution_results[0].result.Failure!.effect.transforms) {
         console.log(v)
       }
@@ -229,6 +232,7 @@ export class Invariant {
       key
     )
 
+    console.log(response)
     const bytes = new Uint8Array(
       String(response)
         .match(/.{1,2}/g)!
@@ -275,11 +279,25 @@ export class Invariant {
       feeTiers.push(feeTier)
     }
 
-    console.log(feeTiers)
+    return feeTiers
   }
 
   async getPool() {
-    const key = '8993177b688dbcd454730d11f28d54508151536789928beb4deff08cc5a3e786'
+    const buffor: number[] = []
+    // TODO: Add dynamic serialization for pool keys
+    const poolKeyBytes = [
+      7, 0, 0, 0, 80, 111, 111, 108, 75, 101, 121, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 70, 101, 101, 84, 105,
+      101, 114, 10, 0, 0, 0, 80, 101, 114, 99, 101, 110, 116, 97, 103, 101, 1, 100, 10, 0, 0, 0
+    ]
+    buffor.push(...'pools'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'pools'.split('').map(c => c.charCodeAt(0)))
+    buffor.push(...poolKeyBytes)
+
+    const key = hash(new Uint8Array(buffor))
+
     const stateRootHash = await this.service.getStateRootHash()
     const response = await this.client.nodeClient.getDictionaryItemBytesByName(
       stateRootHash,
@@ -287,6 +305,123 @@ export class Invariant {
       'state',
       key
     )
-    console.log(response)
+
+    const optionParser = new CLOptionBytesParser()
+    const u256Parser = new CLU256BytesParser()
+    const stringParser = new CLStringBytesParser()
+    const i32Parser = new CLI32BytesParser()
+    const u64Parser = new CLU64BytesParser()
+    const addressParser = new CLAccountHashBytesParser()
+    const boolParser = new CLBoolBytesParser()
+
+    const bytes = new Uint8Array(
+      String(response)
+        .match(/.{1,2}/g)!
+        .map((byte: string) => parseInt(byte, 16))
+    )
+
+    const expectedType = new CLOptionType(CLTypeBuilder.string())
+    const { remainder: optionRemainder } = optionParser.fromBytesWithRemainder(bytes, expectedType)
+
+    const { remainder: liquidityTypeRemainder } = stringParser.fromBytesWithRemainder(
+      optionRemainder!
+    )
+
+    const { result: liquidityBytes, remainder: liquidityRemainder } =
+      u256Parser.fromBytesWithRemainder(liquidityTypeRemainder!)
+
+    const liquidity = BigInt(unwrap(liquidityBytes, 'Couldnt parse u256'))
+
+    const { remainder: sqrtPriceTypeRemainder } = stringParser.fromBytesWithRemainder(
+      liquidityRemainder!
+    )
+
+    const { result: sqrtPriceBytes, remainder: sqrtPriceRemainder } =
+      u256Parser.fromBytesWithRemainder(sqrtPriceTypeRemainder!)
+
+    const sqrtPrice = BigInt(unwrap(sqrtPriceBytes, 'Couldnt parse u256'))
+
+    const { result: currentTickBytes, remainder: currentTickRemainder } =
+      i32Parser.fromBytesWithRemainder(sqrtPriceRemainder!)
+
+    const currentTickIndex = BigInt(unwrap(currentTickBytes, 'Couldnt parse i32'))
+
+    const { remainder: feeGrowthGlobalXTypeRemainder } = stringParser.fromBytesWithRemainder(
+      currentTickRemainder!
+    )
+
+    const { result: feeGrowthGlobalXBytes, remainder: feeGrowthGlobalXRemainder } =
+      u256Parser.fromBytesWithRemainder(feeGrowthGlobalXTypeRemainder!)
+
+    const feeGrowthGlobalX = BigInt(unwrap(feeGrowthGlobalXBytes, 'Couldnt parse u256'))
+
+    const { remainder: feeGrowthGlobalYTypeRemainder } = stringParser.fromBytesWithRemainder(
+      feeGrowthGlobalXRemainder!
+    )
+
+    const { result: feeGrowthGlobalYBytes, remainder: feeGrowthGlobalYRemainder } =
+      u256Parser.fromBytesWithRemainder(feeGrowthGlobalYTypeRemainder!)
+
+    const feeGrowthGlobalY = BigInt(unwrap(feeGrowthGlobalYBytes, 'Couldnt parse u256'))
+
+    const { remainder: feeProtocolTokenXTypeRemainder } = stringParser.fromBytesWithRemainder(
+      feeGrowthGlobalYRemainder!
+    )
+
+    const { result: feeProtocolTokenXBytes, remainder: feeProtocolTokenXRemainder } =
+      u256Parser.fromBytesWithRemainder(feeProtocolTokenXTypeRemainder!)
+
+    const feeProtocolTokenX = BigInt(unwrap(feeProtocolTokenXBytes, 'Couldnt parse u256'))
+
+    const { remainder: feeProtocolTokenYTypeRemainder } = stringParser.fromBytesWithRemainder(
+      feeProtocolTokenXRemainder!
+    )
+
+    const { result: feeProtocolTokenYBytes, remainder: feeProtocolTokenYRemainder } =
+      u256Parser.fromBytesWithRemainder(feeProtocolTokenYTypeRemainder!)
+
+    const feeProtocolTokenY = BigInt(unwrap(feeProtocolTokenYBytes, 'Couldnt parse u256'))
+
+    const { result: startTimestampBytes, remainder: startTimestampRemainder } =
+      u64Parser.fromBytesWithRemainder(feeProtocolTokenYRemainder!)
+
+    const startTimestamp = BigInt(unwrap(startTimestampBytes, 'Couldnt parse u64'))
+
+    const { result: lastTimestampBytes, remainder: lastTimestampRemainder } =
+      u64Parser.fromBytesWithRemainder(startTimestampRemainder!)
+
+    const lastTimestamp = BigInt(unwrap(lastTimestampBytes, 'Couldnt parse u64'))
+
+    // One additional byte is left on the beggining of the bytes remainder
+    const updatedRemainder = lastTimestampRemainder!.slice(1, lastTimestampRemainder!.length)
+
+    const { result: adminAddressBytes, remainder: adminAddressRemainder } =
+      addressParser.fromBytesWithRemainder(updatedRemainder!)
+
+    const adminAddress = bytesToHex(unwrap(adminAddressBytes, 'Couldnt parse address'))
+
+    const { result: oracleBytes, remainder } = boolParser.fromBytesWithRemainder(
+      adminAddressRemainder!
+    )
+
+    const oracle = unwrap(oracleBytes, 'Couldnt parse bool')
+
+    if (remainder!.length != 0) {
+      throw new Error('There are remaining bytes left')
+    }
+
+    return {
+      liquidity,
+      sqrtPrice,
+      currentTickIndex,
+      feeGrowthGlobalX,
+      feeGrowthGlobalY,
+      feeProtocolTokenX,
+      feeProtocolTokenY,
+      startTimestamp,
+      lastTimestamp,
+      admin: adminAddress,
+      oracle
+    }
   }
 }
