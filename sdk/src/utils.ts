@@ -318,3 +318,10 @@ export const bigintToByteArray = (bigintValue: bigint): number[] => {
 
   return byteArray.reverse()
 }
+
+export const integerSafeCast = (value: bigint): number => {
+  if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(Number.MIN_SAFE_INTEGER)) {
+    throw new Error('Integer value is outside the safe range for Numbers')
+  }
+  return Number(value)
+}

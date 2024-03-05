@@ -19,6 +19,7 @@ import {
   encodePoolKey,
   getDeploymentData,
   hash,
+  integerSafeCast,
   sendTx
 } from './utils'
 
@@ -138,7 +139,7 @@ export class Invariant {
       'add_fee_tier',
       {
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
       }
     )
   }
@@ -158,7 +159,7 @@ export class Invariant {
       'remove_fee_tier',
       {
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
       }
     )
   }
@@ -187,9 +188,9 @@ export class Invariant {
         token_0: CLValueBuilder.key(token0Key),
         token_1: CLValueBuilder.key(token1Key),
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(Number(tickSpacing)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
         init_sqrt_price: CLValueBuilder.u128(BigNumber.from(initSqrtPrice)),
-        init_tick: CLValueBuilder.i32(Number(initTick))
+        init_tick: CLValueBuilder.i32(integerSafeCast(initTick))
       }
     )
   }
@@ -218,7 +219,7 @@ export class Invariant {
         token_0: CLValueBuilder.key(token0Key),
         token_1: CLValueBuilder.key(token1Key),
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(Number(tickSpacing)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
         fee_receiver: CLValueBuilder.key(feeReceiverKey)
       }
     )
@@ -301,5 +302,84 @@ export class Invariant {
     const rawBytes = (response.CLValue! as any).bytes
 
     return decodePool(rawBytes)
+  }
+
+  async createPosition(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint,
+    lowerTick: bigint,
+    upperTick: bigint,
+    liquidityDelta: bigint,
+    slippageLimitLower: bigint,
+    slippageLimitUpper: bigint
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'create_position',
+      {
+        token_0: CLValueBuilder.key(token0Key),
+        token_1: CLValueBuilder.key(token1Key),
+        fee: CLValueBuilder.u128(BigNumber.from(fee)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
+        lower_tick: CLValueBuilder.i32(integerSafeCast(lowerTick)),
+        upper_tick: CLValueBuilder.i32(integerSafeCast(upperTick)),
+        liquidity_delta: CLValueBuilder.u256(BigNumber.from(liquidityDelta)),
+        slippage_limit_lower: CLValueBuilder.u128(BigNumber.from(slippageLimitLower)),
+        slippage_limit_upper: CLValueBuilder.u128(BigNumber.from(slippageLimitUpper))
+      }
+    )
+  }
+
+  async removePosition(account: Keys.AsymmetricKey, network: Network, index: bigint) {
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'remove_position',
+      {
+        index: CLValueBuilder.u32(integerSafeCast(index))
+      }
+    )
+  }
+
+  async transferPosition(account: Keys.AsymmetricKey, network: Network, index: bigint) {
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'transfer_position',
+      {
+        index: CLValueBuilder.u32(integerSafeCast(index))
+      }
+    )
+  }
+
+  async claimFee(account: Keys.AsymmetricKey, network: Network, index: bigint) {
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'claim_fee',
+      {
+        index: CLValueBuilder.u32(integerSafeCast(index))
+      }
+    )
   }
 }
