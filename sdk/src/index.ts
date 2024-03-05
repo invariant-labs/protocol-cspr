@@ -65,16 +65,11 @@ const main = async () => {
   console.log(feeTiers)
   console.log(config)
 
-  // {
-  //   await invariant.changeProtocolFee(account, network, 200n)
-  //   const config = await invariant.getInvariantConfig()
-  //   console.log(config.invariantConfig.protocolFee.percentage)
-  // }
-  // {
-  //   await invariant.changeProtocolFee(account, network, 99n)
-  //   const config = await invariant.getInvariantConfig()
-  //   console.log(config.invariantConfig.protocolFee.percentage)
-  // }
+  {
+    await invariant.changeProtocolFee(account, network, 200n)
+    const config = await invariant.getInvariantConfig()
+    console.log(config)
+  }
 }
 
 main()
