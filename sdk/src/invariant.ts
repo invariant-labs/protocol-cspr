@@ -19,6 +19,7 @@ import {
   encodePoolKey,
   getDeploymentData,
   hash,
+  integerSafeCast,
   sendTx
 } from './utils'
 
@@ -138,7 +139,7 @@ export class Invariant {
       'add_fee_tier',
       {
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
       }
     )
   }
@@ -158,7 +159,7 @@ export class Invariant {
       'remove_fee_tier',
       {
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
       }
     )
   }
@@ -269,9 +270,9 @@ export class Invariant {
         token_0: CLValueBuilder.key(token0Key),
         token_1: CLValueBuilder.key(token1Key),
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(Number(tickSpacing)),
-        lower_tick: CLValueBuilder.i32(Number(lowerTick)),
-        upper_tick: CLValueBuilder.i32(Number(upperTick)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
+        lower_tick: CLValueBuilder.i32(integerSafeCast(lowerTick)),
+        upper_tick: CLValueBuilder.i32(integerSafeCast(upperTick)),
         liquidity_delta: CLValueBuilder.u256(BigNumber.from(liquidityDelta)),
         slippage_limit_lower: CLValueBuilder.u128(BigNumber.from(slippageLimitLower)),
         slippage_limit_upper: CLValueBuilder.u128(BigNumber.from(slippageLimitUpper))
@@ -288,7 +289,7 @@ export class Invariant {
       network,
       'remove_position',
       {
-        index: CLValueBuilder.u32(Number(index))
+        index: CLValueBuilder.u32(integerSafeCast(index))
       }
     )
   }
@@ -302,7 +303,7 @@ export class Invariant {
       network,
       'transfer_position',
       {
-        index: CLValueBuilder.u32(Number(index))
+        index: CLValueBuilder.u32(integerSafeCast(index))
       }
     )
   }
@@ -316,7 +317,7 @@ export class Invariant {
       network,
       'claim_fee',
       {
-        index: CLValueBuilder.u32(Number(index))
+        index: CLValueBuilder.u32(integerSafeCast(index))
       }
     )
   }
