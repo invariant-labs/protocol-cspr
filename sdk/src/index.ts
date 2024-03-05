@@ -1,10 +1,11 @@
 import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_INVARIANT_HASH, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
-import { createAccountKeys, initCasperClientAndService } from './utils'
+import { createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
 
 const main = async () => {
   const createKeys = false
+  const wasm = await loadWasm()
 
   if (createKeys) {
     createAccountKeys()
@@ -66,12 +67,12 @@ const main = async () => {
   const invariant = await Invariant.load(client, service, invariantHash)
 
   console.log('Init SDK!')
-  // {
-  //   const sqrtPriceScale = getSqrtPriceScale();
-  //   const sqrtPriceDenominator = getSqrtPriceDenominator();
-  //   // const amount: TokenAmount = { v: 100000000n };
-  //   console.log(sqrtPriceScale, sqrtPriceDenominator);
-  // }
+  {
+    const sqrtPriceScale = wasm.getSqrtPriceScale()
+    const sqrtPriceDenominator = wasm.getSqrtPriceDenominator()
+    // const amount: TokenAmount = { v: 100000000n };
+    console.log(sqrtPriceScale, sqrtPriceDenominator)
+  }
   {
     const fee = 55n
     const tickSpacing = 10n
@@ -104,15 +105,15 @@ const main = async () => {
     // )
     let pool = await invariant.getPool(poolKey)
     console.log(pool)
-    await invariant.changeFeeReceiver(
-      account,
-      network,
-      token0,
-      token1,
-      fee,
-      tickSpacing,
-      'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
-    )
+    // await invariant.changeFeeReceiver(
+    //   account,
+    //   network,
+    //   token0,
+    //   token1,
+    //   fee,
+    //   tickSpacing,
+    //   'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
+    // )
     pool = await invariant.getPool(poolKey)
     console.log(pool)
   }

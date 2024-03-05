@@ -24,6 +24,7 @@ import {
 import fs from 'fs'
 import { readFile } from 'fs/promises'
 import path from 'path'
+import { dynamicImport } from 'tsimportlib'
 import { Network } from './network'
 import { Algo } from './schema'
 
@@ -317,6 +318,13 @@ export const bigintToByteArray = (bigintValue: bigint): number[] => {
   }
 
   return byteArray.reverse()
+}
+
+export const loadWasm = async () => {
+  return (await dynamicImport(
+    'invariant-cspr-wasm',
+    module
+  )) as typeof import('invariant-cspr-wasm')
 }
 
 export const integerSafeCast = (value: bigint): number => {
