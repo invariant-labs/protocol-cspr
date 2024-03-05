@@ -1,5 +1,6 @@
 use super::fee_tier::FeeTier;
 use crate::errors::InvariantError;
+use crate::is_token_x;
 use crate::{convert, resolve};
 use odra::OdraType;
 use serde::{Deserialize, Serialize};
@@ -35,19 +36,19 @@ impl PoolKey {
             return Err(InvariantError::TokensAreSame);
         }
 
-        if token_0 < token_1 {
-            Ok(PoolKey {
+        Ok(if is_token_x(token_0.clone(), token_1.clone()).unwrap() {
+            PoolKey {
                 token_x: token_0,
                 token_y: token_1,
                 fee_tier,
-            })
+            }
         } else {
-            Ok(PoolKey {
+            PoolKey {
                 token_x: token_1,
                 token_y: token_0,
                 fee_tier,
-            })
-        }
+            }
+        })
     }
 }
 

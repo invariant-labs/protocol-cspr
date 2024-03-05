@@ -104,7 +104,6 @@ function passStringToWasm0(arg, malloc, realloc) {
         const ret = encodeString(arg, view);
 
         offset += ret.written;
-        ptr = realloc(ptr, len, offset, 1) >>> 0;
     }
 
     WASM_VECTOR_LEN = offset;
@@ -506,84 +505,6 @@ export function calculateMinAmountOut(js_expected_amount_out, js_slippage) {
 /**
 * @returns {bigint}
 */
-export function getSqrtPriceScale() {
-    const ret = wasm.getSqrtPriceScale();
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
-export function getSqrtPriceDenominator() {
-    const ret = wasm.getSqrtPriceDenominator();
-    return takeObject(ret);
-}
-
-/**
-* @param {any} js_val
-* @param {any} js_scale
-* @returns {bigint}
-*/
-export function toSqrtPrice(js_val, js_scale) {
-    const ret = wasm.toSqrtPrice(addHeapObject(js_val), addHeapObject(js_scale));
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
-export function getFeeGrowthScale() {
-    const ret = wasm.getFeeGrowthScale();
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
-export function getFeeGrowthDenominator() {
-    const ret = wasm.getFeeGrowthDenominator();
-    return takeObject(ret);
-}
-
-/**
-* @param {any} js_val
-* @param {any} js_scale
-* @returns {bigint}
-*/
-export function toFeeGrowth(js_val, js_scale) {
-    const ret = wasm.toFeeGrowth(addHeapObject(js_val), addHeapObject(js_scale));
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
-export function getSecondsPerLiquidityScale() {
-    const ret = wasm.getSecondsPerLiquidityScale();
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
-export function getSecondsPerLiquidityDenominator() {
-    const ret = wasm.getSecondsPerLiquidityDenominator();
-    return takeObject(ret);
-}
-
-/**
-* @param {any} js_val
-* @param {any} js_scale
-* @returns {bigint}
-*/
-export function toSecondsPerLiquidity(js_val, js_scale) {
-    const ret = wasm.toSecondsPerLiquidity(addHeapObject(js_val), addHeapObject(js_scale));
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
 export function getTokenAmountScale() {
     const ret = wasm.getTokenAmountScale();
     return takeObject(ret);
@@ -631,6 +552,27 @@ export function getLiquidityDenominator() {
 export function toLiquidity(js_val, js_scale) {
     const ret = wasm.toLiquidity(addHeapObject(js_val), addHeapObject(js_scale));
     return takeObject(ret);
+}
+
+/**
+* @param {any} js_fee
+* @param {any} js_tick_spacing
+* @returns {any}
+*/
+export function _newFeeTier(js_fee, js_tick_spacing) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm._newFeeTier(retptr, addHeapObject(js_fee), addHeapObject(js_tick_spacing));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
 }
 
 /**
@@ -686,46 +628,29 @@ export function toFixedPoint(js_val, js_scale) {
 }
 
 /**
-* @param {any} js_fee
-* @param {any} js_tick_spacing
-* @returns {any}
+* @returns {bigint}
 */
-export function _newFeeTier(js_fee, js_tick_spacing) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm._newFeeTier(retptr, addHeapObject(js_fee), addHeapObject(js_tick_spacing));
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        var r2 = getInt32Memory0()[retptr / 4 + 2];
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
+export function getSqrtPriceScale() {
+    const ret = wasm.getSqrtPriceScale();
+    return takeObject(ret);
 }
 
 /**
-* @param {any} token_0
-* @param {any} token_1
-* @param {any} fee_tier
-* @returns {any}
+* @returns {bigint}
 */
-export function _newPoolKey(token_0, token_1, fee_tier) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm._newPoolKey(retptr, addHeapObject(token_0), addHeapObject(token_1), addHeapObject(fee_tier));
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        var r2 = getInt32Memory0()[retptr / 4 + 2];
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
+export function getSqrtPriceDenominator() {
+    const ret = wasm.getSqrtPriceDenominator();
+    return takeObject(ret);
+}
+
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toSqrtPrice(js_val, js_scale) {
+    const ret = wasm.toSqrtPrice(addHeapObject(js_val), addHeapObject(js_scale));
+    return takeObject(ret);
 }
 
 /**
@@ -899,6 +824,169 @@ export function isValidTick(js_tick_index, js_tick_spacing, js_sqrt_price) {
 }
 
 /**
+* @param {any} js_sqrt_price
+* @param {any} js_tick_spacing
+* @returns {any}
+*/
+export function calculateTick(js_sqrt_price, js_tick_spacing) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.calculateTick(retptr, addHeapObject(js_sqrt_price), addHeapObject(js_tick_spacing));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {any} js_v
+* @returns {bigint}
+*/
+export function test(js_v) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.test(retptr, addHeapObject(js_v));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {any} js_x
+* @param {any} js_lower_tick
+* @param {any} js_upper_tick
+* @param {any} js_current_sqrt_price
+* @param {any} js_rounding_up
+* @returns {any}
+*/
+export function getLiquidityByX(js_x, js_lower_tick, js_upper_tick, js_current_sqrt_price, js_rounding_up) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.getLiquidityByX(retptr, addHeapObject(js_x), addHeapObject(js_lower_tick), addHeapObject(js_upper_tick), addHeapObject(js_current_sqrt_price), addHeapObject(js_rounding_up));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {any} js_y
+* @param {any} js_lower_tick
+* @param {any} js_upper_tick
+* @param {any} js_current_sqrt_price
+* @param {any} js_rounding_up
+* @returns {any}
+*/
+export function getLiquidityByY(js_y, js_lower_tick, js_upper_tick, js_current_sqrt_price, js_rounding_up) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.getLiquidityByY(retptr, addHeapObject(js_y), addHeapObject(js_lower_tick), addHeapObject(js_upper_tick), addHeapObject(js_current_sqrt_price), addHeapObject(js_rounding_up));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {any} token_0
+* @param {any} token_1
+* @param {any} fee_tier
+* @returns {any}
+*/
+export function _newPoolKey(token_0, token_1, fee_tier) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm._newPoolKey(retptr, addHeapObject(token_0), addHeapObject(token_1), addHeapObject(fee_tier));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @returns {bigint}
+*/
+export function getFeeGrowthScale() {
+    const ret = wasm.getFeeGrowthScale();
+    return takeObject(ret);
+}
+
+/**
+* @returns {bigint}
+*/
+export function getFeeGrowthDenominator() {
+    const ret = wasm.getFeeGrowthDenominator();
+    return takeObject(ret);
+}
+
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toFeeGrowth(js_val, js_scale) {
+    const ret = wasm.toFeeGrowth(addHeapObject(js_val), addHeapObject(js_scale));
+    return takeObject(ret);
+}
+
+/**
+* @returns {bigint}
+*/
+export function getSecondsPerLiquidityScale() {
+    const ret = wasm.getSecondsPerLiquidityScale();
+    return takeObject(ret);
+}
+
+/**
+* @returns {bigint}
+*/
+export function getSecondsPerLiquidityDenominator() {
+    const ret = wasm.getSecondsPerLiquidityDenominator();
+    return takeObject(ret);
+}
+
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toSecondsPerLiquidity(js_val, js_scale) {
+    const ret = wasm.toSecondsPerLiquidity(addHeapObject(js_val), addHeapObject(js_scale));
+    return takeObject(ret);
+}
+
+/**
 */
 export const InvariantError = Object.freeze({ NotAdmin:0,"0":"NotAdmin",NotFeeReceiver:1,"1":"NotFeeReceiver",PoolAlreadyExist:2,"2":"PoolAlreadyExist",PoolNotFound:3,"3":"PoolNotFound",TickAlreadyExist:4,"4":"TickAlreadyExist",InvalidTickIndexOrTickSpacing:5,"5":"InvalidTickIndexOrTickSpacing",PositionNotFound:6,"6":"PositionNotFound",TickNotFound:7,"7":"TickNotFound",FeeTierNotFound:8,"8":"FeeTierNotFound",PoolKeyNotFound:9,"9":"PoolKeyNotFound",AmountIsZero:10,"10":"AmountIsZero",WrongLimit:11,"11":"WrongLimit",PriceLimitReached:12,"12":"PriceLimitReached",NoGainSwap:13,"13":"NoGainSwap",InvalidTickSpacing:14,"14":"InvalidTickSpacing",FeeTierAlreadyExist:15,"15":"FeeTierAlreadyExist",PoolKeyAlreadyExist:16,"16":"PoolKeyAlreadyExist",UnauthorizedFeeReceiver:17,"17":"UnauthorizedFeeReceiver",ZeroLiquidity:18,"18":"ZeroLiquidity",TransferError:19,"19":"TransferError",TokensAreSame:20,"20":"TokensAreSame",AmountUnderMinimumAmountOut:21,"21":"AmountUnderMinimumAmountOut",InvalidFee:22,"22":"InvalidFee",NotEmptyTickDeinitialization:23,"23":"NotEmptyTickDeinitialization",InvalidInitTick:24,"24":"InvalidInitTick",InvalidInitSqrtPrice:25,"25":"InvalidInitSqrtPrice", });
 
@@ -917,38 +1005,13 @@ export function __wbindgen_boolean_get(arg0) {
     return ret;
 };
 
-export function __wbindgen_bigint_from_u64(arg0) {
-    const ret = BigInt.asUintN(64, arg0);
-    return addHeapObject(ret);
-};
-
 export function __wbindgen_number_new(arg0) {
     const ret = arg0;
     return addHeapObject(ret);
 };
 
-export function __wbindgen_mul(arg0, arg1) {
-    const ret = getObject(arg0) * getObject(arg1);
-    return addHeapObject(ret);
-};
-
-export function __wbindgen_shl(arg0, arg1) {
-    const ret = getObject(arg0) << getObject(arg1);
-    return addHeapObject(ret);
-};
-
-export function __wbindgen_bit_or(arg0, arg1) {
-    const ret = getObject(arg0) | getObject(arg1);
-    return addHeapObject(ret);
-};
-
 export function __wbindgen_bigint_from_u128(arg0, arg1) {
     const ret = BigInt.asUintN(64, arg0) << BigInt(64) | BigInt.asUintN(64, arg1);
-    return addHeapObject(ret);
-};
-
-export function __wbindgen_error_new(arg0, arg1) {
-    const ret = new Error(getStringFromWasm0(arg0, arg1));
     return addHeapObject(ret);
 };
 
@@ -959,6 +1022,24 @@ export function __wbindgen_string_get(arg0, arg1) {
     var len1 = WASM_VECTOR_LEN;
     getInt32Memory0()[arg0 / 4 + 1] = len1;
     getInt32Memory0()[arg0 / 4 + 0] = ptr1;
+};
+
+export function __wbindgen_number_get(arg0, arg1) {
+    const obj = getObject(arg1);
+    const ret = typeof(obj) === 'number' ? obj : undefined;
+    getFloat64Memory0()[arg0 / 8 + 1] = isLikeNone(ret) ? 0 : ret;
+    getInt32Memory0()[arg0 / 4 + 0] = !isLikeNone(ret);
+};
+
+export function __wbindgen_error_new(arg0, arg1) {
+    const ret = new Error(getStringFromWasm0(arg0, arg1));
+    return addHeapObject(ret);
+};
+
+export function __wbindgen_is_object(arg0) {
+    const val = getObject(arg0);
+    const ret = typeof(val) === 'object' && val !== null;
+    return ret;
 };
 
 export function __wbindgen_is_undefined(arg0) {
@@ -986,17 +1067,9 @@ export function __wbindgen_jsval_eq(arg0, arg1) {
     return ret;
 };
 
-export function __wbindgen_is_object(arg0) {
-    const val = getObject(arg0);
-    const ret = typeof(val) === 'object' && val !== null;
-    return ret;
-};
-
-export function __wbindgen_number_get(arg0, arg1) {
-    const obj = getObject(arg1);
-    const ret = typeof(obj) === 'number' ? obj : undefined;
-    getFloat64Memory0()[arg0 / 8 + 1] = isLikeNone(ret) ? 0 : ret;
-    getInt32Memory0()[arg0 / 4 + 0] = !isLikeNone(ret);
+export function __wbindgen_bigint_from_u64(arg0) {
+    const ret = BigInt.asUintN(64, arg0);
+    return addHeapObject(ret);
 };
 
 export function __wbindgen_object_clone_ref(arg0) {
@@ -1023,26 +1096,26 @@ export function __wbg_set_9182712abebf82ef(arg0, arg1, arg2) {
     getObject(arg0)[takeObject(arg1)] = takeObject(arg2);
 };
 
-export function __wbg_new_75208e29bddfd88c() {
+export function __wbg_new_34c624469fb1d4fd() {
     const ret = new Array();
     return addHeapObject(ret);
 };
 
-export function __wbg_BigInt_3f5cc8bcc808fd96(arg0) {
+export function __wbg_BigInt_32d50b32fc9c8c1b(arg0) {
     const ret = BigInt(getObject(arg0));
     return addHeapObject(ret);
 };
 
-export function __wbg_new_632630b5cec17f21() {
+export function __wbg_new_87d841e70661f6e9() {
     const ret = new Object();
     return addHeapObject(ret);
 };
 
-export function __wbg_set_79c308ecd9a1d091(arg0, arg1, arg2) {
+export function __wbg_set_379b27f1d5f1bf9c(arg0, arg1, arg2) {
     getObject(arg0)[arg1 >>> 0] = takeObject(arg2);
 };
 
-export function __wbg_instanceof_ArrayBuffer_9221fa854ffb71b5(arg0) {
+export function __wbg_instanceof_ArrayBuffer_f4521cec1b99ee35(arg0) {
     let result;
     try {
         result = getObject(arg0) instanceof ArrayBuffer;
@@ -1053,31 +1126,31 @@ export function __wbg_instanceof_ArrayBuffer_9221fa854ffb71b5(arg0) {
     return ret;
 };
 
-export function __wbg_isSafeInteger_a23a66ee7c41b273(arg0) {
+export function __wbg_isSafeInteger_d8c89788832a17bf(arg0) {
     const ret = Number.isSafeInteger(getObject(arg0));
     return ret;
 };
 
-export function __wbg_buffer_b914fb8b50ebbc3e(arg0) {
+export function __wbg_buffer_5d1b598a01b41a42(arg0) {
     const ret = getObject(arg0).buffer;
     return addHeapObject(ret);
 };
 
-export function __wbg_new_b1f2d6842d615181(arg0) {
+export function __wbg_new_ace717933ad7117f(arg0) {
     const ret = new Uint8Array(getObject(arg0));
     return addHeapObject(ret);
 };
 
-export function __wbg_set_7d988c98e6ced92d(arg0, arg1, arg2) {
+export function __wbg_set_74906aa30864df5a(arg0, arg1, arg2) {
     getObject(arg0).set(getObject(arg1), arg2 >>> 0);
 };
 
-export function __wbg_length_21c4b0ae73cba59d(arg0) {
+export function __wbg_length_f0764416ba5bb237(arg0) {
     const ret = getObject(arg0).length;
     return ret;
 };
 
-export function __wbg_instanceof_Uint8Array_c299a4ee232e76ba(arg0) {
+export function __wbg_instanceof_Uint8Array_4f5cffed7df34b2f(arg0) {
     let result;
     try {
         result = getObject(arg0) instanceof Uint8Array;

@@ -70,8 +70,16 @@ const main = async () => {
   {
     const sqrtPriceScale = wasm.getSqrtPriceScale()
     const sqrtPriceDenominator = wasm.getSqrtPriceDenominator()
-    // const amount: TokenAmount = { v: 100000000n };
+    const amount = wasm.toTokenAmount(1000, wasm.getTokenAmountScale())
+    console.log(amount)
     console.log(sqrtPriceScale, sqrtPriceDenominator)
+
+    const sqrtPriceA = { v: '234878324943782000000000000' }
+    const sqrtPriceB = { v: '87854456421658000000000000' }
+    const liquidity = { v: '983983249092' }
+    const resultDown = wasm.getDeltaX(sqrtPriceA, sqrtPriceB, liquidity, false)
+    const resultUp = wasm.getDeltaX(sqrtPriceA, sqrtPriceB, liquidity, true)
+    console.log(resultDown, resultUp)
   }
   {
     const fee = 55n

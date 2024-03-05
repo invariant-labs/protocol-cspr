@@ -1,5 +1,7 @@
 use decimal::*;
 use traceable_result::*;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+use wasm_wrapper::wasm_wrapper;
 
 use crate::consts::*;
 use crate::types::sqrt_price::SqrtPrice;
@@ -83,6 +85,7 @@ fn log2_iterative_approximation_x32(mut sqrt_price_x32: u64) -> (bool, u64) {
     (sign, result)
 }
 
+#[wasm_wrapper("calculateTick")]
 pub fn get_tick_at_sqrt_price(sqrt_price: SqrtPrice, tick_spacing: u32) -> TrackableResult<i32> {
     if sqrt_price.get().as_u128() > MAX_SQRT_PRICE || sqrt_price.get().as_u128() < MIN_SQRT_PRICE {
         return Err(err!("sqrt_price out of range"));

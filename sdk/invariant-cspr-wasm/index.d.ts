@@ -105,48 +105,6 @@ export function calculateMinAmountOut(js_expected_amount_out: any, js_slippage: 
 /**
 * @returns {bigint}
 */
-export function getSqrtPriceScale(): bigint;
-/**
-* @returns {bigint}
-*/
-export function getSqrtPriceDenominator(): bigint;
-/**
-* @param {any} js_val
-* @param {any} js_scale
-* @returns {bigint}
-*/
-export function toSqrtPrice(js_val: any, js_scale: any): bigint;
-/**
-* @returns {bigint}
-*/
-export function getFeeGrowthScale(): bigint;
-/**
-* @returns {bigint}
-*/
-export function getFeeGrowthDenominator(): bigint;
-/**
-* @param {any} js_val
-* @param {any} js_scale
-* @returns {bigint}
-*/
-export function toFeeGrowth(js_val: any, js_scale: any): bigint;
-/**
-* @returns {bigint}
-*/
-export function getSecondsPerLiquidityScale(): bigint;
-/**
-* @returns {bigint}
-*/
-export function getSecondsPerLiquidityDenominator(): bigint;
-/**
-* @param {any} js_val
-* @param {any} js_scale
-* @returns {bigint}
-*/
-export function toSecondsPerLiquidity(js_val: any, js_scale: any): bigint;
-/**
-* @returns {bigint}
-*/
 export function getTokenAmountScale(): bigint;
 /**
 * @returns {bigint}
@@ -172,6 +130,12 @@ export function getLiquidityDenominator(): bigint;
 * @returns {bigint}
 */
 export function toLiquidity(js_val: any, js_scale: any): bigint;
+/**
+* @param {any} js_fee
+* @param {any} js_tick_spacing
+* @returns {any}
+*/
+export function _newFeeTier(js_fee: any, js_tick_spacing: any): any;
 /**
 * @returns {bigint}
 */
@@ -201,18 +165,19 @@ export function getFixedPointDenominator(): bigint;
 */
 export function toFixedPoint(js_val: any, js_scale: any): bigint;
 /**
-* @param {any} js_fee
-* @param {any} js_tick_spacing
-* @returns {any}
+* @returns {bigint}
 */
-export function _newFeeTier(js_fee: any, js_tick_spacing: any): any;
+export function getSqrtPriceScale(): bigint;
 /**
-* @param {any} token_0
-* @param {any} token_1
-* @param {any} fee_tier
-* @returns {any}
+* @returns {bigint}
 */
-export function _newPoolKey(token_0: any, token_1: any, fee_tier: any): any;
+export function getSqrtPriceDenominator(): bigint;
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toSqrtPrice(js_val: any, js_scale: any): bigint;
 /**
 * @returns {bigint}
 */
@@ -264,6 +229,70 @@ export function isTokenX(js_token_candidate: any, js_token_to_compare: any): any
 */
 export function isValidTick(js_tick_index: any, js_tick_spacing: any, js_sqrt_price: any): any;
 /**
+* @param {any} js_sqrt_price
+* @param {any} js_tick_spacing
+* @returns {any}
+*/
+export function calculateTick(js_sqrt_price: any, js_tick_spacing: any): any;
+/**
+* @param {any} js_v
+* @returns {bigint}
+*/
+export function test(js_v: any): bigint;
+/**
+* @param {any} js_x
+* @param {any} js_lower_tick
+* @param {any} js_upper_tick
+* @param {any} js_current_sqrt_price
+* @param {any} js_rounding_up
+* @returns {any}
+*/
+export function getLiquidityByX(js_x: any, js_lower_tick: any, js_upper_tick: any, js_current_sqrt_price: any, js_rounding_up: any): any;
+/**
+* @param {any} js_y
+* @param {any} js_lower_tick
+* @param {any} js_upper_tick
+* @param {any} js_current_sqrt_price
+* @param {any} js_rounding_up
+* @returns {any}
+*/
+export function getLiquidityByY(js_y: any, js_lower_tick: any, js_upper_tick: any, js_current_sqrt_price: any, js_rounding_up: any): any;
+/**
+* @param {any} token_0
+* @param {any} token_1
+* @param {any} fee_tier
+* @returns {any}
+*/
+export function _newPoolKey(token_0: any, token_1: any, fee_tier: any): any;
+/**
+* @returns {bigint}
+*/
+export function getFeeGrowthScale(): bigint;
+/**
+* @returns {bigint}
+*/
+export function getFeeGrowthDenominator(): bigint;
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toFeeGrowth(js_val: any, js_scale: any): bigint;
+/**
+* @returns {bigint}
+*/
+export function getSecondsPerLiquidityScale(): bigint;
+/**
+* @returns {bigint}
+*/
+export function getSecondsPerLiquidityDenominator(): bigint;
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toSecondsPerLiquidity(js_val: any, js_scale: any): bigint;
+/**
 */
 export enum InvariantError {
   NotAdmin = 0,
@@ -301,60 +330,6 @@ export interface SwapResult {
 }
 
 export type calculateAmountDeltaResult = [TokenAmount, TokenAmount, boolean];
-
-export interface SqrtPrice {
-    v: bigint;
-}
-
-export interface FeeGrowth {
-    v: bigint;
-}
-
-export interface SecondsPerLiquidity {
-    v: bigint;
-}
-
-export interface TokenAmount {
-    v: bigint;
-}
-
-export interface Liquidity {
-    v: bigint;
-}
-
-export interface Percentage {
-    v: bigint;
-}
-
-export interface Pool {
-    liquidity: Liquidity;
-    sqrtPrice: SqrtPrice;
-    currentTickIndex: bigint;
-    feeGrowthGlobalX: FeeGrowth;
-    feeGrowthGlobalY: FeeGrowth;
-    feeProtocolTokenX: TokenAmount;
-    feeProtocolTokenY: TokenAmount;
-    startTimestamp: bigint;
-    lastTimestamp: bigint;
-    feeReceiver: string;
-    oracleInitialized: boolean;
-}
-
-export interface InvariantConfig {
-    admin: string;
-    protocolFee: Percentage;
-}
-
-export interface Tick {
-    index: bigint;
-    sign: boolean;
-    liquidityChange: Liquidity;
-    liquidityGross: Liquidity;
-    sqrtPrice: SqrtPrice;
-    feeGrowthOutsideX: FeeGrowth;
-    feeGrowthOutsideY: FeeGrowth;
-    secondsOutside: bigint;
-}
 
 export interface SwapEvent {
     timestamp: bigint;
@@ -395,7 +370,11 @@ export interface CreatePositionEvent {
     currentSqrtPrice: SqrtPrice;
 }
 
-export interface FixedPoint {
+export interface TokenAmount {
+    v: bigint;
+}
+
+export interface Liquidity {
     v: bigint;
 }
 
@@ -404,25 +383,22 @@ export interface FeeTier {
     tickSpacing: bigint;
 }
 
-export interface PoolKey {
-    tokenX: string;
-    tokenY: string;
-    feeTier: FeeTier;
+export interface InvariantConfig {
+    admin: string;
+    protocolFee: Percentage;
 }
 
-export interface Position {
-    poolKey: PoolKey;
-    liquidity: Liquidity;
-    lowerTickIndex: bigint;
-    upperTickIndex: bigint;
-    feeGrowthInsideX: FeeGrowth;
-    feeGrowthInsideY: FeeGrowth;
-    lastBlockNumber: bigint;
-    tokensOwedX: TokenAmount;
-    tokensOwedY: TokenAmount;
+export interface Percentage {
+    v: bigint;
 }
 
-export type InvariantError = "NotAdmin" | "NotFeeReceiver" | "PoolAlreadyExist" | "PoolNotFound" | "TickAlreadyExist" | "InvalidTickIndexOrTickSpacing" | "PositionNotFound" | "TickNotFound" | "FeeTierNotFound" | "PoolKeyNotFound" | "AmountIsZero" | "WrongLimit" | "PriceLimitReached" | "NoGainSwap" | "InvalidTickSpacing" | "FeeTierAlreadyExist" | "PoolKeyAlreadyExist" | "UnauthorizedFeeReceiver" | "ZeroLiquidity" | "TransferError" | "TokensAreSame" | "AmountUnderMinimumAmountOut" | "InvalidFee" | "NotEmptyTickDeinitialization" | "InvalidInitTick" | "InvalidInitSqrtPrice";
+export interface FixedPoint {
+    v: bigint;
+}
+
+export interface SqrtPrice {
+    v: bigint;
+}
 
 export interface SwapHop {
     poolKey: PoolKey;
@@ -442,4 +418,62 @@ export interface TokenAmounts {
 }
 
 export type _calculateFeeResult = [TokenAmount, TokenAmount];
+
+export type InvariantError = "NotAdmin" | "NotFeeReceiver" | "PoolAlreadyExist" | "PoolNotFound" | "TickAlreadyExist" | "InvalidTickIndexOrTickSpacing" | "PositionNotFound" | "TickNotFound" | "FeeTierNotFound" | "PoolKeyNotFound" | "AmountIsZero" | "WrongLimit" | "PriceLimitReached" | "NoGainSwap" | "InvalidTickSpacing" | "FeeTierAlreadyExist" | "PoolKeyAlreadyExist" | "UnauthorizedFeeReceiver" | "ZeroLiquidity" | "TransferError" | "TokensAreSame" | "AmountUnderMinimumAmountOut" | "InvalidFee" | "NotEmptyTickDeinitialization" | "InvalidInitTick" | "InvalidInitSqrtPrice";
+
+export interface Pool {
+    liquidity: Liquidity;
+    sqrtPrice: SqrtPrice;
+    currentTickIndex: bigint;
+    feeGrowthGlobalX: FeeGrowth;
+    feeGrowthGlobalY: FeeGrowth;
+    feeProtocolTokenX: TokenAmount;
+    feeProtocolTokenY: TokenAmount;
+    startTimestamp: bigint;
+    lastTimestamp: bigint;
+    feeReceiver: string;
+    oracleInitialized: boolean;
+}
+
+export interface SingleTokenLiquidity {
+    l: Liquidity;
+    amount: TokenAmount;
+}
+
+export interface PoolKey {
+    tokenX: string;
+    tokenY: string;
+    feeTier: FeeTier;
+}
+
+export interface Tick {
+    index: bigint;
+    sign: boolean;
+    liquidityChange: Liquidity;
+    liquidityGross: Liquidity;
+    sqrtPrice: SqrtPrice;
+    feeGrowthOutsideX: FeeGrowth;
+    feeGrowthOutsideY: FeeGrowth;
+    secondsOutside: bigint;
+}
+
+export interface Position {
+    poolKey: PoolKey;
+    liquidity: Liquidity;
+    lowerTickIndex: bigint;
+    upperTickIndex: bigint;
+    feeGrowthInsideX: FeeGrowth;
+    feeGrowthInsideY: FeeGrowth;
+    lastBlockNumber: bigint;
+    tokensOwedX: TokenAmount;
+    tokensOwedY: TokenAmount;
+}
+
+export interface FeeGrowth {
+    v: bigint;
+}
+
+export interface SecondsPerLiquidity {
+    v: bigint;
+}
 
