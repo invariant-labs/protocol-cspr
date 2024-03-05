@@ -358,11 +358,13 @@ impl Entrypoints for Invariant {
 
         self.pool_keys.set(PoolKeys::default());
         self.fee_tiers.set(FeeTiers::default());
+
         self.config.set(InvariantConfig {
             admin: caller,
             protocol_fee,
-        })
+        });
     }
+
     pub fn add_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError> {
         let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
 

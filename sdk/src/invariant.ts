@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+import { BigNumber } from '@ethersproject/bignumber'
 import {
   CLValueBuilder,
   CasperClient,
@@ -7,9 +8,17 @@ import {
   Keys,
   RuntimeArgs
 } from 'casper-js-sdk'
-import { DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './network'
-import { getDeploymentData, sendTx } from './utils'
+import {
+  decodeFeeTiers,
+  decodeInvariantConfig,
+  decodePool,
+  encodePoolKey,
+  getDeploymentData,
+  hash,
+  sendTx
+} from './utils'
 
 const CONTRACT_NAME = 'invariant'
 
@@ -66,6 +75,13 @@ export class Invariant {
     const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
 
     if (deploymentResult.execution_results[0].result.Failure) {
+      // Shows the required deploy fee in case of failure
+      console.log('----------')
+      for (const v of deploymentResult.execution_results[0].result.Failure!.effect.transforms) {
+        console.log(v)
+      }
+      console.log('----------')
+
       throw new Error(
         deploymentResult.execution_results[0].result.Failure.error_message?.toString()
       )
@@ -126,28 +142,81 @@ export class Invariant {
   }
 
   async changeProtocolFee(account: Keys.AsymmetricKey, network: Network, protocolFee: bigint) {
-    return await sendTx(
-      this.contract,
-      this.service,
-      this.paymentAmount,
-      account,
-      network,
+    const txArgs = RuntimeArgs.fromMap({
+      protocol_fee: CLValueBuilder.u128(BigNumber.from(protocolFee))
+    })
+
+    const deploy = this.contract.callEntrypoint(
       'change_protocol_fee',
-      {
-        protocol_fee: CLValueBuilder.u128(Number(protocolFee))
-      }
+      txArgs,
+      account.publicKey,
+      network,
+      DEFAULT_PAYMENT_AMOUNT.toString(),
+      [account]
     )
+
+    deploy.sign([account])
+    await deploy.send(TESTNET_NODE_URL)
+    await this.service.deploy(deploy)
+    return await this.service.waitForDeploy(deploy, 100000)
   }
 
-  // async getProtocolFee(account: Keys.AsymmetricKey, network: Network) {
-  //   return await sendTx(
-  //     this.contract,
-  //     this.service,
-  //     this.paymentAmount,
-  //     account,
-  //     network,
-  //     'get_protocol_fee',
-  //     {}
-  //   )
-  // }
+  async getInvariantConfig() {
+    const key = hash('config')
+    const stateRootHash = await this.service.getStateRootHash()
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+
+    return decodeInvariantConfig(rawBytes)
+  }
+
+  async getFeeTiers() {
+    const key = hash('fee_tiers')
+    const stateRootHash = await this.service.getStateRootHash()
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+
+    return decodeFeeTiers(rawBytes)
+  }
+
+  async getPool(poolKey: any) {
+    const buffor: number[] = []
+
+    const poolKeyBytes = encodePoolKey(poolKey)
+    buffor.push(...'pools'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'pools'.split('').map(c => c.charCodeAt(0)))
+    buffor.push(...poolKeyBytes)
+
+    const key = hash(new Uint8Array(buffor))
+
+    const stateRootHash = await this.service.getStateRootHash()
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+
+    return decodePool(rawBytes)
+  }
 }
