@@ -58,9 +58,12 @@ const main = async () => {
   console.log('Invariant loaded')
 
   const feeTiers = await invariant.getFeeTiers()
-  console.log(feeTiers)
   const pool = await invariant.getPool()
+  const config = await invariant.getInvariantConfig()
+
   console.log(pool)
+  console.log(feeTiers)
+  console.log(config)
 
   // {
   //   await invariant.changeProtocolFee(account, network, 200n)

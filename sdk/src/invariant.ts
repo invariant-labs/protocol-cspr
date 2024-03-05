@@ -168,15 +168,18 @@ export class Invariant {
     const key = hash('config')
     const stateRootHash = await this.service.getStateRootHash()
 
-    const response = await this.client.nodeClient.getDictionaryItemBytesByName(
+    const response = await this.service.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
-      key
+      key,
+      { rawData: true }
     )
 
+    const rawBytes = (response.CLValue! as any).bytes
+
     const bytes = new Uint8Array(
-      String(response)
+      String(rawBytes)
         .match(/.{1,2}/g)!
         .map((byte: string) => parseInt(byte, 16))
     )
@@ -225,20 +228,21 @@ export class Invariant {
   async getFeeTiers() {
     const key = hash('fee_tiers')
     const stateRootHash = await this.service.getStateRootHash()
-    const response = await this.client.nodeClient.getDictionaryItemBytesByName(
+    const response = await this.service.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
-      key
+      key,
+      { rawData: true }
     )
 
+    const rawBytes = (response.CLValue! as any).bytes
+
     const bytes = new Uint8Array(
-      String(response)
+      String(rawBytes)
         .match(/.{1,2}/g)!
         .map((byte: string) => parseInt(byte, 16))
     )
-
-    console.log(bytes)
 
     const stringParser = new CLStringBytesParser()
     const u32Parser = new CLU32BytesParser()
@@ -300,11 +304,21 @@ export class Invariant {
     const key = hash(new Uint8Array(buffor))
 
     const stateRootHash = await this.service.getStateRootHash()
-    const response = await this.client.nodeClient.getDictionaryItemBytesByName(
+
+    const response = await this.service.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
-      key
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+
+    const bytes = new Uint8Array(
+      String(rawBytes)
+        .match(/.{1,2}/g)!
+        .map((byte: string) => parseInt(byte, 16))
     )
 
     const optionParser = new CLOptionBytesParser()
@@ -314,12 +328,6 @@ export class Invariant {
     const u64Parser = new CLU64BytesParser()
     const addressParser = new CLAccountHashBytesParser()
     const boolParser = new CLBoolBytesParser()
-
-    const bytes = new Uint8Array(
-      String(response)
-        .match(/.{1,2}/g)!
-        .map((byte: string) => parseInt(byte, 16))
-    )
 
     const expectedType = new CLOptionType(CLTypeBuilder.string())
     const { remainder: optionRemainder } = optionParser.fromBytesWithRemainder(bytes, expectedType)
