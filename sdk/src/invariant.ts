@@ -141,6 +141,26 @@ export class Invariant {
     )
   }
 
+  async removeFeeTier(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    fee: bigint,
+    tickSpacing: bigint
+  ) {
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'remove_fee_tier',
+      {
+        fee: CLValueBuilder.u128(Number(fee)),
+        tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
+      }
+    )
+  }
+
   async changeProtocolFee(account: Keys.AsymmetricKey, network: Network, protocolFee: bigint) {
     const txArgs = RuntimeArgs.fromMap({
       protocol_fee: CLValueBuilder.u128(BigNumber.from(protocolFee))
