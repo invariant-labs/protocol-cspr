@@ -164,6 +164,67 @@ export class Invariant {
     )
   }
 
+  async createPool(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint,
+    initSqrtPrice: bigint,
+    initTick: bigint
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'create_pool',
+      {
+        token_0: CLValueBuilder.key(token0Key),
+        token_1: CLValueBuilder.key(token1Key),
+        fee: CLValueBuilder.u128(BigNumber.from(fee)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
+        init_sqrt_price: CLValueBuilder.u128(BigNumber.from(initSqrtPrice)),
+        init_tick: CLValueBuilder.i32(integerSafeCast(initTick))
+      }
+    )
+  }
+
+  async changeFeeReceiver(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint,
+    newFeeReceiver: string
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+    const feeReceiverKey = new CLByteArray(decodeBase16(newFeeReceiver))
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'change_fee_receiver',
+      {
+        token_0: CLValueBuilder.key(token0Key),
+        token_1: CLValueBuilder.key(token1Key),
+        fee: CLValueBuilder.u128(BigNumber.from(fee)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
+        fee_receiver: CLValueBuilder.key(feeReceiverKey)
+      }
+    )
+  }
+
   async changeProtocolFee(account: Keys.AsymmetricKey, network: Network, protocolFee: bigint) {
     const txArgs = RuntimeArgs.fromMap({
       protocol_fee: CLValueBuilder.u128(BigNumber.from(protocolFee))

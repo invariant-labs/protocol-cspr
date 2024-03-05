@@ -42,6 +42,9 @@ const main = async () => {
   //   150000000000n
   // )
 
+  // c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472
+  // da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908
+
   // const erc20 = await Erc20.load(client, service, erc20Hash)
   // console.log(await erc20.name())
 
@@ -63,12 +66,48 @@ const main = async () => {
   const invariant = await Invariant.load(client, service, invariantHash)
 
   {
-    await invariant.addFeeTier(account, network, 55n, 10n)
-    let feeTiers = await invariant.getFeeTiers()
+    const fee = 55n
+    const tickSpacing = 10n
+    const token0 = 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472'
+    const token1 = 'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
+    const initSqrtPrice = 10n ** 24n
+    const initTick = 0n
+    console.log(initSqrtPrice, initTick)
+    console.log(token0, token1)
+    const poolKey = {
+      tokenX: token0,
+      tokenY: token1,
+      feeTier: {
+        fee,
+        tickSpacing
+      }
+    }
+    // await invariant.addFeeTier(account, network, 55n, 10n)
+    const feeTiers = await invariant.getFeeTiers()
     console.log(feeTiers)
-    await invariant.removeFeeTier(account, network, 55n, 10n)
-    feeTiers = await invariant.getFeeTiers()
-    console.log(feeTiers)
+    // await invariant.createPool(
+    //   account,
+    //   network,
+    //   token0,
+    //   token1,
+    //   fee,
+    //   tickSpacing,
+    //   initSqrtPrice,
+    //   initTick
+    // )
+    let pool = await invariant.getPool(poolKey)
+    console.log(pool)
+    await invariant.changeFeeReceiver(
+      account,
+      network,
+      token0,
+      token1,
+      fee,
+      tickSpacing,
+      'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
+    )
+    pool = await invariant.getPool(poolKey)
+    console.log(pool)
   }
   console.log('Invariant loaded')
 

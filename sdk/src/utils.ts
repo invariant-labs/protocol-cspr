@@ -248,8 +248,8 @@ export const decodePool = (rawBytes: any) => {
   const [feeProtocolTokenY, feeProtocolTokenYRemainder] = decodeU256(feeProtocolTokenYTypeRemainder)
   const [startTimestamp, startTimestampRemainder] = decodeU64(feeProtocolTokenYRemainder)
   const [lastTimestamp, lastTimestampRemainder] = decodeU64(startTimestampRemainder)
-  const [admin, adminRemainder] = decodeAddress(lastTimestampRemainder)
-  const [oracle, remainder] = decodeBool(adminRemainder)
+  const [feeReceiver, feeReceiverRemainder] = decodeAddress(lastTimestampRemainder)
+  const [oracle, remainder] = decodeBool(feeReceiverRemainder)
 
   if (remainder!.length != 0) {
     throw new Error('There are remaining bytes left')
@@ -265,7 +265,7 @@ export const decodePool = (rawBytes: any) => {
     feeProtocolTokenY,
     startTimestamp,
     lastTimestamp,
-    admin,
+    feeReceiver,
     oracle
   }
 }
