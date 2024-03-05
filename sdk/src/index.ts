@@ -1,4 +1,4 @@
-import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
+import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_INVARIANT_HASH, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
 import { createAccountKeys, initCasperClientAndService } from './utils'
@@ -49,31 +49,45 @@ const main = async () => {
   // await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
   // console.log(await erc20.balance_of(account.publicKey))
 
-  const invariantHash = 'fb0a6c4c0d6b5a45b52fe7a05bbc3ffe87bfa4ea57f2b9722e179b4660a8b810'
-  // const invariantHash = await Invariant.deploy(client, service, network, account, 0n, 288058232555n)
+  const invariantHash = TESTNET_INVARIANT_HASH
+  // const invariantHash = await Invariant.deploy(
+  //   client,
+  //   service,
+  //   network,
+  //   account,
+  //   0n,
+  //   TESTNET_DEPLOY_AMOUNT
+  // )
   // console.log('Invariant deployed:', invariantHash)
 
   const invariant = await Invariant.load(client, service, invariantHash)
 
+  {
+    await invariant.addFeeTier(account, network, 55n, 10n)
+    let feeTiers = await invariant.getFeeTiers()
+    console.log(feeTiers)
+    await invariant.removeFeeTier(account, network, 55n, 10n)
+    feeTiers = await invariant.getFeeTiers()
+    console.log(feeTiers)
+  }
   console.log('Invariant loaded')
 
-  const feeTiers = await invariant.getFeeTiers()
-  const config = await invariant.getInvariantConfig()
+  // const config = await invariant.getInvariantConfig()
 
-  console.log(feeTiers)
-  console.log(config)
+  // console.log(feeTiers)
+  // console.log(config)
 
-  const poolKey = {
-    tokenX: '0101010101010101010101010101010101010101010101010101010101010101',
-    tokenY: '0202020202020202020202020202020202020202020202020202020202020202',
-    feeTier: {
-      tickSpacing: 10n,
-      fee: 100n
-    }
-  }
+  // const poolKey = {
+  //   tokenX: '0101010101010101010101010101010101010101010101010101010101010101',
+  //   tokenY: '0202020202020202020202020202020202020202020202020202020202020202',
+  //   feeTier: {
+  //     tickSpacing: 10n,
+  //     fee: 100n
+  //   }
+  // }
 
-  const pool = await invariant.getPool(poolKey)
-  console.log(pool)
+  // const pool = await invariant.getPool(poolKey)
+  // console.log(pool)
 
   // {
   //   await invariant.changeProtocolFee(account, network, 200n)
