@@ -268,7 +268,7 @@ export class Invariant {
       {
         token_0: CLValueBuilder.key(token0Key),
         token_1: CLValueBuilder.key(token1Key),
-        fee: CLValueBuilder.u128(Number(fee)),
+        fee: CLValueBuilder.u128(BigNumber.from(fee)),
         tick_spacing: CLValueBuilder.u32(Number(tickSpacing)),
         lower_tick: CLValueBuilder.i32(Number(lowerTick)),
         upper_tick: CLValueBuilder.i32(Number(upperTick)),
