@@ -14,6 +14,7 @@ import {
   decodeFeeTiers,
   decodeInvariantConfig,
   decodePool,
+  encodePoolKey,
   getDeploymentData,
   hash,
   sendTx
@@ -193,15 +194,10 @@ export class Invariant {
     return decodeFeeTiers(rawBytes)
   }
 
-  async getPool() {
+  async getPool(poolKey: any) {
     const buffor: number[] = []
-    // TODO: Add dynamic serialization for pool keys
-    const poolKeyBytes = [
-      7, 0, 0, 0, 80, 111, 111, 108, 75, 101, 121, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-      2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 7, 0, 0, 0, 70, 101, 101, 84, 105,
-      101, 114, 10, 0, 0, 0, 80, 101, 114, 99, 101, 110, 116, 97, 103, 101, 1, 100, 10, 0, 0, 0
-    ]
+
+    const poolKeyBytes = encodePoolKey(poolKey)
     buffor.push(...'pools'.split('').map(c => c.charCodeAt(0)))
     buffor.push('#'.charCodeAt(0))
     buffor.push(...'pools'.split('').map(c => c.charCodeAt(0)))

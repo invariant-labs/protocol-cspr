@@ -245,4 +245,35 @@ fn main() {
         println!("Hash = {}", encoded);
         // 8993177b688dbcd454730d11f28d54508151536789928beb4deff08cc5a3e786
     }
+    // Serialize Pool key
+    {
+        let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
+        let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
+
+        let fee_tier = FeeTier {
+            fee: Percentage { v: U128::from(100) },
+            tick_spacing: 10,
+        };
+
+        let pool_key = PoolKey::new(token_0, token_1, fee_tier.clone()).unwrap();
+        let pool_key_bytes = pool_key.to_bytes().unwrap();
+
+        let mut buffor: Vec<u8> = vec![];
+
+        let pool_key_struct_bytes = "PoolKey".to_bytes().unwrap();
+        let token_0_bytes = token_0.to_bytes().unwrap();
+        let token_1_bytes = token_1.to_bytes().unwrap();
+        let fee_tier_struct_bytes = "FeeTier".to_bytes().unwrap();
+        let tick_spacing_bytes = fee_tier.tick_spacing.to_bytes().unwrap();
+        let fee_bytes = fee_tier.fee.to_bytes().unwrap();
+
+        buffor.extend_from_slice(&pool_key_struct_bytes);
+        buffor.extend_from_slice(&token_0_bytes);
+        buffor.extend_from_slice(&token_1_bytes);
+        buffor.extend_from_slice(&fee_tier_struct_bytes);
+        buffor.extend_from_slice(&fee_bytes);
+        buffor.extend_from_slice(&tick_spacing_bytes);
+
+        assert_eq!(buffor, pool_key_bytes);
+    }
 }

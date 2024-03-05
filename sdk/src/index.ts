@@ -58,18 +58,28 @@ const main = async () => {
   console.log('Invariant loaded')
 
   const feeTiers = await invariant.getFeeTiers()
-  const pool = await invariant.getPool()
   const config = await invariant.getInvariantConfig()
 
-  console.log(pool)
   console.log(feeTiers)
   console.log(config)
 
-  {
-    await invariant.changeProtocolFee(account, network, 200n)
-    const config = await invariant.getInvariantConfig()
-    console.log(config)
+  const poolKey = {
+    tokenX: '0101010101010101010101010101010101010101010101010101010101010101',
+    tokenY: '0202020202020202020202020202020202020202020202020202020202020202',
+    feeTier: {
+      tickSpacing: 10n,
+      fee: 100n
+    }
   }
+
+  const pool = await invariant.getPool(poolKey)
+  console.log(pool)
+
+  // {
+  //   await invariant.changeProtocolFee(account, network, 200n)
+  //   const config = await invariant.getInvariantConfig()
+  //   console.log(config)
+  // }
 }
 
 main()

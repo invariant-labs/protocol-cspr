@@ -277,3 +277,44 @@ export const parseBytes = (rawBytes: any): Uint8Array => {
       .map((byte: string) => parseInt(byte, 16))
   )
 }
+
+export const encodePoolKey = (poolKey: any): number[] => {
+  const buffor: number[] = []
+  const poolKeyStructBytes = 'PoolKey'.split('').map(c => c.charCodeAt(0))
+  const tokenXBytes = hexToBytes(poolKey.tokenX)
+  const tokenYBytes = hexToBytes(poolKey.tokenY)
+  const feeTierStructBytes = 'FeeTier'.split('').map(c => c.charCodeAt(0))
+  const percentageSturctBytes = 'Percentage'.split('').map(c => c.charCodeAt(0))
+  const feeBytes = bigintToByteArray(poolKey.feeTier.fee)
+
+  buffor.push(7, 0, 0, 0)
+  buffor.push(...poolKeyStructBytes)
+  buffor.push(1)
+  buffor.push(...tokenXBytes)
+  buffor.push(1)
+  buffor.push(...tokenYBytes)
+  buffor.push(7, 0, 0, 0)
+  buffor.push(...feeTierStructBytes)
+  buffor.push(10, 0, 0, 0)
+  buffor.push(...percentageSturctBytes)
+  buffor.push(feeBytes.length)
+  buffor.push(...feeBytes)
+  buffor.push(...[Number(poolKey.feeTier.tickSpacing), 0, 0, 0])
+
+  return buffor
+}
+
+export const bigintToByteArray = (bigintValue: bigint): number[] => {
+  const byteArray: number[] = []
+
+  while (bigintValue > 0n) {
+    byteArray.unshift(Number(bigintValue & 0xffn))
+    bigintValue >>= 8n
+  }
+
+  if (byteArray.length === 0) {
+    byteArray.push(0)
+  }
+
+  return byteArray.reverse()
+}
