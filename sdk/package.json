@@ -2,7 +2,6 @@
   "name": "@invariant-labs/cspr-sdk",
   "version": "1.0.0",
   "description": "",
-  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "start": "npx tsc && node --experimental-wasm-modules target/src/index.js",
@@ -21,7 +20,9 @@
     "blakejs": "^1.2.1",
     "casper-js-sdk": "^2.15.3",
     "chai": "^5.0.3",
-    "ts-node": "^10.9.2"
+    "invariant-cspr-wasm": "file:./invariant-cspr-wasm",
+    "ts-node": "^10.9.2",
+    "tsimportlib": "^0.0.5"
   },
   "keywords": [],
   "author": "",
