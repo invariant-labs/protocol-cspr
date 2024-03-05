@@ -60,7 +60,7 @@ export class Invariant {
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
-      fee: CLValueBuilder.u128(Number(fee))
+      fee: CLValueBuilder.u128(BigNumber.from(fee))
     })
 
     const signedDeploy = contract.install(
@@ -137,7 +137,7 @@ export class Invariant {
       network,
       'add_fee_tier',
       {
-        fee: CLValueBuilder.u128(Number(fee)),
+        fee: CLValueBuilder.u128(BigNumber.from(fee)),
         tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
       }
     )
@@ -157,7 +157,7 @@ export class Invariant {
       network,
       'remove_fee_tier',
       {
-        fee: CLValueBuilder.u128(Number(fee)),
+        fee: CLValueBuilder.u128(BigNumber.from(fee)),
         tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
       }
     )
