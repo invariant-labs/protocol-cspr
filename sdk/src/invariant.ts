@@ -1,12 +1,14 @@
 /* eslint-disable camelcase */
 import { BigNumber } from '@ethersproject/bignumber'
 import {
+  CLByteArray,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
   Contracts,
   Keys,
-  RuntimeArgs
+  RuntimeArgs,
+  decodeBase16
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './network'
@@ -157,6 +159,67 @@ export class Invariant {
       {
         fee: CLValueBuilder.u128(Number(fee)),
         tick_spacing: CLValueBuilder.u32(Number(tickSpacing))
+      }
+    )
+  }
+
+  async createPool(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint,
+    initSqrtPrice: bigint,
+    initTick: bigint
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'create_pool',
+      {
+        token_0: CLValueBuilder.key(token0Key),
+        token_1: CLValueBuilder.key(token1Key),
+        fee: CLValueBuilder.u128(Number(fee)),
+        tick_spacing: CLValueBuilder.u32(Number(tickSpacing)),
+        init_sqrt_price: CLValueBuilder.u128(BigNumber.from(initSqrtPrice)),
+        init_tick: CLValueBuilder.i32(Number(initTick))
+      }
+    )
+  }
+
+  async changeFeeReceiver(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint,
+    newFeeReceiver: string
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+    const feeReceiverKey = new CLByteArray(decodeBase16(newFeeReceiver))
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'change_fee_receiver',
+      {
+        token_0: CLValueBuilder.key(token0Key),
+        token_1: CLValueBuilder.key(token1Key),
+        fee: CLValueBuilder.u128(Number(fee)),
+        tick_spacing: CLValueBuilder.u32(Number(tickSpacing)),
+        fee_receiver: CLValueBuilder.key(feeReceiverKey)
       }
     )
   }
