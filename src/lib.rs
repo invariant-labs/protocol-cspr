@@ -4,9 +4,8 @@ extern crate alloc;
 
 pub mod contracts;
 pub mod math;
-pub mod token;
 
-use odra_modules::erc20::Erc20Ref;
+pub use odra_modules::erc20::{Erc20, Erc20Deployer, Erc20Ref};
 
 #[cfg(test)]
 pub mod e2e;
@@ -50,7 +49,10 @@ pub struct CalculateSwapResult {
 }
 #[derive(OdraType, Debug)]
 pub struct SwapHop {
-    pub pool_key: PoolKey,
+    pub token_x: Address,
+    pub token_y: Address,
+    pub fee: U128,
+    pub tick_spacing: u32,
     pub x_to_y: bool,
 }
 
@@ -223,7 +225,19 @@ impl Invariant {
         let mut next_swap_amount = amount_in;
 
         for swap in swaps.iter() {
-            let SwapHop { pool_key, x_to_y } = *swap;
+            let SwapHop {
+                token_x,
+                token_y,
+                fee,
+                tick_spacing,
+                x_to_y,
+            } = *swap;
+
+            let pool_key = PoolKey::new(
+                token_x,
+                token_y,
+                FeeTier::new(Percentage::new(fee), tick_spacing)?,
+            )?;
 
             let sqrt_price_limit = if x_to_y {
                 SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
@@ -232,7 +246,16 @@ impl Invariant {
             };
 
             let result = if is_swap {
-                self.swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)
+                self.swap(
+                    pool_key.token_x,
+                    pool_key.token_y,
+                    pool_key.fee_tier.fee.get(),
+                    pool_key.fee_tier.tick_spacing,
+                    x_to_y,
+                    next_swap_amount.get(),
+                    true,
+                    sqrt_price_limit.get(),
+                )
             } else {
                 self.calculate_swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)
             }?;
@@ -335,12 +358,16 @@ impl Entrypoints for Invariant {
 
         self.pool_keys.set(PoolKeys::default());
         self.fee_tiers.set(FeeTiers::default());
+
         self.config.set(InvariantConfig {
             admin: caller,
             protocol_fee,
-        })
+        });
     }
-    pub fn add_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
+
+    pub fn add_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError> {
+        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
+
         let caller = contract_env::caller();
         let config = self.config.get().unwrap_or_revert();
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
@@ -355,12 +382,14 @@ impl Entrypoints for Invariant {
         Ok(())
     }
 
-    pub fn fee_tier_exist(&self, fee_tier: FeeTier) -> bool {
+    pub fn fee_tier_exist(&self, fee: U128, tick_spacing: u32) -> bool {
+        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing).unwrap();
         let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
         fee_tiers.contains(fee_tier)
     }
 
-    pub fn remove_fee_tier(&mut self, fee_tier: FeeTier) -> Result<(), InvariantError> {
+    pub fn remove_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError> {
+        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
         let caller = contract_env::caller();
         let config = self.config.get().unwrap_or_revert();
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
@@ -385,10 +414,14 @@ impl Entrypoints for Invariant {
         &mut self,
         token_0: Address,
         token_1: Address,
-        fee_tier: FeeTier,
-        init_sqrt_price: SqrtPrice,
+        fee: U128,
+        tick_spacing: u32,
+        init_sqrt_price: U128,
         init_tick: i32,
     ) -> Result<(), InvariantError> {
+        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
+        let init_sqrt_price = SqrtPrice::new(init_sqrt_price);
+
         let current_timestamp = odra::contract_env::get_block_time();
         let mut pool_keys = self.pool_keys.get().unwrap_or_revert();
         let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
@@ -426,8 +459,10 @@ impl Entrypoints for Invariant {
         &self,
         token_0: Address,
         token_1: Address,
-        fee_tier: FeeTier,
+        fee: U128,
+        tick_spacing: u32,
     ) -> Result<Pool, InvariantError> {
+        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
         let key: PoolKey = PoolKey::new(token_0, token_1, fee_tier)?;
         let pool = self.pools.get(key)?;
 
@@ -443,7 +478,19 @@ impl Entrypoints for Invariant {
         config.protocol_fee
     }
 
-    pub fn withdraw_protocol_fee(&mut self, pool_key: PoolKey) -> Result<(), InvariantError> {
+    pub fn withdraw_protocol_fee(
+        &mut self,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
+    ) -> Result<(), InvariantError> {
+        let pool_key = PoolKey::new(
+            token_0,
+            token_1,
+            FeeTier::new(Percentage::new(fee), tick_spacing)?,
+        )?;
+
         let caller = contract_env::caller();
         let mut pool = self.pools.get(pool_key)?;
 
@@ -461,7 +508,8 @@ impl Entrypoints for Invariant {
         Ok(())
     }
 
-    pub fn change_protocol_fee(&mut self, protocol_fee: Percentage) -> Result<(), InvariantError> {
+    pub fn change_protocol_fee(&mut self, protocol_fee: U128) -> Result<(), InvariantError> {
+        let protocol_fee = Percentage::new(protocol_fee);
         let caller = contract_env::caller();
         let mut config = self.config.get().unwrap_or_revert();
 
@@ -478,9 +526,17 @@ impl Entrypoints for Invariant {
 
     pub fn change_fee_receiver(
         &mut self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         fee_receiver: Address,
     ) -> Result<(), InvariantError> {
+        let pool_key = PoolKey::new(
+            token_0,
+            token_1,
+            FeeTier::new(Percentage::new(fee), tick_spacing)?,
+        )?;
         let caller = contract_env::caller();
         let config = self.config.get().unwrap_or_revert();
         let mut pool = self.pools.get(pool_key)?;
@@ -495,11 +551,36 @@ impl Entrypoints for Invariant {
         Ok(())
     }
 
-    pub fn is_tick_initialized(&self, key: PoolKey, index: i32) -> bool {
+    pub fn is_tick_initialized(
+        &self,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
+        index: i32,
+    ) -> bool {
+        let key = PoolKey::new(
+            token_0,
+            token_1,
+            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
+        )
+        .unwrap();
         self.tickmap.get(index, key.fee_tier.tick_spacing, key)
     }
 
-    pub fn get_tick(&self, key: PoolKey, index: i32) -> Result<Tick, InvariantError> {
+    pub fn get_tick(
+        &self,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
+        index: i32,
+    ) -> Result<Tick, InvariantError> {
+        let key = PoolKey::new(
+            token_0,
+            token_1,
+            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
+        )?;
         self.ticks.get(key, index)
     }
 
@@ -539,15 +620,28 @@ impl Entrypoints for Invariant {
 
         Ok((x, y))
     }
+    #[allow(clippy::too_many_arguments)]
     pub fn create_position(
         &mut self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         lower_tick: i32,
         upper_tick: i32,
-        liquidity_delta: Liquidity,
-        slippage_limit_lower: SqrtPrice,
-        slippage_limit_upper: SqrtPrice,
+        liquidity_delta: U256,
+        slippage_limit_lower: U128,
+        slippage_limit_upper: U128,
     ) -> Result<Position, InvariantError> {
+        let pool_key = PoolKey::new(
+            token_0,
+            token_1,
+            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
+        )?;
+        let liquidity_delta = Liquidity::new(liquidity_delta);
+        let slippage_limit_lower = SqrtPrice::new(slippage_limit_lower);
+        let slippage_limit_upper = SqrtPrice::new(slippage_limit_upper);
+
         let caller = contract_env::caller();
         let contract = contract_env::self_address();
         let current_timestamp = contract_env::get_block_time();
@@ -687,14 +781,26 @@ impl Entrypoints for Invariant {
         self.positions.get_all(owner)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn quote(
         &self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         x_to_y: bool,
-        amount: TokenAmount,
+        amount: U256,
         by_amount_in: bool,
-        sqrt_price_limit: SqrtPrice,
+        sqrt_price_limit: U128,
     ) -> Result<QuoteResult, InvariantError> {
+        let pool_key = PoolKey::new(
+            token_0,
+            token_1,
+            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
+        )?;
+        let amount = TokenAmount::new(amount);
+        let sqrt_price_limit = SqrtPrice::new(sqrt_price_limit);
+
         let calculate_swap_result =
             self.calculate_swap(pool_key, x_to_y, amount, by_amount_in, sqrt_price_limit)?;
 
@@ -706,14 +812,26 @@ impl Entrypoints for Invariant {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn swap(
         &mut self,
-        pool_key: PoolKey,
+        token_0: Address,
+        token_1: Address,
+        fee: U128,
+        tick_spacing: u32,
         x_to_y: bool,
-        amount: TokenAmount,
+        amount: U256,
         by_amount_in: bool,
-        sqrt_price_limit: SqrtPrice,
+        sqrt_price_limit: U128,
     ) -> Result<CalculateSwapResult, InvariantError> {
+        let pool_key = PoolKey::new(
+            token_0,
+            token_1,
+            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
+        )?;
+        let amount = TokenAmount::new(amount);
+        let sqrt_price_limit = SqrtPrice::new(sqrt_price_limit);
+
         let caller = contract_env::caller();
         let contract = contract_env::self_address();
 
@@ -767,9 +885,11 @@ impl Entrypoints for Invariant {
 
     pub fn quote_route(
         &mut self,
-        amount_in: TokenAmount,
+        amount_in: U256,
         swaps: Vec<SwapHop>,
     ) -> Result<TokenAmount, InvariantError> {
+        let amount_in = TokenAmount::new(amount_in);
+
         let amount_out = self.route(false, amount_in, swaps)?;
 
         Ok(amount_out)
@@ -777,11 +897,15 @@ impl Entrypoints for Invariant {
 
     pub fn swap_route(
         &mut self,
-        amount_in: TokenAmount,
-        expected_amount_out: TokenAmount,
-        slippage: Percentage,
+        amount_in: U256,
+        expected_amount_out: U256,
+        slippage: U128,
         swaps: Vec<SwapHop>,
     ) -> Result<(), InvariantError> {
+        let amount_in = TokenAmount::new(amount_in);
+        let expected_amount_out = TokenAmount::new(expected_amount_out);
+        let slippage = Percentage::new(slippage);
+
         let amount_out = self.route(true, amount_in, swaps)?;
 
         let min_amount_out = calculate_min_amount_out(expected_amount_out, slippage);

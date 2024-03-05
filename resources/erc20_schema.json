@@ -1,16 +1,16 @@
 {
-  "name": "Token",
+  "name": "Erc20",
   "entrypoints": [
     {
       "name": "init",
       "is_mutable": true,
       "args": [
         {
-          "name": "name",
+          "name": "symbol",
           "ty": "String"
         },
         {
-          "name": "symbol",
+          "name": "name",
           "ty": "String"
         },
         {
@@ -19,22 +19,9 @@
         },
         {
           "name": "initial_supply",
-          "ty": "U256"
-        }
-      ],
-      "return_ty": "Unit"
-    },
-    {
-      "name": "mint",
-      "is_mutable": true,
-      "args": [
-        {
-          "name": "address",
-          "ty": "Key"
-        },
-        {
-          "name": "amount",
-          "ty": "U256"
+          "ty": {
+            "Option": "U256"
+          }
         }
       ],
       "return_ty": "Unit"
@@ -117,7 +104,7 @@
       "is_mutable": false,
       "args": [
         {
-          "name": "owner",
+          "name": "address",
           "ty": "Key"
         }
       ],
@@ -139,18 +126,31 @@
       "return_ty": "U256"
     },
     {
-      "name": "get_owner",
-      "is_mutable": false,
-      "args": [],
-      "return_ty": "Key"
-    },
-    {
-      "name": "transfer_ownership",
+      "name": "mint",
       "is_mutable": true,
       "args": [
         {
-          "name": "new_owner",
+          "name": "address",
           "ty": "Key"
+        },
+        {
+          "name": "amount",
+          "ty": "U256"
+        }
+      ],
+      "return_ty": "Unit"
+    },
+    {
+      "name": "burn",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "address",
+          "ty": "Key"
+        },
+        {
+          "name": "amount",
+          "ty": "U256"
         }
       ],
       "return_ty": "Unit"
@@ -171,23 +171,6 @@
         {
           "name": "value",
           "ty": "U256"
-        }
-      ]
-    },
-    {
-      "name": "OwnershipTransferred",
-      "fields": [
-        {
-          "name": "previous_owner",
-          "ty": {
-            "Option": "Key"
-          }
-        },
-        {
-          "name": "new_owner",
-          "ty": {
-            "Option": "Key"
-          }
         }
       ]
     },

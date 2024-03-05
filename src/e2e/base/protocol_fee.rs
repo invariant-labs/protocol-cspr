@@ -26,8 +26,11 @@ fn test_protocol_fee() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
@@ -36,8 +39,9 @@ fn test_protocol_fee() {
             .create_pool(
                 pool_key.token_x,
                 pool_key.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -52,7 +56,12 @@ fn test_protocol_fee() {
         let liquidity = Liquidity::from_integer(1000000);
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage_limit_lower = pool_before.sqrt_price;
@@ -60,17 +69,25 @@ fn test_protocol_fee() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick,
                 upper_tick,
-                liquidity,
-                slippage_limit_lower,
-                slippage_limit_upper,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
             )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         assert_eq!(pool_after.liquidity, liquidity)
@@ -90,17 +107,36 @@ fn test_protocol_fee() {
         assert_eq!(amount_y, U256::from(1000));
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
         invariant
-            .swap(pool_key, true, swap_amount, true, slippage)
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let expected_tick = -20;
@@ -139,7 +175,14 @@ fn test_protocol_fee() {
     }
     // Withdraw fee
     test_env::set_caller(test_env::get_account(0));
-    invariant.withdraw_protocol_fee(pool_key).unwrap();
+    invariant
+        .withdraw_protocol_fee(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
+        .unwrap();
     let amount_x = token_x.balance_of(&deployer);
     let amount_y = token_y.balance_of(&deployer);
 
@@ -152,7 +195,12 @@ fn test_protocol_fee() {
     assert_eq!(amount_y, U256::from(7));
 
     let pool_after_withdraw = invariant
-        .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     assert_eq!(
@@ -178,8 +226,11 @@ fn test_protocol_fee_not_admin() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
@@ -188,8 +239,9 @@ fn test_protocol_fee_not_admin() {
             .create_pool(
                 pool_key.token_x,
                 pool_key.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -204,7 +256,12 @@ fn test_protocol_fee_not_admin() {
         let liquidity = Liquidity::from_integer(1000000);
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage_limit_lower = pool_before.sqrt_price;
@@ -212,17 +269,25 @@ fn test_protocol_fee_not_admin() {
 
         invariant
             .create_position(
-                pool_key,
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick,
                 upper_tick,
-                liquidity,
-                slippage_limit_lower,
-                slippage_limit_upper,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
             )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         assert_eq!(pool_after.liquidity, liquidity)
@@ -242,17 +307,36 @@ fn test_protocol_fee_not_admin() {
         assert_eq!(amount_y, U256::from(1000));
 
         let pool_before = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         let swap_amount = TokenAmount::new(amount);
         invariant
-            .swap(pool_key, true, swap_amount, true, slippage)
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
             .unwrap();
 
         let pool_after = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let expected_tick = -20;
@@ -290,6 +374,11 @@ fn test_protocol_fee_not_admin() {
         );
     }
     // Withdraw fee not admin
-    let result = invariant.withdraw_protocol_fee(pool_key);
+    let result = invariant.withdraw_protocol_fee(
+        pool_key.token_x,
+        pool_key.token_y,
+        fee_tier.fee.get(),
+        fee_tier.tick_spacing,
+    );
     assert_eq!(result, Err(InvariantError::NotFeeReceiver));
 }

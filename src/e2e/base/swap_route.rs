@@ -5,7 +5,7 @@ use crate::math::sqrt_price::calculate_sqrt_price;
 use crate::math::token_amount::TokenAmount;
 use crate::FeeTier;
 use crate::SwapHop;
-use crate::{token::TokenDeployer, InvariantDeployer};
+use crate::{Erc20Deployer, InvariantDeployer};
 use alloc::string::String;
 use alloc::vec;
 use decimal::*;
@@ -17,12 +17,12 @@ fn test_swap_route() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
     // Init basic dex and tokens
-    let mint_amount = U256::from(10u128.pow(10));
+    let mint_amount = Some(U256::from(10u128.pow(10)));
     let fee = Percentage::from_scale(1, 2);
     let mut invariant = InvariantDeployer::init(fee.get());
-    let token_0 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let token_1 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
-    let token_2 = TokenDeployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    let token_0 = Erc20Deployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    let token_1 = Erc20Deployer::init(String::from(""), String::from(""), 0, &mint_amount);
+    let token_2 = Erc20Deployer::init(String::from(""), String::from(""), 0, &mint_amount);
 
     let mut token_vector = [token_0, token_1, token_2];
     token_vector.sort_by(|a, b| a.address().cmp(b.address()));
@@ -34,8 +34,11 @@ fn test_swap_route() {
 
     // Add fee tier
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
     }
     // Init x to y pool
@@ -46,8 +49,9 @@ fn test_swap_route() {
             .create_pool(
                 pool_key_xy.token_x,
                 pool_key_xy.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -60,8 +64,9 @@ fn test_swap_route() {
             .create_pool(
                 pool_key_yz.token_x,
                 pool_key_yz.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -81,28 +86,39 @@ fn test_swap_route() {
         let lower_tick = -1;
         let upper_tick = 1;
         let pool = invariant
-            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .get_pool(
+                *token_x.address(),
+                *token_y.address(),
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         let slippage_limit = pool.sqrt_price;
         invariant
             .create_position(
-                pool_key_xy,
+                pool_key_xy.token_x,
+                pool_key_xy.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick,
                 upper_tick,
-                liquidity_delta,
-                slippage_limit,
-                slippage_limit,
+                liquidity_delta.get(),
+                slippage_limit.get(),
+                slippage_limit.get(),
             )
             .unwrap();
         invariant
             .create_position(
-                pool_key_yz,
+                pool_key_yz.token_x,
+                pool_key_yz.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
                 lower_tick,
                 upper_tick,
-                liquidity_delta,
-                slippage_limit,
-                slippage_limit,
+                liquidity_delta.get(),
+                slippage_limit.get(),
+                slippage_limit.get(),
             )
             .unwrap();
     }
@@ -119,18 +135,31 @@ fn test_swap_route() {
         let slippage = Percentage::new(U128::from(0));
         let swaps = vec![
             SwapHop {
-                pool_key: pool_key_xy,
+                token_x: pool_key_xy.token_x,
+                token_y: pool_key_xy.token_y,
+                fee: fee_tier.fee.get(),
+                tick_spacing: fee_tier.tick_spacing,
                 x_to_y: true,
             },
             SwapHop {
-                pool_key: pool_key_yz,
+                token_x: pool_key_yz.token_x,
+                token_y: pool_key_yz.token_y,
+                fee: fee_tier.fee.get(),
+                tick_spacing: fee_tier.tick_spacing,
                 x_to_y: true,
             },
         ];
 
-        let expected_token_amount = invariant.quote_route(amount_in, swaps.clone()).unwrap();
+        let expected_token_amount = invariant
+            .quote_route(amount_in.get(), swaps.clone())
+            .unwrap();
         invariant
-            .swap_route(amount_in, expected_token_amount, slippage, swaps)
+            .swap_route(
+                amount_in.get(),
+                expected_token_amount.get(),
+                slippage.get(),
+                swaps,
+            )
             .unwrap();
 
         // Check states
@@ -143,7 +172,12 @@ fn test_swap_route() {
         assert_eq!(swapper_z, U256::from(986));
 
         let pool_xy = invariant
-            .get_pool(*token_x.address(), *token_y.address(), fee_tier)
+            .get_pool(
+                *token_x.address(),
+                *token_y.address(),
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         assert_eq!(
@@ -156,7 +190,12 @@ fn test_swap_route() {
         );
 
         let pool_yz = invariant
-            .get_pool(*token_y.address(), *token_z.address(), fee_tier)
+            .get_pool(
+                *token_y.address(),
+                *token_z.address(),
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
 
         assert_eq!(

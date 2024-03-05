@@ -25,8 +25,11 @@ fn test_multiple_swap_x_to_y() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
@@ -35,8 +38,9 @@ fn test_multiple_swap_x_to_y() {
             .create_pool(
                 pool_key.token_x,
                 pool_key.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -55,7 +59,12 @@ fn test_multiple_swap_x_to_y() {
     let amount = 100;
 
     let pool = invariant
-        .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     let liquidity = get_liquidity(
@@ -74,12 +83,15 @@ fn test_multiple_swap_x_to_y() {
 
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             lower_tick,
             upper_tick,
-            liquidity,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 
@@ -97,12 +109,30 @@ fn test_multiple_swap_x_to_y() {
         let sqrt_price_limit = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
         for _ in 1..=10 {
             let quoted_target_sqrt_price = invariant
-                .quote(pool_key, true, swap_amount, true, sqrt_price_limit)
+                .quote(
+                    pool_key.token_x,
+                    pool_key.token_y,
+                    fee_tier.fee.get(),
+                    fee_tier.tick_spacing,
+                    true,
+                    swap_amount.get(),
+                    true,
+                    sqrt_price_limit.get(),
+                )
                 .unwrap()
                 .target_sqrt_price;
 
             invariant
-                .swap(pool_key, true, swap_amount, true, quoted_target_sqrt_price)
+                .swap(
+                    pool_key.token_x,
+                    pool_key.token_y,
+                    fee_tier.fee.get(),
+                    fee_tier.tick_spacing,
+                    true,
+                    swap_amount.get(),
+                    true,
+                    quoted_target_sqrt_price.get(),
+                )
                 .unwrap();
         }
     }
@@ -110,7 +140,12 @@ fn test_multiple_swap_x_to_y() {
     {
         let caller = test_env::get_account(1);
         let pool = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
         let dex_amount_x = token_x.balance_of(invariant.address());
         let dex_amount_y = token_y.balance_of(invariant.address());
@@ -146,8 +181,11 @@ fn test_multiple_swap_y_to_x() {
     let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
     // Init basic pool
     {
-        invariant.add_fee_tier(fee_tier).unwrap();
-        let exist = invariant.fee_tier_exist(fee_tier);
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
         assert!(exist);
 
         let init_tick = 0;
@@ -156,8 +194,9 @@ fn test_multiple_swap_y_to_x() {
             .create_pool(
                 pool_key.token_x,
                 pool_key.token_y,
-                fee_tier,
-                init_sqrt_price,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
                 init_tick,
             )
             .unwrap();
@@ -176,7 +215,12 @@ fn test_multiple_swap_y_to_x() {
     let amount = 100;
 
     let pool = invariant
-        .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+        .get_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+        )
         .unwrap();
 
     let liquidity = get_liquidity(
@@ -195,12 +239,15 @@ fn test_multiple_swap_y_to_x() {
 
     invariant
         .create_position(
-            pool_key,
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
             lower_tick,
             upper_tick,
-            liquidity,
-            slippage_limit_lower,
-            slippage_limit_upper,
+            liquidity.get(),
+            slippage_limit_lower.get(),
+            slippage_limit_upper.get(),
         )
         .unwrap();
 
@@ -218,12 +265,30 @@ fn test_multiple_swap_y_to_x() {
         let sqrt_price_limit = SqrtPrice::new(U128::from(MAX_SQRT_PRICE));
         for _ in 1..=10 {
             let quoted_target_sqrt_price = invariant
-                .quote(pool_key, false, swap_amount, true, sqrt_price_limit)
+                .quote(
+                    pool_key.token_x,
+                    pool_key.token_y,
+                    fee_tier.fee.get(),
+                    fee_tier.tick_spacing,
+                    false,
+                    swap_amount.get(),
+                    true,
+                    sqrt_price_limit.get(),
+                )
                 .unwrap()
                 .target_sqrt_price;
 
             invariant
-                .swap(pool_key, false, swap_amount, true, quoted_target_sqrt_price)
+                .swap(
+                    pool_key.token_x,
+                    pool_key.token_y,
+                    fee_tier.fee.get(),
+                    fee_tier.tick_spacing,
+                    false,
+                    swap_amount.get(),
+                    true,
+                    quoted_target_sqrt_price.get(),
+                )
                 .unwrap();
         }
     }
@@ -231,7 +296,12 @@ fn test_multiple_swap_y_to_x() {
     {
         let caller = test_env::get_account(1);
         let pool = invariant
-            .get_pool(pool_key.token_x, pool_key.token_y, fee_tier)
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
             .unwrap();
         let dex_amount_x = token_x.balance_of(invariant.address());
         let dex_amount_y = token_y.balance_of(invariant.address());

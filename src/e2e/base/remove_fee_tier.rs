@@ -14,12 +14,16 @@ fn test_remove_fee_tier() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
-    let exist = invariant.fee_tier_exist(fee_tier);
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
+    let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
     assert!(exist);
 
-    invariant.remove_fee_tier(fee_tier).unwrap();
-    let exist = invariant.fee_tier_exist(fee_tier);
+    invariant
+        .remove_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
+    let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
     assert!(!exist);
 }
 
@@ -30,7 +34,7 @@ fn test_remove_not_existing_fee_tier() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
-    let result = invariant.remove_fee_tier(fee_tier);
+    let result = invariant.remove_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing);
     assert_eq!(result, Err(InvariantError::FeeTierNotFound));
 }
 
@@ -42,11 +46,13 @@ fn test_remove_fee_tier_not_admin() {
     let mut invariant = InvariantDeployer::init(U128::from(0));
     let fee_tier = FeeTier::new(Percentage::new(U128::from(10)), 1).unwrap();
 
-    invariant.add_fee_tier(fee_tier).unwrap();
-    let exist = invariant.fee_tier_exist(fee_tier);
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
+    let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
     assert!(exist);
 
     test_env::set_caller(not_admin);
-    let result = invariant.remove_fee_tier(fee_tier);
+    let result = invariant.remove_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing);
     assert_eq!(result, Err(InvariantError::NotAdmin));
 }

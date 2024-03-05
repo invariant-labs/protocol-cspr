@@ -78,7 +78,7 @@ jobs:
       - name: Install cargo odra
         if: ${{ steps.check-odra-exists.outcome == 'failure' }}
         run: |
-          cargo +nightly-2023-04-20 install cargo-odra --locked
+          cargo +nightly-2023-04-20 install cargo-odra --locked --version 0.0.10
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
@@ -122,7 +122,7 @@ jobs:
       - name: Install cargo odra
         if: ${{ steps.check-odra-exists.outcome == 'failure' }}
         run: |
-          cargo +nightly-2023-04-20 install cargo-odra --locked
+          cargo +nightly-2023-04-20 install cargo-odra --locked --version 0.0.10
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
@@ -166,7 +166,7 @@ jobs:
       - name: Install cargo odra
         if: ${{ steps.check-odra-exists.outcome == 'failure' }}
         run: |
-          cargo +nightly-2023-04-20 install cargo-odra --locked
+          cargo +nightly-2023-04-20 install cargo-odra --locked --version 0.0.10
 
       - name: Run unit tests
         uses: actions-rs/cargo@v1
@@ -204,10 +204,31 @@ jobs:
 
       - name: Install cargo odra
         run: |
-          cargo +nightly-2023-04-20 install cargo-odra --locked
+          cargo +nightly-2023-04-20 install cargo-odra --locked --version 0.0.10
 
       - name: Build contract with casper backend
         uses: actions-rs/cargo@v1
         with:
           command: odra
           args: build -b casper
+  sdk-build:
+    name: Build and test SDK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Build SDK
+        working-directory: ./sdk
+        run: |
+          chmod +x build.sh
+          ./build.sh
+        shell: bash
+
+      - name: Test SDK
+        working-directory: ./sdk
+        run: |
+          chmod +x tests.sh
+          ./tests.sh
+        shell: bash
