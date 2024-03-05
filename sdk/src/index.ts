@@ -1,15 +1,7 @@
-import { dynamicImport } from 'tsimportlib'
 import { ALICE, LOCAL_NODE_URL } from './consts'
 import { Erc20 } from './erc20'
 import { Network } from './network'
-import { initCasperClientAndService } from './utils'
-
-const loadWasm = async () => {
-  return (await dynamicImport(
-    'invariant-cspr-wasm',
-    module
-  )) as typeof import('invariant-cspr-wasm')
-}
+import { initCasperClientAndService, loadWasm } from './utils'
 
 const main = async () => {
   const { getPercentageDenominator } = await loadWasm()
