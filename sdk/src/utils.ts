@@ -1,6 +1,17 @@
 import { blake2bHex } from 'blakejs'
 import {
+  CLAccountHashBytesParser,
+  CLBoolBytesParser,
   CLErrorCodes,
+  CLI32BytesParser,
+  CLOptionBytesParser,
+  CLOptionType,
+  CLStringBytesParser,
+  CLTypeBuilder,
+  CLU128BytesParser,
+  CLU256BytesParser,
+  CLU32BytesParser,
+  CLU64BytesParser,
   CLValue,
   CasperClient,
   CasperServiceByJsonRPC,
@@ -117,3 +128,152 @@ export const unwrap = (value: Result<CLValue, CLErrorCodes>, err?: string) => {
 }
 
 export const lowerCaseFirstLetter = (v: string): string => v.charAt(0).toLowerCase() + v.slice(1)
+
+export const decodeI32 = (bytes: Uint8Array): [bigint, Uint8Array] => {
+  const parser = new CLI32BytesParser()
+  const { result, remainder } = parser.fromBytesWithRemainder(bytes)
+  const value = BigInt(unwrap(result, 'Couldnt parse i32'))
+  return [value, remainder!]
+}
+export const decodeU32 = (bytes: Uint8Array): [bigint, Uint8Array] => {
+  const parser = new CLU32BytesParser()
+  const { result, remainder } = parser.fromBytesWithRemainder(bytes)
+  const value = BigInt(unwrap(result, 'Couldnt parse u32'))
+  return [value, remainder!]
+}
+export const decodeU64 = (bytes: Uint8Array): [bigint, Uint8Array] => {
+  const parser = new CLU64BytesParser()
+  const { result, remainder } = parser.fromBytesWithRemainder(bytes)
+  const value = BigInt(unwrap(result, 'Couldnt parse u64'))
+  return [value, remainder!]
+}
+export const decodeU128 = (bytes: Uint8Array): [bigint, Uint8Array] => {
+  const parser = new CLU128BytesParser()
+  const { result, remainder } = parser.fromBytesWithRemainder(bytes)
+  const value = BigInt(unwrap(result, 'Couldnt parse u128'))
+  return [value, remainder!]
+}
+export const decodeU256 = (bytes: Uint8Array): [bigint, Uint8Array] => {
+  const parser = new CLU256BytesParser()
+  const { result, remainder } = parser.fromBytesWithRemainder(bytes)
+  const value = BigInt(unwrap(result, 'Couldnt parse u256'))
+  return [value, remainder!]
+}
+export const decodeAddress = (bytes: Uint8Array): [string, Uint8Array] => {
+  // One additional byte is left on the beggining of the bytes remainder
+  const parser = new CLAccountHashBytesParser()
+  const slicedBytes = bytes.slice(1, bytes.length)
+  const { result, remainder } = parser.fromBytesWithRemainder(slicedBytes)
+  const address = bytesToHex(unwrap(result, 'Couldnt parse address'))
+  return [address, remainder!]
+}
+export const decodeString = (bytes: Uint8Array): [string, Uint8Array] => {
+  const parser = new CLStringBytesParser()
+  const { result, remainder } = parser.fromBytesWithRemainder(bytes)
+  const value = lowerCaseFirstLetter(unwrap(result, 'Couldnt parse string'))
+  return [value, remainder!]
+}
+export const decodeOption = (bytes: Uint8Array): Uint8Array => {
+  const expectedType = new CLOptionType(CLTypeBuilder.string())
+  const parser = new CLOptionBytesParser()
+  const { remainder } = parser.fromBytesWithRemainder(bytes, expectedType)
+  return remainder!
+}
+export const decodeBool = (bytes: Uint8Array): [boolean, Uint8Array] => {
+  const parser = new CLBoolBytesParser()
+  const { result, remainder } = parser.fromBytesWithRemainder(bytes)
+  const value = unwrap(result, 'Couldnt parse bool')
+  return [value, remainder!]
+}
+
+export const decodeInvariantConfig = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const structNameRemainder = decodeString(bytes)[1]
+  const [admin, adminRemainder] = decodeAddress(structNameRemainder)
+  const percentageStructNameRemainder = decodeString(adminRemainder)[1]
+  const [protocolFee, remainder] = decodeU128(percentageStructNameRemainder)
+
+  if (remainder!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return {
+    admin,
+    protocolFee
+  }
+}
+export const decodeFeeTiers = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const stringRemainder = decodeString(bytes)[1]
+
+  const result = decodeU32(stringRemainder)
+  const feeTierCount = result[0]
+  let remainingBytes = result[1]
+  const feeTiers = []
+
+  for (let i = 0; i < feeTierCount; i++) {
+    remainingBytes = decodeString(remainingBytes)[1]
+    const [feeType, feeTypeRemainder] = decodeString(remainingBytes)
+    remainingBytes = feeTypeRemainder
+    const [fee, feeRemainder] = decodeU128(remainingBytes)
+    remainingBytes = feeRemainder
+    const [tickSpacing, remainder] = decodeU32(remainingBytes)
+    remainingBytes = remainder
+
+    const feeTier = { [feeType]: fee, tickSpacing }
+    feeTiers.push(feeTier)
+  }
+
+  if (remainingBytes!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return feeTiers
+}
+export const decodePool = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const remainingBytes = decodeOption(bytes)
+  const liquidityTypeRemainder = decodeString(remainingBytes)[1]
+  const [liquidity, liquidityRemainder] = decodeU256(liquidityTypeRemainder)
+  const sqrtPriceTypeRemainder = decodeString(liquidityRemainder)[1]
+  const [sqrtPrice, sqrtPriceRemainder] = decodeU256(sqrtPriceTypeRemainder)
+  const [currentTickIndex, currentTickRemainder] = decodeI32(sqrtPriceRemainder)
+  const feeGrowthGlobalXTypeRemainder = decodeString(currentTickRemainder)[1]
+  const [feeGrowthGlobalX, feeGrowthGlobalXRemainder] = decodeU256(feeGrowthGlobalXTypeRemainder)
+  const feeGrowthGlobalYTypeRemainder = decodeString(feeGrowthGlobalXRemainder)[1]
+  const [feeGrowthGlobalY, feeGrowthGlobalYRemainder] = decodeU256(feeGrowthGlobalYTypeRemainder)
+  const feeProtocolTokenXTypeRemainder = decodeString(feeGrowthGlobalYRemainder)[1]
+  const [feeProtocolTokenX, feeProtocolTokenXRemainder] = decodeU256(feeProtocolTokenXTypeRemainder)
+  const feeProtocolTokenYTypeRemainder = decodeString(feeProtocolTokenXRemainder)[1]
+  const [feeProtocolTokenY, feeProtocolTokenYRemainder] = decodeU256(feeProtocolTokenYTypeRemainder)
+  const [startTimestamp, startTimestampRemainder] = decodeU64(feeProtocolTokenYRemainder)
+  const [lastTimestamp, lastTimestampRemainder] = decodeU64(startTimestampRemainder)
+  const [admin, adminRemainder] = decodeAddress(lastTimestampRemainder)
+  const [oracle, remainder] = decodeBool(adminRemainder)
+
+  if (remainder!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return {
+    liquidity,
+    sqrtPrice,
+    currentTickIndex,
+    feeGrowthGlobalX,
+    feeGrowthGlobalY,
+    feeProtocolTokenX,
+    feeProtocolTokenY,
+    startTimestamp,
+    lastTimestamp,
+    admin,
+    oracle
+  }
+}
+
+export const parseBytes = (rawBytes: any): Uint8Array => {
+  return new Uint8Array(
+    String(rawBytes)
+      .match(/.{1,2}/g)!
+      .map((byte: string) => parseInt(byte, 16))
+  )
+}
