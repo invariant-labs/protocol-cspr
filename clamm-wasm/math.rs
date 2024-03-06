@@ -25,11 +25,6 @@ pub struct SingleTokenLiquidity {
     pub amount: TokenAmount,
 }
 
-#[wasm_wrapper]
-pub fn test(v: SqrtPrice) -> SqrtPrice {
-    v
-}
-
 #[allow(dead_code)]
 pub fn get_liquidity(
     x: TokenAmount,

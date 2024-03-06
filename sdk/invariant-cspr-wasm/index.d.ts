@@ -235,11 +235,6 @@ export function isValidTick(js_tick_index: any, js_tick_spacing: any, js_sqrt_pr
 */
 export function calculateTick(js_sqrt_price: any, js_tick_spacing: any): any;
 /**
-* @param {any} js_v
-* @returns {bigint}
-*/
-export function test(js_v: any): bigint;
-/**
 * @param {any} js_x
 * @param {any} js_lower_tick
 * @param {any} js_upper_tick

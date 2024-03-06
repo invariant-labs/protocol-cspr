@@ -845,26 +845,6 @@ export function calculateTick(js_sqrt_price, js_tick_spacing) {
 }
 
 /**
-* @param {any} js_v
-* @returns {bigint}
-*/
-export function test(js_v) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.test(retptr, addHeapObject(js_v));
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        var r2 = getInt32Memory0()[retptr / 4 + 2];
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
 * @param {any} js_x
 * @param {any} js_lower_tick
 * @param {any} js_upper_tick
@@ -1005,8 +985,28 @@ export function __wbindgen_boolean_get(arg0) {
     return ret;
 };
 
+export function __wbindgen_bigint_from_u64(arg0) {
+    const ret = BigInt.asUintN(64, arg0);
+    return addHeapObject(ret);
+};
+
 export function __wbindgen_number_new(arg0) {
     const ret = arg0;
+    return addHeapObject(ret);
+};
+
+export function __wbindgen_mul(arg0, arg1) {
+    const ret = getObject(arg0) * getObject(arg1);
+    return addHeapObject(ret);
+};
+
+export function __wbindgen_shl(arg0, arg1) {
+    const ret = getObject(arg0) << getObject(arg1);
+    return addHeapObject(ret);
+};
+
+export function __wbindgen_bit_or(arg0, arg1) {
+    const ret = getObject(arg0) | getObject(arg1);
     return addHeapObject(ret);
 };
 
@@ -1065,11 +1065,6 @@ export function __wbindgen_bigint_from_i64(arg0) {
 export function __wbindgen_jsval_eq(arg0, arg1) {
     const ret = getObject(arg0) === getObject(arg1);
     return ret;
-};
-
-export function __wbindgen_bigint_from_u64(arg0) {
-    const ret = BigInt.asUintN(64, arg0);
-    return addHeapObject(ret);
 };
 
 export function __wbindgen_object_clone_ref(arg0) {

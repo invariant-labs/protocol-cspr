@@ -39,7 +39,6 @@ export function _calculateFee(a: number, b: number, c: number, d: number, e: num
 export function isTokenX(a: number, b: number, c: number): void;
 export function isValidTick(a: number, b: number, c: number, d: number): void;
 export function calculateTick(a: number, b: number, c: number): void;
-export function test(a: number, b: number): void;
 export function getLiquidityByX(a: number, b: number, c: number, d: number, e: number, f: number): void;
 export function getLiquidityByY(a: number, b: number, c: number, d: number, e: number, f: number): void;
 export function _newPoolKey(a: number, b: number, c: number, d: number): void;

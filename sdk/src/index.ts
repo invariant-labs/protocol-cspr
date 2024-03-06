@@ -1,8 +1,8 @@
+import type { Liquidity, SqrtPrice } from 'invariant-cspr-wasm'
 import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_INVARIANT_HASH, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
-import { createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
-
+import { callWasm, createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
 const main = async () => {
   const createKeys = false
   const wasm = await loadWasm()
@@ -28,6 +28,7 @@ const main = async () => {
     network = Network.Testnet
     nodeUrl = TESTNET_NODE_URL
   }
+  console.log(account, network)
 
   const { client, service } = initCasperClientAndService(nodeUrl)
 
@@ -68,20 +69,15 @@ const main = async () => {
 
   console.log('Init SDK!')
   {
-    const sqrtPriceScale = wasm.getSqrtPriceScale()
-    const sqrtPriceDenominator = wasm.getSqrtPriceDenominator()
-    const amount = wasm.toTokenAmount(1000, wasm.getTokenAmountScale())
-    console.log(amount)
-    console.log(sqrtPriceScale, sqrtPriceDenominator)
-
-    const sqrtPriceA = { v: '234878324943782000000000000' }
-    const sqrtPriceB = { v: '87854456421658000000000000' }
-    const liquidity = { v: '983983249092' }
-    const resultDown = wasm.getDeltaX(sqrtPriceA, sqrtPriceB, liquidity, false)
-    const resultUp = wasm.getDeltaX(sqrtPriceA, sqrtPriceB, liquidity, true)
-    console.log(resultDown, resultUp)
+    console.log('Wasm logs!')
+    const sqrtPriceA: SqrtPrice = { v: 234878324943782000000000000n }
+    const sqrtPriceB: SqrtPrice = { v: 87854456421658000000000000n }
+    const liquidity: Liquidity = { v: 983983249092n }
+    const result = await callWasm(wasm.getDeltaX, sqrtPriceA, sqrtPriceB, liquidity, true)
+    console.log('Wrapped wasm call result = ', result) // { v: 70109n }
   }
   {
+    console.log('Contract calls logs!')
     const fee = 55n
     const tickSpacing = 10n
     const token0 = 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472'
