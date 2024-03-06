@@ -1,15 +1,17 @@
 /* eslint-disable camelcase */
 import { Some } from '@casperlabs/ts-results'
 import {
+  CLByteArray,
   CLPublicKey,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
   Contracts,
   Keys,
-  RuntimeArgs
+  RuntimeArgs,
+  decodeBase16
 } from 'casper-js-sdk'
-import { BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
 import { Network } from './network'
 import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
 
@@ -39,6 +41,7 @@ export class Erc20 {
     service: CasperServiceByJsonRPC,
     network: Network,
     deployer: Keys.AsymmetricKey,
+    nameSuffix: string,
     initial_supply: bigint = 0n,
     name: string = '',
     symbol: string = '',
@@ -50,7 +53,7 @@ export class Erc20 {
     const wasm = await getDeploymentData(CONTRACT_NAME)
 
     const args = RuntimeArgs.fromMap({
-      odra_cfg_package_hash_key_name: CLValueBuilder.string(CONTRACT_NAME),
+      odra_cfg_package_hash_key_name: CLValueBuilder.string(CONTRACT_NAME + nameSuffix),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
@@ -90,7 +93,9 @@ export class Erc20 {
       throw new Error('Account not found in block state')
     }
 
-    const contractPackageHash = Account.namedKeys.find((i: any) => i.name === CONTRACT_NAME)?.key
+    const contractPackageHash = Account.namedKeys.find(
+      (i: any) => i.name === CONTRACT_NAME + nameSuffix
+    )?.key
 
     if (!contractPackageHash) {
       throw new Error('Contract package not found in account named keys')
@@ -158,5 +163,32 @@ export class Erc20 {
     const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
 
     return BigInt(response.data._hex)
+  }
+
+  async allowance(owner: string, spender: string) {
+    const ownerHash = hexToBytes(owner)
+    const spenderHash = hexToBytes(spender)
+    const balanceKey = new Uint8Array([...ALLOWANCES, 0, ...ownerHash, 0, ...spenderHash])
+
+    const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
+
+    return BigInt(response.data._hex)
+  }
+
+  async approve(account: Keys.AsymmetricKey, network: Network, spender: string, amount: bigint) {
+    const spenderKey = new CLByteArray(decodeBase16(spender))
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'approve',
+      {
+        spender: CLValueBuilder.key(spenderKey),
+        amount: CLValueBuilder.u256(Number(amount))
+      }
+    )
   }
 }

@@ -376,7 +376,7 @@ impl Entrypoints for Invariant {
             return Err(InvariantError::NotAdmin);
         }
 
-        fee_tiers.add(fee_tier)?;
+        fee_tiers.add(fee_tier).unwrap();
 
         self.fee_tiers.set(fee_tiers);
         Ok(())
@@ -419,7 +419,7 @@ impl Entrypoints for Invariant {
         init_sqrt_price: U128,
         init_tick: i32,
     ) -> Result<(), InvariantError> {
-        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
+        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing).unwrap();
         let init_sqrt_price = SqrtPrice::new(init_sqrt_price);
 
         let current_timestamp = odra::contract_env::get_block_time();
@@ -428,16 +428,17 @@ impl Entrypoints for Invariant {
         let config = self.config.get().unwrap_or_revert();
 
         if !fee_tiers.contains(fee_tier) {
-            return Err(InvariantError::FeeTierNotFound);
+            panic!();
         };
 
         check_tick(init_tick, fee_tier.tick_spacing)
-            .map_err(|_| InvariantError::InvalidInitTick)?;
+            .map_err(|_| InvariantError::InvalidInitTick)
+            .unwrap();
 
-        let pool_key = PoolKey::new(token_0, token_1, fee_tier)?;
+        let pool_key = PoolKey::new(token_0, token_1, fee_tier).unwrap();
 
         if self.pools.get(pool_key).is_ok() {
-            return Err(InvariantError::PoolAlreadyExist);
+            panic!();
         };
 
         let pool = Pool::create(
@@ -446,10 +447,11 @@ impl Entrypoints for Invariant {
             current_timestamp,
             fee_tier.tick_spacing,
             config.admin,
-        )?;
+        )
+        .unwrap();
 
-        self.pools.add(pool_key, &pool)?;
-        pool_keys.add(pool_key)?;
+        self.pools.add(pool_key, &pool).unwrap();
+        pool_keys.add(pool_key).unwrap();
 
         self.pool_keys.set(pool_keys);
         Ok(())
@@ -649,10 +651,10 @@ impl Entrypoints for Invariant {
 
         // liquidity delta = 0 => return
         if liquidity_delta == Liquidity::new(U256::from(0)) {
-            return Err(InvariantError::ZeroLiquidity);
+            panic!();
         }
 
-        let mut pool = self.pools.get(pool_key)?;
+        let mut pool = self.pools.get(pool_key).unwrap();
 
         let mut lower_tick = self
             .ticks
@@ -675,14 +677,19 @@ impl Entrypoints for Invariant {
             slippage_limit_upper,
             current_block_number,
             pool_key.fee_tier.tick_spacing,
-        )?;
+        )
+        .unwrap();
 
-        self.pools.update(pool_key, &pool)?;
+        self.pools.update(pool_key, &pool).unwrap();
 
         self.positions.add(caller, &position);
 
-        self.ticks.update(pool_key, lower_tick.index, &lower_tick)?;
-        self.ticks.update(pool_key, upper_tick.index, &upper_tick)?;
+        self.ticks
+            .update(pool_key, lower_tick.index, &lower_tick)
+            .unwrap();
+        self.ticks
+            .update(pool_key, upper_tick.index, &upper_tick)
+            .unwrap();
 
         Erc20Ref::at(&pool_key.token_x).transfer_from(&caller, &contract, &x.get());
         Erc20Ref::at(&pool_key.token_y).transfer_from(&caller, &contract, &y.get());

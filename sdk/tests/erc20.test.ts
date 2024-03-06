@@ -12,6 +12,7 @@ describe('erc20', () => {
       service,
       Network.Local,
       ALICE,
+      '0',
       1000000000000n,
       'Coin',
       'COIN',
