@@ -3,23 +3,13 @@ name = "invariant"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-
 [dependencies]
-odra = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.1", default-features = false}
-odra-modules = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.1", default-features = false, optional = true }
+odra = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.1", default-features = false }
+odra-modules = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.1", default-features = false }
 decimal = { path = "src/decimal" }
 traceable_result = { path = "src/traceable_result" }
 uint = { version = "0.9", default-features = false }
 borsh = { version = "0.9.3", default-features = false }
-
-wasm-bindgen = {version = "0.2.89", default-features = false, optional = true }
-serde = { version = "1.0", features = ["derive"], default-features = false, optional = true }
-serde-wasm-bindgen = { version = "0.6.3", default-features = false, optional = true}
-tsify = { version = "0.4.5", default-features = false, optional = true }
-paste = { version = "1.0.14", default-features = false, optional = true }
-js-sys = { version = "0.3.66", default-features = false, optional = true }
-
 
 [features]
 default = ["mock-vm"]
@@ -27,4 +17,3 @@ mock-vm = ["odra/mock-vm", "odra-modules/mock-vm"]
 casper = ["odra/casper", "odra-modules/casper"]
 time-consuming-e2e = []
 base-e2e = []
-wasm = ["wasm-bindgen", "serde", "serde-wasm-bindgen", "tsify", "paste", "js-sys"]
