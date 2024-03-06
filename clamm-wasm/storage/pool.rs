@@ -24,21 +24,3 @@ pub struct Pool {
     pub fee_receiver: String,
     pub oracle_initialized: bool,
 }
-
-// impl Default for Pool {
-//     fn default() -> Self {
-//         Self {
-//             fee_receiver: Address::Account(AccountHash::new([0x0; 32])),
-//             liquidity: Liquidity::default(),
-//             sqrt_price: SqrtPrice::default(),
-//             current_tick_index: i32::default(),
-//             fee_growth_global_x: FeeGrowth::default(),
-//             fee_growth_global_y: FeeGrowth::default(),
-//             fee_protocol_token_x: TokenAmount::default(),
-//             fee_protocol_token_y: TokenAmount::default(),
-//             start_timestamp: u64::default(),
-//             last_timestamp: u64::default(),
-//             oracle_initialized: bool::default(),
-//         }
-//     }
-// }
