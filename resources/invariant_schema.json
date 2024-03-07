@@ -48,6 +48,12 @@
       "return_ty": "Bool"
     },
     {
+      "name": "fee_tier_return",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": "Bool"
+    },
+    {
       "name": "remove_fee_tier",
       "is_mutable": true,
       "args": [

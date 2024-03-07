@@ -1,0 +1,23 @@
+[package]
+name = "query-service"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path= "./lib.rs"
+
+[dependencies]
+odra = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.1", default-features = false }
+odra-modules = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.1", default-features = false }
+invariant = { path = "../" }
+ahash = "0.8.11"
+actix-web = { version = "4.5.1" }
+actix-cors = "0.6.4"
+serde_json = "1.0.103"
+serde = "1.0.171"
+
+[[bin]]
+name = "query-service"
+path = "./lib.rs"
