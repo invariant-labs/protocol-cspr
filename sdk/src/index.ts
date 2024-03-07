@@ -1,10 +1,11 @@
+import type { Liquidity, SqrtPrice } from 'invariant-cspr-wasm'
 import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_INVARIANT_HASH, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
-import { createAccountKeys, initCasperClientAndService } from './utils'
-
+import { callWasm, createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
 const main = async () => {
   const createKeys = false
+  const wasm = await loadWasm()
 
   if (createKeys) {
     createAccountKeys()
@@ -27,6 +28,7 @@ const main = async () => {
     network = Network.Testnet
     nodeUrl = TESTNET_NODE_URL
   }
+  console.log(account, network)
 
   const { client, service } = initCasperClientAndService(nodeUrl)
 
@@ -65,7 +67,17 @@ const main = async () => {
 
   const invariant = await Invariant.load(client, service, invariantHash)
 
+  console.log('Init SDK!')
   {
+    console.log('Wasm logs!')
+    const sqrtPriceA: SqrtPrice = { v: 234878324943782000000000000n }
+    const sqrtPriceB: SqrtPrice = { v: 87854456421658000000000000n }
+    const liquidity: Liquidity = { v: 983983249092n }
+    const result = await callWasm(wasm.getDeltaX, sqrtPriceA, sqrtPriceB, liquidity, true)
+    console.log('Wrapped wasm call result = ', result) // { v: 70109n }
+  }
+  {
+    console.log('Contract calls logs!')
     const fee = 55n
     const tickSpacing = 10n
     const token0 = 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472'
@@ -97,15 +109,15 @@ const main = async () => {
     // )
     let pool = await invariant.getPool(poolKey)
     console.log(pool)
-    await invariant.changeFeeReceiver(
-      account,
-      network,
-      token0,
-      token1,
-      fee,
-      tickSpacing,
-      'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
-    )
+    // await invariant.changeFeeReceiver(
+    //   account,
+    //   network,
+    //   token0,
+    //   token1,
+    //   fee,
+    //   tickSpacing,
+    //   'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
+    // )
     pool = await invariant.getPool(poolKey)
     console.log(pool)
   }

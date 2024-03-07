@@ -1,0 +1,32 @@
+[package]
+name = "invariant-cspr-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+odra = { git = "https://github.com/odradev/odra.git", branch = "release/0.7.1", default-features = false, optional = true }
+decimal = { path = "../src/decimal"}
+traceable_result = { path = "../src/traceable_result" }
+uint = { version = "0.9", default-features = false }
+borsh = { version = "0.9.3", default-features = false }
+
+wasm-bindgen = "0.2.89"
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6.3"
+tsify = "0.4.5"
+paste = "1.0.14"
+js-sys = "0.3.66"
+
+wasm_wrapper = { path = "./wasm_wrapper" }
+
+
+[features]
+default = ["mock-vm"]
+mock-vm = ["odra/mock-vm"]
+casper = ["odra/casper"]
+time-consuming-e2e = []
+base-e2e = []
