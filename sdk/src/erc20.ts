@@ -2,15 +2,13 @@
 import { Some } from '@casperlabs/ts-results'
 import { BigNumber } from '@ethersproject/bignumber'
 import {
-  CLByteArray,
   CLPublicKey,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
   Contracts,
   Keys,
-  RuntimeArgs,
-  decodeBase16
+  RuntimeArgs
 } from 'casper-js-sdk'
 import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
 import { Network } from './network'
@@ -157,7 +155,7 @@ export class Erc20 {
     return BigInt(response.data)
   }
 
-  async balance_of(address: CLPublicKey) {
+  async balanceOf(address: CLPublicKey) {
     const accountHash = hexToBytes(address.toAccountHashStr().replace('account-hash-', ''))
     const balanceKey = new Uint8Array([...BALANCES, 0, ...accountHash])
 
@@ -176,8 +174,17 @@ export class Erc20 {
     return BigInt(response.data._hex)
   }
 
-  async approve(account: Keys.AsymmetricKey, network: Network, spender: string, amount: bigint) {
-    const spenderKey = new CLByteArray(decodeBase16(spender))
+  async approve(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    spender: CLPublicKey,
+    amount: bigint
+  ) {
+    // const spenderKey = new CLByteArray(decodeBase16(spender))
+    // const spenderKey = CLValueBuilder.byteArray(stringToUint8Array(spender))
+    // const spenderKey = CLValueBuilder.byteArray(hexToBytes(spender))
+    // const spenderKey = CLValueBuilder.byteArray(stringToUint8Array('hash-' + spender))
+    // const spenderKey = CLValueBuilder.byteArray(stringToUint8Array('account-hash-' + spender))
 
     return await sendTx(
       this.contract,
@@ -187,7 +194,29 @@ export class Erc20 {
       network,
       'approve',
       {
-        spender: CLValueBuilder.key(spenderKey),
+        spender: CLValueBuilder.key(spender),
+        amount: CLValueBuilder.u256(BigNumber.from(amount))
+      }
+    )
+  }
+
+  async transferFrom(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    owner: CLPublicKey,
+    recipient: CLPublicKey,
+    amount: bigint
+  ) {
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'transfer_from',
+      {
+        owner: CLValueBuilder.key(owner),
+        recipient: CLValueBuilder.key(recipient),
         amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )
