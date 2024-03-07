@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import { Some } from '@casperlabs/ts-results'
+import { BigNumber } from '@ethersproject/bignumber'
 import {
   CLByteArray,
   CLPublicKey,
@@ -187,7 +188,7 @@ export class Erc20 {
       'approve',
       {
         spender: CLValueBuilder.key(spenderKey),
-        amount: CLValueBuilder.u256(Number(amount))
+        amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )
   }

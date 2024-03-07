@@ -45,7 +45,6 @@ const main = async () => {
     service,
     '6f9672545b2600f4f135124bc5fcce3eabcf1d43d828a9c9a227434e13aedc8d'
   )
-  // const invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
 
   // const token0ContractHash = await Erc20.deploy(
   //   client,
@@ -85,46 +84,46 @@ const main = async () => {
 
   // const token0Address = token0Contract.contract.contractHash?.replace('hash-', '') ?? ''
   // const token1Address = token1Contract.contract.contractHash?.replace('hash-', '') ?? ''
-  const token0Address = 'a9129e520e38ba142d81cdeebf05691b0e404206820792209ae188fbdc15428d'
-  const token1Address = '8b64d645c83ec910e58a900a80b62013794fe0d1f8d36a34ed3a8ad94e3d46e7'
-  const [tokenX, tokenY] =
-    token0Address < token1Address ? [token0Address, token1Address] : [token1Address, token0Address]
+  // const token0Address = 'a9129e520e38ba142d81cdeebf05691b0e404206820792209ae188fbdc15428d'
+  // const token1Address = '8b64d645c83ec910e58a900a80b62013794fe0d1f8d36a34ed3a8ad94e3d46e7'
+  // const [tokenX, tokenY] =
+  //   token0Address < token1Address ? [token0Address, token1Address] : [token1Address, token0Address]
 
-  const fee = 100n
-  const tickSpacing = 10n
+  // const fee = 100n
+  // const tickSpacing = 10n
 
-  const addFeeTierResult = await invariantContract.addFeeTier(account, network, fee, tickSpacing)
-  console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
+  // const addFeeTierResult = await invariantContract.addFeeTier(account, network, fee, tickSpacing)
+  // console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
 
-  const feeTiers = await invariantContract.getFeeTiers()
-  console.log(feeTiers)
+  // const feeTiers = await invariantContract.getFeeTiers()
+  // console.log(feeTiers)
 
-  const createPoolResult = await invariantContract.createPool(
-    account,
-    network,
-    tokenX,
-    tokenY,
-    fee,
-    tickSpacing,
-    1000000000000000000000000n,
-    0n
-  )
-  console.log('createPool', createPoolResult.execution_results[0].result)
+  // const createPoolResult = await invariantContract.createPool(
+  //   account,
+  //   network,
+  //   tokenX,
+  //   tokenY,
+  //   fee,
+  //   tickSpacing,
+  //   1000000000000000000000000n,
+  //   0n
+  // )
+  // console.log('createPool', createPoolResult.execution_results[0].result)
 
-  const poolBeforePosition = await invariantContract.getPool({
-    tokenX,
-    tokenY,
-    feeTier: {
-      fee,
-      tickSpacing
-    }
-  })
-  console.log(poolBeforePosition)
+  // const poolBeforePosition = await invariantContract.getPool({
+  //   tokenX,
+  //   tokenY,
+  //   feeTier: {
+  //     fee,
+  //     tickSpacing
+  //   }
+  // })
+  // console.log(poolBeforePosition)
 
   const token0UserBalance = await token0Contract.balance_of(account.publicKey)
-  console.log('token0UserBalance', token0UserBalance)
+  console.log('token 0 balance', token0UserBalance)
   const token1UserBalance = await token1Contract.balance_of(account.publicKey)
-  console.log('token1UserBalance', token1UserBalance)
+  console.log('token 1 balance', token1UserBalance)
 
   const approveResult = await token0Contract.approve(
     account,
@@ -140,30 +139,30 @@ const main = async () => {
   )
   console.log('allowance', invariantAllowance)
 
-  const createPositionResult = await invariantContract.createPosition(
-    account,
-    network,
-    tokenX,
-    tokenY,
-    fee,
-    tickSpacing,
-    -10n,
-    10n,
-    10000n,
-    1000000000000000000000000n,
-    1000000000000000000000000n
-  )
-  console.log('createposition ', createPositionResult.execution_results[0].result)
+  // const createPositionResult = await invariantContract.createPosition(
+  //   account,
+  //   network,
+  //   tokenX,
+  //   tokenY,
+  //   fee,
+  //   tickSpacing,
+  //   -10n,
+  //   10n,
+  //   10000n,
+  //   1000000000000000000000000n,
+  //   1000000000000000000000000n
+  // )
+  // console.log('createposition ', createPositionResult.execution_results[0].result)
 
-  const poolAfterPosition = await invariantContract.getPool({
-    tokenX,
-    tokenY,
-    feeTier: {
-      fee,
-      tickSpacing
-    }
-  })
-  console.log(poolAfterPosition)
+  // const poolAfterPosition = await invariantContract.getPool({
+  //   tokenX,
+  //   tokenY,
+  //   feeTier: {
+  //     fee,
+  //     tickSpacing
+  //   }
+  // })
+  // console.log(poolAfterPosition)
 }
 
 main()
