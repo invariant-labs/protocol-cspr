@@ -94,9 +94,11 @@ const main = async () => {
         tickSpacing
       }
     }
-    // await invariant.addFeeTier(account, network, 55n, 10n)
+    console.log(await invariant.feeTierExist(99n, 1n))
+    await invariant.addFeeTier(account, network, 55n, 10n)
     const feeTiers = await invariant.getFeeTiers()
     console.log(feeTiers)
+    console.log(await invariant.feeTierExist(55n, 10n))
     // await invariant.createPool(
     //   account,
     //   network,

@@ -278,6 +278,11 @@ export class Invariant {
     return decodeFeeTiers(rawBytes)
   }
 
+  async feeTierExist(fee: bigint, tickSpacing: bigint): Promise<boolean> {
+    const feeTiers = await this.getFeeTiers()
+    return feeTiers.some(tier => tier.percentage === fee && tier.tickSpacing === tickSpacing)
+  }
+
   async getPool(poolKey: any) {
     const buffor: number[] = []
 
