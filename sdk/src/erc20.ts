@@ -12,7 +12,7 @@ import {
   decodeBase16
 } from 'casper-js-sdk'
 import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
-import { Hash, Network } from './enums'
+import { Key, Network } from './enums'
 import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
 
 const CONTRACT_NAME = 'erc20'
@@ -139,7 +139,7 @@ export class Erc20 {
     return BigInt(response.data)
   }
 
-  async balanceOf(addressHash: Hash, address: string) {
+  async balanceOf(addressHash: Key, address: string) {
     const balanceKey = new Uint8Array([...BALANCES, addressHash, ...hexToBytes(address)])
 
     const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
@@ -147,7 +147,7 @@ export class Erc20 {
     return BigInt(response.data._hex)
   }
 
-  async allowance(ownerHash: Hash, owner: string, spenderHash: Hash, spender: string) {
+  async allowance(ownerHash: Key, owner: string, spenderHash: Key, spender: string) {
     const balanceKey = new Uint8Array([
       ...ALLOWANCES,
       ownerHash,
@@ -164,7 +164,7 @@ export class Erc20 {
   async approve(
     account: Keys.AsymmetricKey,
     network: Network,
-    spenderHash: Hash,
+    spenderHash: Key,
     spender: string,
     amount: bigint
   ) {
@@ -188,7 +188,7 @@ export class Erc20 {
   async transfer(
     account: Keys.AsymmetricKey,
     network: Network,
-    recipientHash: Hash,
+    recipientHash: Key,
     recipient: string,
     amount: bigint
   ) {
@@ -212,9 +212,9 @@ export class Erc20 {
   async transferFrom(
     account: Keys.AsymmetricKey,
     network: Network,
-    ownerHash: Hash,
+    ownerHash: Key,
     owner: string,
-    recipientHash: Hash,
+    recipientHash: Key,
     recipient: string,
     amount: bigint
   ) {

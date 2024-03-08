@@ -331,7 +331,7 @@ export class Invariant {
     return await sendTx(
       this.contract,
       this.service,
-      1000000000000n,
+      this.paymentAmount,
       account,
       network,
       'create_position',

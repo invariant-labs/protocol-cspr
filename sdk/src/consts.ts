@@ -12,7 +12,7 @@ export const [ALICE, BOB, CHARLIE] = FUNDED_KEYS.map(k => k.private).map(key =>
 )
 export const TEST = parseAccountKeys(KEYS_PATH, Algo.ed25519)
 
-export const DEFAULT_PAYMENT_AMOUNT = 10000000000n
+export const DEFAULT_PAYMENT_AMOUNT = 100000000000n
 export const TESTNET_DEPLOY_AMOUNT = 947800000000n
 export const TESTNET_INVARIANT_HASH =
   '17da891dccd576ddaf93b942b4cf06855fcbb70e95cbf8276adb815f9e1cf0d9'

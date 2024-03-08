@@ -1,5 +1,5 @@
 import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
-import { Hash, Network } from './enums'
+import { Key, Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
 import { createAccountKeys, initCasperClientAndService } from './utils'
@@ -90,13 +90,13 @@ const main = async () => {
     token1Address = token1Contract.contract.contractHash?.replace('hash-', '') ?? ''
   }
 
-  // console.log('balance', await token0Contract.balanceOf(Hash.Account, accountAddress))
-  // console.log('balance', await token1Contract.balanceOf(Hash.Account, accountAddress))
+  // console.log('balance', await token0Contract.balanceOf(Key.Account, accountAddress))
+  // console.log('balance', await token1Contract.balanceOf(Key.Account, accountAddress))
 
   // const approveResult = await token0Contract.approve(
   //   account,
   //   network,
-  //   Hash.Account,
+  //   Key.Account,
   //   dummyAddress,
   //   1000000000000000n
   // )
@@ -104,22 +104,22 @@ const main = async () => {
 
   // console.log(
   //   'allowance',
-  //   await token0Contract.allowance(Hash.Account, accountAddress, Hash.Account, dummyAddress)
+  //   await token0Contract.allowance(Key.Account, accountAddress, Key.Account, dummyAddress)
   // )
 
   // const transferFromResult = await token0Contract.transferFrom(
   //   dummy,
   //   network,
-  //   Hash.Account,
+  //   Key.Account,
   //   accountAddress,
-  //   Hash.Account,
+  //   Key.Account,
   //   dummyAddress,
   //   10000n
   // )
   // console.log('transferFrom', transferFromResult.execution_results[0].result)
 
-  // console.log('balance', await token0Contract.balanceOf(Hash.Account, accountAddress))
-  // console.log('balance', await token0Contract.balanceOf(Hash.Account, dummyAddress))
+  // console.log('balance', await token0Contract.balanceOf(Key.Account, accountAddress))
+  // console.log('balance', await token0Contract.balanceOf(Key.Account, dummyAddress))
 
   const addFeeTierResult = await invariantContract.addFeeTier(account, network, 0n, 1n)
   console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
@@ -139,7 +139,7 @@ const main = async () => {
   const approveResult1 = await token0Contract.approve(
     account,
     network,
-    Hash.Contract,
+    Key.Hash,
     invariantContractPackage,
     1000000000000000n
   )
@@ -148,7 +148,7 @@ const main = async () => {
   const approveResult2 = await token1Contract.approve(
     account,
     network,
-    Hash.Contract,
+    Key.Hash,
     invariantContractPackage,
     1000000000000000n
   )
@@ -163,11 +163,43 @@ const main = async () => {
     1n,
     -10n,
     10n,
-    1000000n,
+    1000000000000000n,
     1000000000000000000000000n,
     1000000000000000000000000n
   )
   console.log('createPosition', createPositionResult.execution_results[0].result)
+
+  console.log(
+    'token 0 invariant balance',
+    await token0Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
+  console.log(
+    'token 1 invariant balance',
+    await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
+
+  const swapResult = await invariantContract.swap(
+    account,
+    network,
+    token0ContractPackage,
+    token1ContractPackage,
+    0n,
+    1n,
+    true,
+    10n,
+    true,
+    0n
+  )
+  console.log('swap', swapResult.execution_results[0].result)
+
+  console.log(
+    'token 0 invariant balance',
+    await token0Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
+  console.log(
+    'token 1 invariant balance',
+    await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
 }
 
 main()

@@ -4,7 +4,7 @@ export enum Network {
   Mainnet = 'casper'
 }
 
-export enum Hash {
+export enum Key {
   Account = 0,
-  Contract = 1
+  Hash = 1
 }
