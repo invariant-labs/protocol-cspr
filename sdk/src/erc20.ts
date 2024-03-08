@@ -2,16 +2,17 @@
 import { Some } from '@casperlabs/ts-results'
 import { BigNumber } from '@ethersproject/bignumber'
 import {
-  CLPublicKey,
+  CLByteArray,
   CLValueBuilder,
   CasperClient,
   CasperServiceByJsonRPC,
   Contracts,
   Keys,
-  RuntimeArgs
+  RuntimeArgs,
+  decodeBase16
 } from 'casper-js-sdk'
 import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
-import { Network } from './network'
+import { Hash, Network } from './enums'
 import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
 
 const CONTRACT_NAME = 'erc20'
@@ -46,7 +47,7 @@ export class Erc20 {
     symbol: string = '',
     decimals: bigint = 0n,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
-  ): Promise<string> {
+  ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
 
     const wasm = await getDeploymentData(CONTRACT_NAME)
@@ -106,7 +107,10 @@ export class Erc20 {
       throw new Error('Contract package not found in block state')
     }
 
-    return ContractPackage.versions[0].contractHash.replace('contract-', '')
+    return [
+      contractPackageHash.replace('hash-', ''),
+      ContractPackage.versions[0].contractHash.replace('contract-', '')
+    ]
   }
 
   static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
@@ -115,26 +119,6 @@ export class Erc20 {
 
   async setContractHash(contractHash: string) {
     this.contract.setContractHash('hash-' + contractHash)
-  }
-
-  async transfer(
-    account: Keys.AsymmetricKey,
-    network: Network,
-    recipient: CLPublicKey,
-    amount: bigint
-  ) {
-    return await sendTx(
-      this.contract,
-      this.service,
-      this.paymentAmount,
-      account,
-      network,
-      'transfer',
-      {
-        recipient: CLValueBuilder.key(recipient),
-        amount: CLValueBuilder.u256(Number(amount))
-      }
-    )
   }
 
   async name() {
@@ -155,19 +139,22 @@ export class Erc20 {
     return BigInt(response.data)
   }
 
-  async balanceOf(address: CLPublicKey) {
-    const accountHash = hexToBytes(address.toAccountHashStr().replace('account-hash-', ''))
-    const balanceKey = new Uint8Array([...BALANCES, 0, ...accountHash])
+  async balanceOf(addressHash: Hash, address: string) {
+    const balanceKey = new Uint8Array([...BALANCES, addressHash, ...hexToBytes(address)])
 
     const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
 
     return BigInt(response.data._hex)
   }
 
-  async allowance(owner: string, spender: string) {
-    const ownerHash = hexToBytes(owner)
-    const spenderHash = hexToBytes(spender)
-    const balanceKey = new Uint8Array([...ALLOWANCES, 0, ...ownerHash, 0, ...spenderHash])
+  async allowance(ownerHash: Hash, owner: string, spenderHash: Hash, spender: string) {
+    const balanceKey = new Uint8Array([
+      ...ALLOWANCES,
+      ownerHash,
+      ...hexToBytes(owner),
+      spenderHash,
+      ...hexToBytes(spender)
+    ])
 
     const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
 
@@ -177,14 +164,12 @@ export class Erc20 {
   async approve(
     account: Keys.AsymmetricKey,
     network: Network,
-    spender: CLPublicKey,
+    spenderHash: Hash,
+    spender: string,
     amount: bigint
   ) {
-    // const spenderKey = new CLByteArray(decodeBase16(spender))
-    // const spenderKey = CLValueBuilder.byteArray(stringToUint8Array(spender))
-    // const spenderKey = CLValueBuilder.byteArray(hexToBytes(spender))
-    // const spenderKey = CLValueBuilder.byteArray(stringToUint8Array('hash-' + spender))
-    // const spenderKey = CLValueBuilder.byteArray(stringToUint8Array('account-hash-' + spender))
+    const spenderBytes = new Uint8Array([spenderHash, ...decodeBase16(spender)])
+    const spenderKey = new CLByteArray(spenderBytes)
 
     return await sendTx(
       this.contract,
@@ -194,8 +179,32 @@ export class Erc20 {
       network,
       'approve',
       {
-        spender: CLValueBuilder.key(spender),
+        spender: spenderKey,
         amount: CLValueBuilder.u256(BigNumber.from(amount))
+      }
+    )
+  }
+
+  async transfer(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    recipientHash: Hash,
+    recipient: string,
+    amount: bigint
+  ) {
+    const recipientBytes = new Uint8Array([recipientHash, ...decodeBase16(recipient)])
+    const recipientKey = new CLByteArray(recipientBytes)
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'transfer',
+      {
+        recipient: recipientKey,
+        amount: CLValueBuilder.u256(Number(amount))
       }
     )
   }
@@ -203,10 +212,17 @@ export class Erc20 {
   async transferFrom(
     account: Keys.AsymmetricKey,
     network: Network,
-    owner: CLPublicKey,
-    recipient: CLPublicKey,
+    ownerHash: Hash,
+    owner: string,
+    recipientHash: Hash,
+    recipient: string,
     amount: bigint
   ) {
+    const ownerBytes = new Uint8Array([ownerHash, ...decodeBase16(owner)])
+    const ownerKey = new CLByteArray(ownerBytes)
+    const recipientBytes = new Uint8Array([recipientHash, ...decodeBase16(recipient)])
+    const recipientKey = new CLByteArray(recipientBytes)
+
     return await sendTx(
       this.contract,
       this.service,
@@ -215,8 +231,8 @@ export class Erc20 {
       network,
       'transfer_from',
       {
-        owner: CLValueBuilder.key(owner),
-        recipient: CLValueBuilder.key(recipient),
+        owner: ownerKey,
+        recipient: recipientKey,
         amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )

@@ -11,7 +11,7 @@ import {
   decodeBase16
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
-import { Network } from './network'
+import { Network } from './enums'
 import {
   decodeFeeTiers,
   decodeInvariantConfig,

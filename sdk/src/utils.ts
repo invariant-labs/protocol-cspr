@@ -25,7 +25,7 @@ import fs from 'fs'
 import { readFile } from 'fs/promises'
 import path from 'path'
 import { dynamicImport } from 'tsimportlib'
-import { Network } from './network'
+import { Network } from './enums'
 import { Algo } from './schema'
 
 export const initCasperClientAndService = (nodeUrl: string) => {

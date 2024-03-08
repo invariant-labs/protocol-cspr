@@ -1,13 +1,13 @@
 import { ALICE, LOCAL_NODE_URL } from '../src/consts'
+import { Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
-import { Network } from '../src/network'
 import { initCasperClientAndService } from '../src/utils'
 
 describe('erc20', () => {
   it('should get metadata', async () => {
     const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
 
-    const erc20Hash = await Erc20.deploy(
+    const [, erc20Hash] = await Erc20.deploy(
       client,
       service,
       Network.Local,

@@ -3,3 +3,8 @@ export enum Network {
   Testnet = 'casper-test',
   Mainnet = 'casper'
 }
+
+export enum Hash {
+  Account = 0,
+  Contract = 1
+}
