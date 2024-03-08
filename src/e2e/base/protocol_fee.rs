@@ -214,6 +214,7 @@ fn test_protocol_fee() {
 }
 
 #[test]
+#[should_panic]
 fn test_protocol_fee_not_admin() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);

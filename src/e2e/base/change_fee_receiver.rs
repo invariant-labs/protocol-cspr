@@ -59,6 +59,7 @@ fn test_change_fee_reciever() {
 }
 
 #[test]
+#[should_panic]
 fn test_not_admin_change_fee_reciever() {
     let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
     let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));

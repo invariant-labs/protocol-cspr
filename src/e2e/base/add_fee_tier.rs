@@ -41,6 +41,7 @@ fn test_add_multiple_fee_tiers() {
 }
 
 #[test]
+#[should_panic]
 fn test_add_existing_fee_tier() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
@@ -57,6 +58,7 @@ fn test_add_existing_fee_tier() {
 }
 
 #[test]
+#[should_panic]
 fn test_add_fee_tier_not_admin() {
     let deployer = test_env::get_account(0);
     let not_admin = test_env::get_account(1);
