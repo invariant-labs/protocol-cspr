@@ -12,7 +12,7 @@ pub mod e2e;
 
 use crate::contracts::errors::InvariantError;
 use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
-use contracts::{events::*, InvariantConfig};
+use contracts::{events::*, unwrap_invariant_result, InvariantConfig, InvariantErrorReturn};
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, Tick, Tickmap, Ticks,
 };
@@ -71,13 +71,15 @@ impl Invariant {
     fn create_tick(&mut self, pool_key: PoolKey, index: i32) -> Result<Tick, InvariantError> {
         let current_timestamp = contract_env::get_block_time();
 
-        check_tick(index, pool_key.fee_tier.tick_spacing)
-            .map_err(|_| InvariantError::InvalidTickIndexOrTickSpacing)?;
+        unwrap_invariant_result(
+            check_tick(index, pool_key.fee_tier.tick_spacing)
+                .map_err(|_| InvariantError::InvalidTickIndexOrTickSpacing),
+        );
 
-        let pool = self.pools.get(pool_key)?;
+        let pool = unwrap_invariant_result(self.pools.get(pool_key));
 
         let tick = Tick::create(index, &pool, current_timestamp);
-        self.ticks.add(pool_key, index, &tick)?;
+        unwrap_invariant_result(self.ticks.add(pool_key, index, &tick));
 
         self.tickmap
             .flip(true, index, pool_key.fee_tier.tick_spacing, pool_key);
@@ -87,12 +89,12 @@ impl Invariant {
 
     fn remove_tick(&mut self, key: PoolKey, tick: Tick) -> Result<(), InvariantError> {
         if !tick.liquidity_gross.is_zero() {
-            return Err(InvariantError::NotEmptyTickDeinitialization);
+            contract_env::revert(InvariantErrorReturn::NotEmptyTickDeinitialization);
         }
 
         self.tickmap
             .flip(false, tick.index, key.fee_tier.tick_spacing, key);
-        self.ticks.remove(key, tick.index)?;
+        unwrap_invariant_result(self.ticks.remove(key, tick.index));
         Ok(())
     }
 
@@ -107,23 +109,23 @@ impl Invariant {
         let current_timestamp = contract_env::get_block_time();
         let config = self.config.get().unwrap_or_revert();
         if amount.is_zero() {
-            return Err(InvariantError::AmountIsZero);
+            contract_env::revert(InvariantErrorReturn::AmountIsZero);
         }
 
         let mut ticks: Vec<Tick> = vec![];
 
-        let mut pool = self.pools.get(pool_key)?;
+        let mut pool = unwrap_invariant_result(self.pools.get(pool_key));
 
         if x_to_y {
             if pool.sqrt_price <= sqrt_price_limit
                 || sqrt_price_limit > SqrtPrice::new(U128::from(MAX_SQRT_PRICE))
             {
-                return Err(InvariantError::WrongLimit);
+                contract_env::revert(InvariantErrorReturn::WrongLimit);
             }
         } else if pool.sqrt_price >= sqrt_price_limit
             || sqrt_price_limit < SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
         {
-            return Err(InvariantError::WrongLimit);
+            contract_env::revert(InvariantErrorReturn::WrongLimit);
         }
 
         let mut remaining_amount = amount;
@@ -169,7 +171,7 @@ impl Invariant {
 
             // Fail if price would go over swap limit
             if pool.sqrt_price == sqrt_price_limit && !remaining_amount.is_zero() {
-                return Err(InvariantError::PriceLimitReached);
+                contract_env::revert(InvariantErrorReturn::PriceLimitReached);
             }
 
             if let Some((tick_index, is_initialized)) = limiting_tick {
@@ -202,7 +204,7 @@ impl Invariant {
         }
 
         if total_amount_out.get().is_zero() {
-            return Err(InvariantError::NoGainSwap);
+            contract_env::revert(InvariantErrorReturn::NoGainSwap);
         }
 
         Ok(CalculateSwapResult {
@@ -233,11 +235,11 @@ impl Invariant {
                 x_to_y,
             } = *swap;
 
-            let pool_key = PoolKey::new(
+            let pool_key = unwrap_invariant_result(PoolKey::new(
                 token_x,
                 token_y,
-                FeeTier::new(Percentage::new(fee), tick_spacing)?,
-            )?;
+                unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing)),
+            ));
 
             let sqrt_price_limit = if x_to_y {
                 SqrtPrice::new(U128::from(MIN_SQRT_PRICE))
@@ -245,7 +247,7 @@ impl Invariant {
                 SqrtPrice::new(U128::from(MAX_SQRT_PRICE))
             };
 
-            let result = if is_swap {
+            let result = unwrap_invariant_result(if is_swap {
                 self.swap(
                     pool_key.token_x,
                     pool_key.token_y,
@@ -258,7 +260,7 @@ impl Invariant {
                 )
             } else {
                 self.calculate_swap(pool_key, x_to_y, next_swap_amount, true, sqrt_price_limit)
-            }?;
+            });
 
             next_swap_amount = result.amount_out;
         }
@@ -366,17 +368,17 @@ impl Entrypoints for Invariant {
     }
 
     pub fn add_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError> {
-        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
+        let fee_tier = unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing));
 
         let caller = contract_env::caller();
         let config = self.config.get().unwrap_or_revert();
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
 
         if caller != config.admin {
-            return Err(InvariantError::NotAdmin);
+            contract_env::revert(InvariantErrorReturn::NotAdmin);
         }
 
-        fee_tiers.add(fee_tier).unwrap();
+        unwrap_invariant_result(fee_tiers.add(fee_tier));
 
         self.fee_tiers.set(fee_tiers);
         Ok(())
@@ -389,16 +391,16 @@ impl Entrypoints for Invariant {
     }
 
     pub fn remove_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError> {
-        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
+        let fee_tier = unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing));
         let caller = contract_env::caller();
         let config = self.config.get().unwrap_or_revert();
         let mut fee_tiers = self.fee_tiers.get().unwrap_or_revert();
 
         if caller != config.admin {
-            return Err(InvariantError::NotAdmin);
+            contract_env::revert(InvariantErrorReturn::NotAdmin);
         }
 
-        fee_tiers.remove(fee_tier)?;
+        unwrap_invariant_result(fee_tiers.remove(fee_tier));
 
         self.fee_tiers.set(fee_tiers);
 
@@ -419,7 +421,7 @@ impl Entrypoints for Invariant {
         init_sqrt_price: U128,
         init_tick: i32,
     ) -> Result<(), InvariantError> {
-        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing).unwrap();
+        let fee_tier = unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing));
         let init_sqrt_price = SqrtPrice::new(init_sqrt_price);
 
         let current_timestamp = odra::contract_env::get_block_time();
@@ -428,30 +430,30 @@ impl Entrypoints for Invariant {
         let config = self.config.get().unwrap_or_revert();
 
         if !fee_tiers.contains(fee_tier) {
-            panic!();
+            contract_env::revert(InvariantErrorReturn::FeeTierNotFound);
         };
 
-        check_tick(init_tick, fee_tier.tick_spacing)
-            .map_err(|_| InvariantError::InvalidInitTick)
-            .unwrap();
+        unwrap_invariant_result(
+            check_tick(init_tick, fee_tier.tick_spacing)
+                .map_err(|_| InvariantError::InvalidInitTick),
+        );
 
-        let pool_key = PoolKey::new(token_0, token_1, fee_tier).unwrap();
+        let pool_key = unwrap_invariant_result(PoolKey::new(token_0, token_1, fee_tier));
 
         if self.pools.get(pool_key).is_ok() {
-            panic!();
+            contract_env::revert(InvariantErrorReturn::PoolAlreadyExist);
         };
 
-        let pool = Pool::create(
+        let pool = unwrap_invariant_result(Pool::create(
             init_sqrt_price,
             init_tick,
             current_timestamp,
             fee_tier.tick_spacing,
             config.admin,
-        )
-        .unwrap();
+        ));
 
-        self.pools.add(pool_key, &pool).unwrap();
-        pool_keys.add(pool_key).unwrap();
+        unwrap_invariant_result(self.pools.add(pool_key, &pool));
+        unwrap_invariant_result(pool_keys.add(pool_key));
 
         self.pool_keys.set(pool_keys);
         Ok(())
@@ -464,9 +466,9 @@ impl Entrypoints for Invariant {
         fee: U128,
         tick_spacing: u32,
     ) -> Result<Pool, InvariantError> {
-        let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
-        let key: PoolKey = PoolKey::new(token_0, token_1, fee_tier)?;
-        let pool = self.pools.get(key)?;
+        let fee_tier = unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing));
+        let key: PoolKey = unwrap_invariant_result(PoolKey::new(token_0, token_1, fee_tier));
+        let pool = unwrap_invariant_result(self.pools.get(key));
 
         Ok(pool)
     }
@@ -487,17 +489,17 @@ impl Entrypoints for Invariant {
         fee: U128,
         tick_spacing: u32,
     ) -> Result<(), InvariantError> {
-        let pool_key = PoolKey::new(
+        let pool_key = unwrap_invariant_result(PoolKey::new(
             token_0,
             token_1,
-            FeeTier::new(Percentage::new(fee), tick_spacing)?,
-        )?;
+            unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing)),
+        ));
 
         let caller = contract_env::caller();
-        let mut pool = self.pools.get(pool_key)?;
+        let mut pool = unwrap_invariant_result(self.pools.get(pool_key));
 
         if caller != pool.fee_receiver {
-            return Err(InvariantError::NotFeeReceiver);
+            contract_env::revert(InvariantErrorReturn::NotFeeReceiver);
         }
 
         let (fee_protocol_token_x, fee_protocol_token_y) = pool.withdraw_protocol_fee(pool_key);
@@ -505,7 +507,7 @@ impl Entrypoints for Invariant {
         Erc20Ref::at(&pool_key.token_x).transfer(&pool.fee_receiver, &fee_protocol_token_x.get());
         Erc20Ref::at(&pool_key.token_y).transfer(&pool.fee_receiver, &fee_protocol_token_y.get());
 
-        self.pools.update(pool_key, &pool)?;
+        unwrap_invariant_result(self.pools.update(pool_key, &pool));
 
         Ok(())
     }
@@ -516,7 +518,7 @@ impl Entrypoints for Invariant {
         let mut config = self.config.get().unwrap_or_revert();
 
         if caller != config.admin {
-            return Err(InvariantError::NotAdmin);
+            contract_env::revert(InvariantErrorReturn::NotAdmin);
         }
 
         config.protocol_fee = protocol_fee;
@@ -534,21 +536,21 @@ impl Entrypoints for Invariant {
         tick_spacing: u32,
         fee_receiver: Address,
     ) -> Result<(), InvariantError> {
-        let pool_key = PoolKey::new(
+        let pool_key = unwrap_invariant_result(PoolKey::new(
             token_0,
             token_1,
-            FeeTier::new(Percentage::new(fee), tick_spacing)?,
-        )?;
+            unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing)),
+        ));
         let caller = contract_env::caller();
         let config = self.config.get().unwrap_or_revert();
-        let mut pool = self.pools.get(pool_key)?;
+        let mut pool = unwrap_invariant_result(self.pools.get(pool_key));
 
         if caller != config.admin {
-            return Err(InvariantError::NotAdmin);
+            contract_env::revert(InvariantErrorReturn::NotAdmin);
         }
 
         pool.fee_receiver = fee_receiver;
-        self.pools.update(pool_key, &pool)?;
+        unwrap_invariant_result(self.pools.update(pool_key, &pool));
 
         Ok(())
     }
@@ -561,12 +563,11 @@ impl Entrypoints for Invariant {
         tick_spacing: u32,
         index: i32,
     ) -> bool {
-        let key = PoolKey::new(
+        let key = unwrap_invariant_result(PoolKey::new(
             token_0,
             token_1,
-            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
-        )
-        .unwrap();
+            unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing)),
+        ));
         self.tickmap.get(index, key.fee_tier.tick_spacing, key)
     }
 
@@ -578,25 +579,23 @@ impl Entrypoints for Invariant {
         tick_spacing: u32,
         index: i32,
     ) -> Result<Tick, InvariantError> {
-        let key = PoolKey::new(
+        let key = unwrap_invariant_result(PoolKey::new(
             token_0,
             token_1,
             FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
-        )?;
+        ));
         self.ticks.get(key, index)
     }
 
     pub fn claim_fee(&mut self, index: u32) -> Result<(TokenAmount, TokenAmount), InvariantError> {
         let caller = odra::contract_env::caller();
         let current_timestamp = odra::contract_env::get_block_time();
-        let mut position = self.positions.get(caller, index)?;
-        let mut lower_tick = self
-            .ticks
-            .get(position.pool_key, position.lower_tick_index)?;
-        let mut upper_tick = self
-            .ticks
-            .get(position.pool_key, position.upper_tick_index)?;
-        let mut pool = self.pools.get(position.pool_key)?;
+        let mut position = unwrap_invariant_result(self.positions.get(caller, index));
+        let mut lower_tick =
+            unwrap_invariant_result(self.ticks.get(position.pool_key, position.lower_tick_index));
+        let mut upper_tick =
+            unwrap_invariant_result(self.ticks.get(position.pool_key, position.upper_tick_index));
+        let mut pool = unwrap_invariant_result(self.pools.get(position.pool_key));
 
         let (x, y) = position.claim_fee(
             &mut pool,
@@ -605,12 +604,18 @@ impl Entrypoints for Invariant {
             current_timestamp,
         );
 
-        self.positions.update(caller, index, &position)?;
-        self.pools.update(position.pool_key, &pool)?;
-        self.ticks
-            .update(position.pool_key, position.lower_tick_index, &lower_tick)?;
-        self.ticks
-            .update(position.pool_key, position.upper_tick_index, &upper_tick)?;
+        unwrap_invariant_result(self.positions.update(caller, index, &position));
+        unwrap_invariant_result(self.pools.update(position.pool_key, &pool));
+        unwrap_invariant_result(self.ticks.update(
+            position.pool_key,
+            position.lower_tick_index,
+            &lower_tick,
+        ));
+        unwrap_invariant_result(self.ticks.update(
+            position.pool_key,
+            position.upper_tick_index,
+            &upper_tick,
+        ));
 
         if !x.get().is_zero() {
             Erc20Ref::at(&position.pool_key.token_x).transfer(&caller, &x.get());
@@ -635,11 +640,11 @@ impl Entrypoints for Invariant {
         slippage_limit_lower: U128,
         slippage_limit_upper: U128,
     ) -> Result<Position, InvariantError> {
-        let pool_key = PoolKey::new(
+        let pool_key = unwrap_invariant_result(PoolKey::new(
             token_0,
             token_1,
-            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
-        )?;
+            unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing)),
+        ));
         let liquidity_delta = Liquidity::new(liquidity_delta);
         let slippage_limit_lower = SqrtPrice::new(slippage_limit_lower);
         let slippage_limit_upper = SqrtPrice::new(slippage_limit_upper);
@@ -651,22 +656,20 @@ impl Entrypoints for Invariant {
 
         // liquidity delta = 0 => return
         if liquidity_delta == Liquidity::new(U256::from(0)) {
-            panic!();
+            contract_env::revert(InvariantErrorReturn::ZeroLiquidity);
         }
 
-        let mut pool = self.pools.get(pool_key).unwrap();
+        let mut pool = unwrap_invariant_result(self.pools.get(pool_key));
 
-        let mut lower_tick = self
-            .ticks
-            .get(pool_key, lower_tick)
-            .unwrap_or_else(|_| Self::create_tick(self, pool_key, lower_tick).unwrap());
+        let mut lower_tick = self.ticks.get(pool_key, lower_tick).unwrap_or_else(|_| {
+            unwrap_invariant_result(Self::create_tick(self, pool_key, lower_tick))
+        });
 
-        let mut upper_tick = self
-            .ticks
-            .get(pool_key, upper_tick)
-            .unwrap_or_else(|_| Self::create_tick(self, pool_key, upper_tick).unwrap());
+        let mut upper_tick = self.ticks.get(pool_key, upper_tick).unwrap_or_else(|_| {
+            unwrap_invariant_result(Self::create_tick(self, pool_key, upper_tick))
+        });
 
-        let (position, x, y) = Position::create(
+        let (position, x, y) = unwrap_invariant_result(Position::create(
             &mut pool,
             pool_key,
             &mut lower_tick,
@@ -677,19 +680,14 @@ impl Entrypoints for Invariant {
             slippage_limit_upper,
             current_block_number,
             pool_key.fee_tier.tick_spacing,
-        )
-        .unwrap();
+        ));
 
-        self.pools.update(pool_key, &pool).unwrap();
+        unwrap_invariant_result(self.pools.update(pool_key, &pool));
 
         self.positions.add(caller, &position);
 
-        self.ticks
-            .update(pool_key, lower_tick.index, &lower_tick)
-            .unwrap();
-        self.ticks
-            .update(pool_key, upper_tick.index, &upper_tick)
-            .unwrap();
+        unwrap_invariant_result(self.ticks.update(pool_key, lower_tick.index, &lower_tick));
+        unwrap_invariant_result(self.ticks.update(pool_key, upper_tick.index, &upper_tick));
 
         Erc20Ref::at(&pool_key.token_x).transfer_from(&caller, &contract, &x.get());
         Erc20Ref::at(&pool_key.token_y).transfer_from(&caller, &contract, &y.get());
@@ -713,7 +711,7 @@ impl Entrypoints for Invariant {
     ) -> Result<(), InvariantError> {
         let caller = contract_env::caller();
 
-        self.positions.transfer(caller, index, receiver)?;
+        unwrap_invariant_result(self.positions.transfer(caller, index, receiver));
 
         Ok(())
     }
@@ -725,18 +723,16 @@ impl Entrypoints for Invariant {
         let caller = contract_env::caller();
         let current_timestamp = contract_env::get_block_time();
 
-        let mut position = self.positions.get(caller, index)?;
+        let mut position = unwrap_invariant_result(self.positions.get(caller, index));
         let withdrawed_liquidity = position.liquidity;
 
-        let mut lower_tick = self
-            .ticks
-            .get(position.pool_key, position.lower_tick_index)?;
+        let mut lower_tick =
+            unwrap_invariant_result(self.ticks.get(position.pool_key, position.lower_tick_index));
 
-        let mut upper_tick = self
-            .ticks
-            .get(position.pool_key, position.upper_tick_index)?;
+        let mut upper_tick =
+            unwrap_invariant_result(self.ticks.get(position.pool_key, position.upper_tick_index));
 
-        let pool = &mut self.pools.get(position.pool_key)?;
+        let pool = &mut unwrap_invariant_result(self.pools.get(position.pool_key));
 
         let (amount_x, amount_y, deinitialize_lower_tick, deinitialize_upper_tick) = position
             .remove(
@@ -747,23 +743,29 @@ impl Entrypoints for Invariant {
                 position.pool_key.fee_tier.tick_spacing,
             );
 
-        self.pools.update(position.pool_key, pool)?;
+        unwrap_invariant_result(self.pools.update(position.pool_key, pool));
 
         if deinitialize_lower_tick {
-            self.remove_tick(position.pool_key, lower_tick)?;
+            unwrap_invariant_result(self.remove_tick(position.pool_key, lower_tick));
         } else {
-            self.ticks
-                .update(position.pool_key, position.lower_tick_index, &lower_tick)?;
+            unwrap_invariant_result(self.ticks.update(
+                position.pool_key,
+                position.lower_tick_index,
+                &lower_tick,
+            ));
         }
 
         if deinitialize_upper_tick {
-            self.remove_tick(position.pool_key, upper_tick)?;
+            unwrap_invariant_result(self.remove_tick(position.pool_key, upper_tick));
         } else {
-            self.ticks
-                .update(position.pool_key, position.upper_tick_index, &upper_tick)?;
+            unwrap_invariant_result(self.ticks.update(
+                position.pool_key,
+                position.upper_tick_index,
+                &upper_tick,
+            ));
         }
 
-        self.positions.remove(caller, index)?;
+        unwrap_invariant_result(self.positions.remove(caller, index));
 
         Erc20Ref::at(&position.pool_key.token_x).transfer(&caller, &amount_x.get());
         Erc20Ref::at(&position.pool_key.token_y).transfer(&caller, &amount_y.get());
@@ -800,16 +802,21 @@ impl Entrypoints for Invariant {
         by_amount_in: bool,
         sqrt_price_limit: U128,
     ) -> Result<QuoteResult, InvariantError> {
-        let pool_key = PoolKey::new(
+        let pool_key = unwrap_invariant_result(PoolKey::new(
             token_0,
             token_1,
             FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
-        )?;
+        ));
         let amount = TokenAmount::new(amount);
         let sqrt_price_limit = SqrtPrice::new(sqrt_price_limit);
 
-        let calculate_swap_result =
-            self.calculate_swap(pool_key, x_to_y, amount, by_amount_in, sqrt_price_limit)?;
+        let calculate_swap_result = unwrap_invariant_result(self.calculate_swap(
+            pool_key,
+            x_to_y,
+            amount,
+            by_amount_in,
+            sqrt_price_limit,
+        ));
 
         Ok(QuoteResult {
             amount_in: calculate_swap_result.amount_in,
@@ -831,24 +838,29 @@ impl Entrypoints for Invariant {
         by_amount_in: bool,
         sqrt_price_limit: U128,
     ) -> Result<CalculateSwapResult, InvariantError> {
-        let pool_key = PoolKey::new(
+        let pool_key = unwrap_invariant_result(PoolKey::new(
             token_0,
             token_1,
-            FeeTier::new(Percentage::new(fee), tick_spacing).unwrap(),
-        )?;
+            unwrap_invariant_result(FeeTier::new(Percentage::new(fee), tick_spacing)),
+        ));
         let amount = TokenAmount::new(amount);
         let sqrt_price_limit = SqrtPrice::new(sqrt_price_limit);
 
         let caller = contract_env::caller();
         let contract = contract_env::self_address();
 
-        let calculate_swap_result =
-            self.calculate_swap(pool_key, x_to_y, amount, by_amount_in, sqrt_price_limit)?;
+        let calculate_swap_result = unwrap_invariant_result(self.calculate_swap(
+            pool_key,
+            x_to_y,
+            amount,
+            by_amount_in,
+            sqrt_price_limit,
+        ));
 
         let mut crossed_tick_indexes: Vec<i32> = vec![];
 
         for tick in calculate_swap_result.ticks.iter() {
-            self.ticks.update(pool_key, tick.index, tick)?;
+            unwrap_invariant_result(self.ticks.update(pool_key, tick.index, tick));
             crossed_tick_indexes.push(tick.index);
         }
 
@@ -856,7 +868,7 @@ impl Entrypoints for Invariant {
             self.emit_cross_tick_event(caller, pool_key, crossed_tick_indexes);
         }
 
-        self.pools.update(pool_key, &calculate_swap_result.pool)?;
+        unwrap_invariant_result(self.pools.update(pool_key, &calculate_swap_result.pool));
 
         if x_to_y {
             Erc20Ref::at(&pool_key.token_x).transfer_from(
@@ -897,7 +909,7 @@ impl Entrypoints for Invariant {
     ) -> Result<TokenAmount, InvariantError> {
         let amount_in = TokenAmount::new(amount_in);
 
-        let amount_out = self.route(false, amount_in, swaps)?;
+        let amount_out = unwrap_invariant_result(self.route(false, amount_in, swaps));
 
         Ok(amount_out)
     }
@@ -913,12 +925,12 @@ impl Entrypoints for Invariant {
         let expected_amount_out = TokenAmount::new(expected_amount_out);
         let slippage = Percentage::new(slippage);
 
-        let amount_out = self.route(true, amount_in, swaps)?;
+        let amount_out = unwrap_invariant_result(self.route(true, amount_in, swaps));
 
         let min_amount_out = calculate_min_amount_out(expected_amount_out, slippage);
 
         if amount_out < min_amount_out {
-            return Err(InvariantError::AmountUnderMinimumAmountOut);
+            contract_env::revert(InvariantErrorReturn::AmountUnderMinimumAmountOut);
         }
 
         Ok(())

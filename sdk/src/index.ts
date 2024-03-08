@@ -3,9 +3,9 @@ import { Hash, Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
 import { createAccountKeys, initCasperClientAndService } from './utils'
-
 const main = async () => {
   const createKeys = false
+  // const wasm = await loadWasm()
 
   if (createKeys) {
     createAccountKeys()
@@ -28,6 +28,7 @@ const main = async () => {
     network = Network.Testnet
     nodeUrl = TESTNET_NODE_URL
   }
+  console.log(account, network)
 
   const { client, service } = initCasperClientAndService(nodeUrl)
 

@@ -278,6 +278,11 @@ export class Invariant {
     return decodeFeeTiers(rawBytes)
   }
 
+  async feeTierExist(fee: bigint, tickSpacing: bigint): Promise<boolean> {
+    const feeTiers = await this.getFeeTiers()
+    return feeTiers.some(tier => tier.percentage === fee && tier.tickSpacing === tickSpacing)
+  }
+
   async getPool(poolKey: any) {
     const buffor: number[] = []
 
@@ -408,5 +413,32 @@ export class Invariant {
       by_amount_in: CLValueBuilder.bool(byAmountIn),
       sqrt_price_limit: CLValueBuilder.u128(BigNumber.from(sqrtPriceLimit))
     })
+  }
+
+  async withdrawProtocolFee(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      network,
+      'withdraw_protocol_fee',
+      {
+        token_0: CLValueBuilder.key(token0Key),
+        token_1: CLValueBuilder.key(token1Key),
+        fee: CLValueBuilder.u128(BigNumber.from(fee)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
+      }
+    )
   }
 }

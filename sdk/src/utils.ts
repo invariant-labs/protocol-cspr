@@ -26,7 +26,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
-import { Algo } from './schema'
+import { Algo, WasmCallParams } from './schema'
 
 export const initCasperClientAndService = (nodeUrl: string) => {
   const client = new CasperClient(nodeUrl)
@@ -325,6 +325,26 @@ export const loadWasm = async () => {
     'invariant-cspr-wasm',
     module
   )) as typeof import('invariant-cspr-wasm')
+}
+
+export const callWasm = async (
+  fn: Promise<any> | any,
+  ...params: WasmCallParams[]
+): Promise<any> => {
+  const preparedParams = params.map(param => {
+    if (typeof param === 'object') {
+      return { v: param.v.toString() }
+    }
+    return param
+  })
+
+  const callResult = await fn(...preparedParams)
+
+  if (typeof callResult === 'object') {
+    return { v: BigInt(callResult.v) }
+  }
+
+  return callResult
 }
 
 export const integerSafeCast = (value: bigint): number => {
