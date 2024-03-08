@@ -5,8 +5,6 @@ extern crate alloc;
 pub mod contracts;
 pub mod math;
 
-use math::fee_growth::FeeGrowth;
-use odra::types::casper_types::ContractPackageHash;
 pub use odra_modules::erc20::{Erc20, Erc20Deployer, Erc20Ref};
 
 #[cfg(test)]
@@ -18,8 +16,7 @@ use contracts::{events::*, unwrap_invariant_result, InvariantConfig, InvariantEr
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, Tick, Tickmap, Ticks,
 };
-use core::str::FromStr;
-use decimal::{Decimal, Factories};
+use decimal::*;
 use math::clamm::{calculate_min_amount_out, compute_swap_step, SwapResult};
 use math::get_tick_at_sqrt_price;
 use math::liquidity::Liquidity;
@@ -360,60 +357,6 @@ impl Entrypoints for Invariant {
         let protocol_fee = Percentage::new(fee);
         let caller = contract_env::caller();
 
-        let lower_tick = Tick {
-            index: -10i32,
-            sign: false,
-            liquidity_change: Liquidity::new(U256::from(0)),
-            liquidity_gross: Liquidity::new(U256::from(0)),
-            sqrt_price: SqrtPrice::from_integer(1),
-            fee_growth_outside_x: FeeGrowth::new(U128::from(0)),
-            fee_growth_outside_y: FeeGrowth::new(U128::from(0)),
-            seconds_outside: 0u64,
-        };
-        let upper_tick = Tick {
-            index: 10i32,
-            sign: true,
-            liquidity_change: Liquidity::new(U256::from(0)),
-            liquidity_gross: Liquidity::new(U256::from(0)),
-            sqrt_price: SqrtPrice::from_integer(1),
-            fee_growth_outside_x: FeeGrowth::new(U128::from(0)),
-            fee_growth_outside_y: FeeGrowth::new(U128::from(0)),
-            seconds_outside: 0u64,
-        };
-
-        let fee_tier = FeeTier {
-            fee: Percentage { v: U128::from(100) },
-            tick_spacing: 10,
-        };
-
-        let pool_key = PoolKey {
-            token_x: Address::Contract(ContractPackageHash::from_formatted_str(
-                "contract-package-c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472",
-            ).unwrap()),
-            token_y: Address::Contract(ContractPackageHash::from_formatted_str(
-                "contract-package-da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908",
-            ).unwrap()),
-            fee_tier,
-        };
-
-        let position = Position {
-            pool_key,
-            lower_tick_index: -10,
-            upper_tick_index: 10,
-            liquidity: Liquidity::from_integer(0),
-            fee_growth_inside_x: FeeGrowth::from_integer(0),
-            fee_growth_inside_y: FeeGrowth::from_integer(0),
-            last_block_number: u64::default(),
-            tokens_owed_x: TokenAmount::from_integer(0),
-            tokens_owed_y: TokenAmount::from_integer(0),
-        };
-
-        self.tickmap.flip(true, -10, 10, pool_key);
-        self.tickmap.flip(true, 10, 10, pool_key);
-        self.positions.add(caller, &position);
-        self.ticks.add(pool_key, -10, &lower_tick).unwrap();
-        self.ticks.add(pool_key, 10, &upper_tick).unwrap();
-
         self.config.set(InvariantConfig {
             admin: caller,
             protocol_fee,
@@ -479,6 +422,8 @@ impl Entrypoints for Invariant {
 
         let current_timestamp = odra::contract_env::get_block_time();
         let mut pool_keys = self.pool_keys.get().unwrap_or_revert();
+        let fee_tiers = self.fee_tiers.get().unwrap_or_revert();
+        let config = self.config.get().unwrap_or_revert();
 
         if !fee_tiers.contains(fee_tier) {
             contract_env::revert(InvariantErrorReturn::FeeTierNotFound);
@@ -701,6 +646,7 @@ impl Entrypoints for Invariant {
         let slippage_limit_upper = SqrtPrice::new(slippage_limit_upper);
 
         let caller = contract_env::caller();
+        let contract = contract_env::self_address();
         let current_timestamp = contract_env::get_block_time();
         let current_block_number = contract_env::get_block_time();
 
