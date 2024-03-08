@@ -33,10 +33,11 @@ const main = async () => {
   const { client, service } = initCasperClientAndService(nodeUrl)
 
   let invariantAddress = '6f9672545b2600f4f135124bc5fcce3eabcf1d43d828a9c9a227434e13aedc8d'
+  let invariantContractPackage = 'f34deac596aeb27b7b9d9418922d9e72ed28bf723a21b1c399c040346ab27d38'
   let invariantContract = await Invariant.load(client, service, invariantAddress)
 
   if (isLocal) {
-    const invariantContractHash = await Invariant.deploy(
+    const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
       client,
       service,
       network,
@@ -44,6 +45,7 @@ const main = async () => {
       0n,
       600000000000n
     )
+    invariantContractPackage = invariantContractPackageHash
     invariantContract = await Invariant.load(client, service, invariantContractHash)
     invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
   }
@@ -80,12 +82,12 @@ const main = async () => {
       0n,
       300000000000n
     )
-    token0Address = token0Contract.contract.contractHash?.replace('hash-', '') ?? ''
-    token1Address = token1Contract.contract.contractHash?.replace('hash-', '') ?? ''
     token0ContractPackage = token0ContractPackageHash
     token1ContractPackage = token1ContractPackageHash
     token0Contract = await Erc20.load(client, service, token0ContractHash)
     token1Contract = await Erc20.load(client, service, token1ContractHash)
+    token0Address = token0Contract.contract.contractHash?.replace('hash-', '') ?? ''
+    token1Address = token1Contract.contract.contractHash?.replace('hash-', '') ?? ''
   }
 
   // console.log('balance', await token0Contract.balanceOf(Hash.Account, accountAddress))
@@ -125,8 +127,8 @@ const main = async () => {
   const createPoolResult = await invariantContract.createPool(
     account,
     network,
-    token0Address,
-    token1Address,
+    token0ContractPackage,
+    token1ContractPackage,
     0n,
     1n,
     1000000000000000000000000n,
@@ -137,17 +139,17 @@ const main = async () => {
   const approveResult1 = await token0Contract.approve(
     account,
     network,
-    Hash.Account,
-    dummyAddress,
+    Hash.Contract,
+    invariantContractPackage,
     1000000000000000n
   )
   console.log('approve', approveResult1.execution_results[0].result)
 
-  const approveResult2 = await token0Contract.approve(
+  const approveResult2 = await token1Contract.approve(
     account,
     network,
-    Hash.Account,
-    dummyAddress,
+    Hash.Contract,
+    invariantContractPackage,
     1000000000000000n
   )
   console.log('approve', approveResult2.execution_results[0].result)
