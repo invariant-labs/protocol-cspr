@@ -203,6 +203,41 @@ export const decodeInvariantConfig = (rawBytes: any) => {
     protocolFee
   }
 }
+
+export const decodePoolKeys = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const stringRemainder = decodeString(bytes)[1]
+
+  const result = decodeU32(stringRemainder)
+  const poolKeyCount = result[0]
+  let remainingBytes = result[1]
+  const poolKeys = []
+  console.log(poolKeyCount)
+  for (let i = 0; i < poolKeyCount; i++) {
+    remainingBytes = decodeString(remainingBytes)[1]
+    const [tokenX, tokenXRemainder] = decodeAddress(remainingBytes)
+    remainingBytes = tokenXRemainder
+    const [tokenY, tokenYRemainder] = decodeAddress(remainingBytes)
+    remainingBytes = tokenYRemainder
+    remainingBytes = decodeString(remainingBytes)[1]
+    remainingBytes = decodeString(remainingBytes)[1]
+    const [fee, feeRemainder] = decodeU128(remainingBytes)
+    remainingBytes = feeRemainder
+    const [tickSpacing, remainder] = decodeU32(remainingBytes)
+    remainingBytes = remainder
+    poolKeys.push({
+      tokenX,
+      tokenY,
+      feeTier: { fee, tickSpacing }
+    })
+  }
+
+  if (remainingBytes!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return poolKeys
+}
 export const decodeFeeTiers = (rawBytes: any) => {
   const bytes = parseBytes(rawBytes)
   const stringRemainder = decodeString(bytes)[1]
