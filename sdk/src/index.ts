@@ -1,10 +1,10 @@
-import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_DEPLOY_AMOUNT, TESTNET_NODE_URL } from './consts'
+import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
-import { createAccountKeys, initCasperClientAndService } from './utils'
+import { callWasm, createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
 const main = async () => {
   const createKeys = false
-  // const wasm = await loadWasm()
+  const wasm = await loadWasm()
 
   if (createKeys) {
     createAccountKeys()
@@ -12,7 +12,7 @@ const main = async () => {
     return
   }
 
-  const isLocal = true
+  const isLocal = false
 
   let account
   let network
@@ -54,17 +54,23 @@ const main = async () => {
   // // console.log(await erc20.balance_of(account.publicKey))
 
   // const invariantHash = TESTNET_INVARIANT_HASH
-  // // const invariantHash = await Invariant.deploy(
-  // //   client,
-  // //   service,
-  // //   network,
-  // //   account,
-  // //   0n,
-  // //   TESTNET_DEPLOY_AMOUNT
-  // // )
-  // // console.log('Invariant deployed:', invariantHash)
+  const invariantHash = '20f479456f71d612ee3c05c949e8faaec16c16a0af05a1d14dd0414be9978d2e'
+  // const invariantHash = await Invariant.deploy(
+  //   client,
+  //   service,
+  //   network,
+  //   account,
+  //   0n,
+  //   TESTNET_DEPLOY_AMOUNT
+  // )
+  // console.log('Invariant deployed:', invariantHash)
 
-  // const invariant = await Invariant.load(client, service, invariantHash)
+  const invariant = await Invariant.load(client, service, invariantHash)
+
+  console.log(await callWasm(wasm.tickToChunk, 10n, 10n))
+  console.log(account.accountHex())
+  console.log(await invariant.getInvariantConfig())
+  console.log(await invariant.getPosition())
 
   // console.log('Init SDK!')
   // {
@@ -145,22 +151,22 @@ const main = async () => {
   // //   console.log(config)
   // // }
 
-  const invariantHash = await Invariant.deploy(
-    client,
-    service,
-    network,
-    account,
-    0n,
-    TESTNET_DEPLOY_AMOUNT
-  )
-  const invariant = await Invariant.load(client, service, invariantHash)
+  // const invariantHash = await Invariant.deploy(
+  //   client,
+  //   service,
+  //   network,
+  //   account,
+  //   0n,
+  //   TESTNET_DEPLOY_AMOUNT
+  // )
+  // const invariant = await Invariant.load(client, service, invariantHash)
 
-  const addFeeTierResult1 = await invariant.addFeeTier(account, network, 0n, 1n)
-  console.log(addFeeTierResult1.execution_results[0].result)
-  const addFeeTierResult2 = await invariant.addFeeTier(account, network, 0n, 1n)
-  console.log(addFeeTierResult2.execution_results[0].result)
-  const addFeeTierResult3 = await invariant.addFeeTier(account, network, 0n, 0n)
-  console.log(addFeeTierResult3.execution_results[0].result)
+  // const addFeeTierResult1 = await invariant.addFeeTier(account, network, 0n, 1n)
+  // console.log(addFeeTierResult1.execution_results[0].result)
+  // const addFeeTierResult2 = await invariant.addFeeTier(account, network, 0n, 1n)
+  // console.log(addFeeTierResult2.execution_results[0].result)
+  // const addFeeTierResult3 = await invariant.addFeeTier(account, network, 0n, 0n)
+  // console.log(addFeeTierResult3.execution_results[0].result)
 }
 
 main()

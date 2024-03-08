@@ -117,6 +117,12 @@ export function getTokenAmountDenominator(): bigint;
 */
 export function toTokenAmount(js_val: any, js_scale: any): bigint;
 /**
+* @param {any} js_fee
+* @param {any} js_tick_spacing
+* @returns {any}
+*/
+export function _newFeeTier(js_fee: any, js_tick_spacing: any): any;
+/**
 * @returns {bigint}
 */
 export function getLiquidityScale(): bigint;
@@ -130,12 +136,6 @@ export function getLiquidityDenominator(): bigint;
 * @returns {bigint}
 */
 export function toLiquidity(js_val: any, js_scale: any): bigint;
-/**
-* @param {any} js_fee
-* @param {any} js_tick_spacing
-* @returns {any}
-*/
-export function _newFeeTier(js_fee: any, js_tick_spacing: any): any;
 /**
 * @returns {bigint}
 */
@@ -178,27 +178,6 @@ export function getSqrtPriceDenominator(): bigint;
 * @returns {bigint}
 */
 export function toSqrtPrice(js_val: any, js_scale: any): bigint;
-/**
-* @returns {bigint}
-*/
-export function getGlobalMaxSqrtPrice(): bigint;
-/**
-* @returns {bigint}
-*/
-export function getGlobalMinSqrtPrice(): bigint;
-/**
-* @returns {bigint}
-*/
-export function getTickSearchRange(): bigint;
-/**
-* @param {any} js_tick_spacing
-* @returns {bigint}
-*/
-export function getMaxChunk(js_tick_spacing: any): bigint;
-/**
-* @returns {bigint}
-*/
-export function getChunkSize(): bigint;
 /**
 * @param {any} js_lower_tick_index
 * @param {any} js_lower_tick_fee_growth_outside_x
@@ -252,6 +231,33 @@ export function getLiquidityByX(js_x: any, js_lower_tick: any, js_upper_tick: an
 * @returns {any}
 */
 export function getLiquidityByY(js_y: any, js_lower_tick: any, js_upper_tick: any, js_current_sqrt_price: any, js_rounding_up: any): any;
+/**
+* @returns {bigint}
+*/
+export function getGlobalMaxSqrtPrice(): bigint;
+/**
+* @returns {bigint}
+*/
+export function getGlobalMinSqrtPrice(): bigint;
+/**
+* @returns {bigint}
+*/
+export function getTickSearchRange(): bigint;
+/**
+* @param {any} js_tick
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function tickToChunk(js_tick: any, js_tick_spacing: any): bigint;
+/**
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function getMaxChunk(js_tick_spacing: any): bigint;
+/**
+* @returns {bigint}
+*/
+export function getChunkSize(): bigint;
 /**
 * @param {any} token_0
 * @param {any} token_1
@@ -369,10 +375,6 @@ export interface TokenAmount {
     v: bigint;
 }
 
-export interface Liquidity {
-    v: bigint;
-}
-
 export interface FeeTier {
     fee: Percentage;
     tickSpacing: bigint;
@@ -381,6 +383,10 @@ export interface FeeTier {
 export interface InvariantConfig {
     admin: string;
     protocolFee: Percentage;
+}
+
+export interface Liquidity {
+    v: bigint;
 }
 
 export interface Percentage {

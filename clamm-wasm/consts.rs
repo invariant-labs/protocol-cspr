@@ -27,6 +27,13 @@ pub fn get_tick_search_range() -> i32 {
 }
 
 #[wasm_wrapper]
+pub fn tick_to_chunk(tick: i32, tick_spacing: i32) -> u16 {
+    let bitmap_index = (tick + MAX_TICK) / tick_spacing;
+    let chunk: u16 = (bitmap_index / CHUNK_SIZE) as u16;
+    chunk
+}
+
+#[wasm_wrapper]
 pub fn get_max_chunk(tick_spacing: u32) -> u32 {
     let max_tick = get_max_tick(tick_spacing);
     let max_bitmap_index = (max_tick + MAX_TICK) / tick_spacing as i32;

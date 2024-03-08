@@ -1,4 +1,5 @@
 use blake2b_simd::Params;
+use odra::types::casper_types::account::AccountHash;
 use odra::types::casper_types::bytesrepr::FromBytes;
 use odra::types::casper_types::bytesrepr::ToBytes;
 use odra::types::casper_types::ContractPackageHash;
@@ -133,7 +134,138 @@ fn main() {
             println!("Remainder = {:?}", remainder);
         }
     }
+    //  Ticks
+    {
+        println!("Construct ticks mapping key");
+        let mut buffor: Vec<u8> = Vec::new();
 
+        let fee_tier = FeeTier {
+            fee: Percentage { v: U128::from(100) },
+            tick_spacing: 10,
+        };
+
+        let pool_key = PoolKey {
+        token_x: Address::Contract(ContractPackageHash::from_formatted_str(
+            "contract-package-c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472",
+        ).unwrap()),
+        token_y: Address::Contract(ContractPackageHash::from_formatted_str(
+            "contract-package-da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908",
+        ).unwrap()),
+        fee_tier,
+        };
+
+        let key = (pool_key, 10u32);
+        buffor.extend_from_slice(b"ticks");
+        buffor.extend_from_slice(b"#");
+        buffor.extend_from_slice(b"ticks");
+        buffor.extend_from_slice(&key.to_bytes().unwrap());
+
+        // Hash the buffer using Blake2b.
+        let result = Params::new()
+            .hash_length(32) // Output hash length in bytes
+            .to_state()
+            .update(&buffor)
+            .finalize();
+
+        // Convert the hash to hex.
+        let encoded = hex::encode(result.as_bytes());
+        println!("Ticks query Hash = {}", encoded);
+    }
+    // Tickmap
+    {
+        println!("Construct tickmap mapping key");
+        let mut buffor: Vec<u8> = Vec::new();
+
+        let fee_tier = FeeTier {
+            fee: Percentage { v: U128::from(100) },
+            tick_spacing: 10,
+        };
+
+        let pool_key = PoolKey {
+        token_x: Address::Contract(ContractPackageHash::from_formatted_str(
+            "contract-package-c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472",
+        ).unwrap()),
+        token_y: Address::Contract(ContractPackageHash::from_formatted_str(
+            "contract-package-da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908",
+        ).unwrap()),
+        fee_tier,
+        };
+
+        let key = (346u16, pool_key);
+        buffor.extend_from_slice(b"tickmap");
+        buffor.extend_from_slice(b"#");
+        buffor.extend_from_slice(b"bitmap");
+        buffor.extend_from_slice(&key.to_bytes().unwrap());
+
+        // Hash the buffer using Blake2b.
+        let result = Params::new()
+            .hash_length(32) // Output hash length in bytes
+            .to_state()
+            .update(&buffor)
+            .finalize();
+
+        // Convert the hash to hex.
+        let encoded = hex::encode(result.as_bytes());
+        println!("Tickmap query Hash = {}", encoded);
+    }
+    // Positions
+    {
+        println!("Construct positions mapping key");
+        let mut buffor: Vec<u8> = Vec::new();
+
+        let account_hex = Address::Account(
+            AccountHash::from_formatted_str(
+                "account-hash-6796ab4158be14efcb3db532e3311123925a2a24f2add0d93eda0f396e4aee5f",
+            )
+            .unwrap(),
+        );
+        let key = (account_hex, 0u32);
+
+        buffor.extend_from_slice(b"positions");
+        buffor.extend_from_slice(b"#");
+        buffor.extend_from_slice(b"positions");
+        buffor.extend_from_slice(&key.to_bytes().unwrap());
+
+        // Hash the buffer using Blake2b.
+        let result = Params::new()
+            .hash_length(32) // Output hash length in bytes
+            .to_state()
+            .update(&buffor)
+            .finalize();
+
+        // Convert the hash to hex.
+        let encoded = hex::encode(result.as_bytes());
+        println!("Positions query Hash = {}", encoded);
+    }
+    // Positions
+    {
+        println!("Construct positions length mapping key");
+        let mut buffor: Vec<u8> = Vec::new();
+
+        let account_hex = Address::Account(
+            AccountHash::from_formatted_str(
+                "account-hash-6796ab4158be14efcb3db532e3311123925a2a24f2add0d93eda0f396e4aee5f",
+            )
+            .unwrap(),
+        );
+        let key = account_hex;
+
+        buffor.extend_from_slice(b"positions");
+        buffor.extend_from_slice(b"#");
+        buffor.extend_from_slice(b"positions_length");
+        buffor.extend_from_slice(&key.to_bytes().unwrap());
+
+        // Hash the buffer using Blake2b.
+        let result = Params::new()
+            .hash_length(32) // Output hash length in bytes
+            .to_state()
+            .update(&buffor)
+            .finalize();
+
+        // Convert the hash to hex.
+        let encoded = hex::encode(result.as_bytes());
+        println!("Positions length query Hash = {}", encoded);
+    }
     // Decode mapping result
     {
         println!("Decoding mapping Pool result");

@@ -388,6 +388,21 @@ export class Invariant {
     )
   }
 
+  async getPosition() {
+    const stateRootHash = await this.service.getStateRootHash()
+    console.log('Root hash:', stateRootHash)
+    // const response = await this.service.getDictionaryItemByName(
+    //   stateRootHash,
+    //   this.contract.contractHash!,
+    //   'state',
+    //   hash('position'),
+    //   { rawData: true }
+    // )
+
+    // const rawBytes = (response.CLValue! as any).bytes
+
+    // return decodePool(rawBytes)
+  }
   async withdrawProtocolFee(
     account: Keys.AsymmetricKey,
     network: Network,
