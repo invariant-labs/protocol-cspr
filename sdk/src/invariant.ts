@@ -51,7 +51,7 @@ export class Invariant {
     deployer: Keys.AsymmetricKey,
     fee: bigint = 0n,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
-  ): Promise<string> {
+  ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
 
     const wasm = await getDeploymentData(CONTRACT_NAME)
@@ -113,7 +113,7 @@ export class Invariant {
       throw new Error('Contract package not found in block state')
     }
 
-    return ContractPackage.versions[0].contractHash.replace('contract-', '')
+    return [ContractPackage.versions[0].contractHash.replace('contract-', ''), contractPackageHash]
   }
 
   static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
@@ -381,6 +381,10 @@ export class Invariant {
         index: CLValueBuilder.u32(integerSafeCast(index))
       }
     )
+  }
+
+  async getContractAddress() {
+    return this.contract.contractPackageHash
   }
 
   async withdrawProtocolFee(

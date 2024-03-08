@@ -1,0 +1,7 @@
+[[contracts]]
+name = "invariant"
+fqn = "invariant::Invariant"
+
+[[contracts]]
+name = "erc20"
+fqn = "invariant::Erc20"

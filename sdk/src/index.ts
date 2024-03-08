@@ -1,5 +1,13 @@
+import axios from 'axios'
 import type { Liquidity, SqrtPrice } from 'invariant-cspr-wasm'
-import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_INVARIANT_HASH, TESTNET_NODE_URL } from './consts'
+import {
+  ALICE,
+  LOCAL_NODE_URL,
+  QUERY_SERVICE_URL,
+  TEST,
+  TESTNET_DEPLOY_AMOUNT,
+  TESTNET_NODE_URL
+} from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
 import { callWasm, createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
@@ -13,7 +21,7 @@ const main = async () => {
     return
   }
 
-  const isLocal = false
+  const isLocal = true
 
   let account
   let network
@@ -28,7 +36,6 @@ const main = async () => {
     network = Network.Testnet
     nodeUrl = TESTNET_NODE_URL
   }
-  console.log(account, network)
 
   const { client, service } = initCasperClientAndService(nodeUrl)
 
@@ -54,17 +61,16 @@ const main = async () => {
   // await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
   // console.log(await erc20.balance_of(account.publicKey))
 
-  const invariantHash = TESTNET_INVARIANT_HASH
-  // const invariantHash = await Invariant.deploy(
-  //   client,
-  //   service,
-  //   network,
-  //   account,
-  //   0n,
-  //   TESTNET_DEPLOY_AMOUNT
-  // )
-  // console.log('Invariant deployed:', invariantHash)
-
+  // const invariantHash = TESTNET_INVARIANT_HASH
+  const [invariantHash, invariantPackageHash] = await Invariant.deploy(
+    client,
+    service,
+    network,
+    account,
+    0n,
+    TESTNET_DEPLOY_AMOUNT
+  )
+  console.log('Invariant deployed:', invariantHash)
   const invariant = await Invariant.load(client, service, invariantHash)
 
   console.log('Init SDK!')
@@ -77,51 +83,71 @@ const main = async () => {
     console.log('Wrapped wasm call result = ', result) // { v: 70109n }
   }
   {
-    console.log('Contract calls logs!')
-    const fee = 55n
-    const tickSpacing = 10n
-    const token0 = 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472'
-    const token1 = 'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
-    const initSqrtPrice = 10n ** 24n
-    const initTick = 0n
-    console.log(initSqrtPrice, initTick)
-    console.log(token0, token1)
-    const poolKey = {
-      tokenX: token0,
-      tokenY: token1,
-      feeTier: {
-        fee,
-        tickSpacing
-      }
+    console.log('Query service logs!')
+    await invariant.addFeeTier(account, network, 55n, 10n)
+    const params = {
+      address: invariantPackageHash,
+      fee: '55',
+      tick_spacing: 10
     }
-    // await invariant.addFeeTier(account, network, 55n, 10n)
-    const feeTiers = await invariant.getFeeTiers()
-    console.log(feeTiers)
-    // await invariant.createPool(
-    //   account,
-    //   network,
-    //   token0,
-    //   token1,
-    //   fee,
-    //   tickSpacing,
-    //   initSqrtPrice,
-    //   initTick
-    // )
-    let pool = await invariant.getPool(poolKey)
-    console.log(pool)
-    // await invariant.changeFeeReceiver(
-    //   account,
-    //   network,
-    //   token0,
-    //   token1,
-    //   fee,
-    //   tickSpacing,
-    //   'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
-    // )
-    pool = await invariant.getPool(poolKey)
-    console.log(pool)
+    try {
+      const response = await axios.post(`${QUERY_SERVICE_URL}/fee_tier_exist`, params, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      console.log(response.status)
+      console.log(response.data)
+    } catch (e) {
+      console.log(e)
+    }
   }
-  console.log('Invariant loaded')
+  // {
+  //   console.log('Contract calls logs!')
+  //   const fee = 55n
+  //   const tickSpacing = 10n
+  //   const token0 = 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472'
+  //   const token1 = 'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
+  //   const initSqrtPrice = 10n ** 24n
+  //   const initTick = 0n
+  //   console.log(initSqrtPrice, initTick)
+  //   console.log(token0, token1)
+  //   const poolKey = {
+  //     tokenX: token0,
+  //     tokenY: token1,
+  //     feeTier: {
+  //       fee,
+  //       tickSpacing
+  //     }
+  //   }
+  // await invariant.addFeeTier(account, network, 55n, 10n)
+  //   const feeTiers = await invariant.getFeeTiers()
+  //   console.log(feeTiers)
+  //   // await invariant.createPool(
+  //   //   account,
+  //   //   network,
+  //   //   token0,
+  //   //   token1,
+  //   //   fee,
+  //   //   tickSpacing,
+  //   //   initSqrtPrice,
+  //   //   initTick
+  //   // )
+  //   let pool = await invariant.getPool(poolKey)
+  //   console.log(pool)
+  //   // await invariant.changeFeeReceiver(
+  //   //   account,
+  //   //   network,
+  //   //   token0,
+  //   //   token1,
+  //   //   fee,
+  //   //   tickSpacing,
+  //   //   'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
+  //   // )
+  //   pool = await invariant.getPool(poolKey)
+  //   console.log(pool)
+  // }
+  // console.log('Invariant loaded')
 
   // const config = await invariant.getInvariantConfig()
 

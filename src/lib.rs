@@ -388,6 +388,10 @@ impl Entrypoints for Invariant {
         fee_tiers.contains(fee_tier)
     }
 
+    pub fn fee_tier_return(&self) -> bool {
+        true
+    }
+
     pub fn remove_fee_tier(&mut self, fee: U128, tick_spacing: u32) -> Result<(), InvariantError> {
         let fee_tier = FeeTier::new(Percentage::new(fee), tick_spacing)?;
         let caller = contract_env::caller();
