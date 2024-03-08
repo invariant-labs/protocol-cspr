@@ -94,9 +94,11 @@ const main = async () => {
         tickSpacing
       }
     }
+
+    console.log(await invariant.getPools())
     // await invariant.addFeeTier(account, network, 55n, 10n)
-    const feeTiers = await invariant.getFeeTiers()
-    console.log(feeTiers)
+    // const feeTiers = await invariant.getFeeTiers()
+    // console.log(feeTiers)
     // await invariant.createPool(
     //   account,
     //   network,
@@ -107,8 +109,8 @@ const main = async () => {
     //   initSqrtPrice,
     //   initTick
     // )
-    let pool = await invariant.getPool(poolKey)
-    console.log(pool)
+    // let pool = await invariant.getPool(poolKey)
+    // console.log(pool)
     // await invariant.changeFeeReceiver(
     //   account,
     //   network,
@@ -118,8 +120,8 @@ const main = async () => {
     //   tickSpacing,
     //   'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
     // )
-    pool = await invariant.getPool(poolKey)
-    console.log(pool)
+    // pool = await invariant.getPool(poolKey)
+    // console.log(pool)
   }
   console.log('Invariant loaded')
 

@@ -16,6 +16,7 @@ import {
   decodeFeeTiers,
   decodeInvariantConfig,
   decodePool,
+  decodePoolKeys,
   encodePoolKey,
   getDeploymentData,
   hash,
@@ -408,5 +409,30 @@ export class Invariant {
         tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
       }
     )
+  }
+
+  private async getPoolKeys() {
+    const key = hash('pool_keys')
+    const stateRootHash = await this.service.getStateRootHash()
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+
+    return decodePoolKeys(rawBytes)
+  }
+
+  async getPools() {
+    const poolKeys = await this.getPoolKeys()
+    const pools = []
+    for (const poolKey of poolKeys) {
+      pools.push(await this.getPool(poolKey))
+    }
+    return pools
   }
 }
