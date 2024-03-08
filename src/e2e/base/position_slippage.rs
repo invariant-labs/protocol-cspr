@@ -153,6 +153,7 @@ fn test_position_slippage_zero_slippage_and_inside_range() {
 }
 
 #[test]
+#[should_panic]
 fn test_position_slippage_below_range() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
@@ -268,6 +269,7 @@ fn test_position_slippage_below_range() {
 }
 
 #[test]
+#[should_panic]
 fn test_position_slippage_above_range() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);

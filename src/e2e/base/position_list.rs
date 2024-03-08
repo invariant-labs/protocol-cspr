@@ -12,6 +12,7 @@ use odra::test_env;
 use odra::types::{U128, U256};
 
 #[test]
+#[should_panic]
 fn test_remove_position_from_empty_list() {
     let user_without_any_positions: odra::types::Address = test_env::get_account(0);
     test_env::set_caller(user_without_any_positions);
@@ -267,6 +268,7 @@ fn test_add_multiple_positions() {
 }
 
 #[test]
+#[should_panic]
 fn test_only_owner_can_modify_position_list() {
     let positions_owner = test_env::get_account(0);
     test_env::set_caller(positions_owner);
@@ -704,6 +706,7 @@ fn test_transfer_position_ownership() {
 }
 
 #[test]
+#[should_panic]
 fn test_only_owner_can_transfer_position() {
     let position_owner = test_env::get_account(0);
     test_env::set_caller(position_owner);

@@ -224,8 +224,7 @@ fn main() {
         fee_tier,
         };
 
-        let key = (346u16, pool_key);
-        println!("Chunk index bytes = {:?}", 346u16.to_bytes().unwrap());
+        let key = (3466u16, pool_key);
         buffor.extend_from_slice(b"tickmap");
         buffor.extend_from_slice(b"#");
         buffor.extend_from_slice(b"bitmap");
@@ -481,8 +480,34 @@ fn main() {
         println!("Hash = {}", encoded);
         // 8993177b688dbcd454730d11f28d54508151536789928beb4deff08cc5a3e786
     }
+    // Decode pool Keys
+    {
+        println!("Decoding pool keys");
+        let bytes = hex::decode("08000000506f6f6c4b6579730100000007000000506f6f6c4b657901c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c47201da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb2290807000000466565546965720a00000050657263656e7461676501370a000000").unwrap();
+
+        let (str, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("str: {:?}", str);
+        let (count, bytes) = u32::from_bytes(bytes).unwrap();
+        println!("count: {:?}", count);
+        let (str, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("str: {:?}", str);
+        let (token_0, bytes) = Address::from_bytes(&bytes).unwrap();
+        println!("token_0: {:?}", token_0);
+        let (token_1, bytes) = Address::from_bytes(&bytes).unwrap();
+        println!("token_1: {:?}", token_1);
+        let (str, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("str: {:?}", str);
+        let (str, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("str: {:?}", str);
+        let (fee, bytes) = U128::from_bytes(&bytes).unwrap();
+        println!("fee: {:?}", fee);
+        let (tick_spacing, bytes) = u32::from_bytes(&bytes).unwrap();
+        println!("tick_spacing: {:?}", tick_spacing);
+        println!("Reamingin bytes length = {:?}", bytes.len())
+    }
     // Serialize Pool key
     {
+        println!("Serializing pool key");
         let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
         let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
 

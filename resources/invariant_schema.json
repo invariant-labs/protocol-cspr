@@ -11,6 +11,565 @@
         }
       ],
       "return_ty": "Unit"
+    },
+    {
+      "name": "add_fee_tier",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "fee_tier_exist",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": "Bool"
+    },
+    {
+      "name": "remove_fee_tier",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_fee_tiers",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": {
+        "List": "Any"
+      }
+    },
+    {
+      "name": "create_pool",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        },
+        {
+          "name": "init_sqrt_price",
+          "ty": "U128"
+        },
+        {
+          "name": "init_tick",
+          "ty": "I32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_pool",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_pools",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": {
+        "List": "Any"
+      }
+    },
+    {
+      "name": "get_protocol_fee",
+      "is_mutable": false,
+      "args": [],
+      "return_ty": "Any"
+    },
+    {
+      "name": "withdraw_protocol_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "change_protocol_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "protocol_fee",
+          "ty": "U128"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "change_fee_receiver",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        },
+        {
+          "name": "fee_receiver",
+          "ty": "Key"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "is_tick_initialized",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        },
+        {
+          "name": "index",
+          "ty": "I32"
+        }
+      ],
+      "return_ty": "Bool"
+    },
+    {
+      "name": "get_tick",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        },
+        {
+          "name": "index",
+          "ty": "I32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "claim_fee",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "index",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": {
+            "Tuple2": [
+              "Any",
+              "Any"
+            ]
+          },
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "create_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        },
+        {
+          "name": "lower_tick",
+          "ty": "I32"
+        },
+        {
+          "name": "upper_tick",
+          "ty": "I32"
+        },
+        {
+          "name": "liquidity_delta",
+          "ty": "U256"
+        },
+        {
+          "name": "slippage_limit_lower",
+          "ty": "U128"
+        },
+        {
+          "name": "slippage_limit_upper",
+          "ty": "U128"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "transfer_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "index",
+          "ty": "U32"
+        },
+        {
+          "name": "receiver",
+          "ty": "Key"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "remove_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "index",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": {
+            "Tuple2": [
+              "Any",
+              "Any"
+            ]
+          },
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_position",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "owner",
+          "ty": "Key"
+        },
+        {
+          "name": "index",
+          "ty": "U32"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "get_all_positions",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "owner",
+          "ty": "Key"
+        }
+      ],
+      "return_ty": {
+        "List": "Any"
+      }
+    },
+    {
+      "name": "quote",
+      "is_mutable": false,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        },
+        {
+          "name": "x_to_y",
+          "ty": "Bool"
+        },
+        {
+          "name": "amount",
+          "ty": "U256"
+        },
+        {
+          "name": "by_amount_in",
+          "ty": "Bool"
+        },
+        {
+          "name": "sqrt_price_limit",
+          "ty": "U128"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "swap",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "token_0",
+          "ty": "Key"
+        },
+        {
+          "name": "token_1",
+          "ty": "Key"
+        },
+        {
+          "name": "fee",
+          "ty": "U128"
+        },
+        {
+          "name": "tick_spacing",
+          "ty": "U32"
+        },
+        {
+          "name": "x_to_y",
+          "ty": "Bool"
+        },
+        {
+          "name": "amount",
+          "ty": "U256"
+        },
+        {
+          "name": "by_amount_in",
+          "ty": "Bool"
+        },
+        {
+          "name": "sqrt_price_limit",
+          "ty": "U128"
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "quote_route",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "amount_in",
+          "ty": "U256"
+        },
+        {
+          "name": "swaps",
+          "ty": {
+            "List": "Any"
+          }
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Any",
+          "err": "U32"
+        }
+      }
+    },
+    {
+      "name": "swap_route",
+      "is_mutable": true,
+      "args": [
+        {
+          "name": "amount_in",
+          "ty": "U256"
+        },
+        {
+          "name": "expected_amount_out",
+          "ty": "U256"
+        },
+        {
+          "name": "slippage",
+          "ty": "U128"
+        },
+        {
+          "name": "swaps",
+          "ty": {
+            "List": "Any"
+          }
+        }
+      ],
+      "return_ty": {
+        "Result": {
+          "ok": "Unit",
+          "err": "U32"
+        }
+      }
     }
   ],
   "events": []

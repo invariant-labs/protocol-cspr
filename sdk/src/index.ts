@@ -1,6 +1,7 @@
-import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
+import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
+import { Key, Network } from './enums'
+import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
-import { Network } from './network'
 import { createAccountKeys, initCasperClientAndService } from './utils'
 const main = async () => {
   const createKeys = false
@@ -11,18 +12,18 @@ const main = async () => {
     return
   }
 
-  const isLocal = false
+  const isLocal = true
 
-  let account
-  let network
-  let nodeUrl
+  let account = ALICE
+  let accountAddress = account.publicKey.toAccountHashStr().replace('account-hash-', '')
+  const dummy = BOB
+  const dummyAddress = dummy.publicKey.toAccountHashStr().replace('account-hash-', '')
+  let network = Network.Local
+  let nodeUrl = LOCAL_NODE_URL
 
-  if (isLocal) {
-    account = ALICE
-    network = Network.Local
-    nodeUrl = LOCAL_NODE_URL
-  } else {
+  if (!isLocal) {
     account = TEST
+    accountAddress = account.publicKey.toAccountHashStr().replace('account-hash-', '')
     network = Network.Testnet
     nodeUrl = TESTNET_NODE_URL
   }
@@ -30,155 +31,169 @@ const main = async () => {
 
   const { client, service } = initCasperClientAndService(nodeUrl)
 
-  // // const erc20Hash = await Erc20.deploy(
-  // //   client,
-  // //   service,
-  // //   network,
-  // //   account,
-  // //   1000000000000n,
-  // //   'COIN',
-  // //   'Coin',
-  // //   6n,
-  // //   150000000000n
-  // // )
+  let invariantAddress = '6f9672545b2600f4f135124bc5fcce3eabcf1d43d828a9c9a227434e13aedc8d'
+  let invariantContractPackage = 'f34deac596aeb27b7b9d9418922d9e72ed28bf723a21b1c399c040346ab27d38'
+  let invariantContract = await Invariant.load(client, service, invariantAddress)
 
-  // // c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472
-  // // da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908
+  const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
+    client,
+    service,
+    network,
+    account,
+    0n,
+    2446489177947n
+  )
+  invariantContractPackage = invariantContractPackageHash
+  invariantContract = await Invariant.load(client, service, invariantContractHash)
+  invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
 
-  // // const erc20 = await Erc20.load(client, service, erc20Hash)
-  // // console.log(await erc20.name())
-
-  // // console.log(await erc20.balance_of(account.publicKey))
-  // // await erc20.transfer(account, network, BOB.publicKey, 2500000000n)
-  // // console.log(await erc20.balance_of(account.publicKey))
-
-  // const invariantHash = TESTNET_INVARIANT_HASH
-  const invariantHash = '20f479456f71d612ee3c05c949e8faaec16c16a0af05a1d14dd0414be9978d2e'
-  // const invariantHash = await Invariant.deploy(
-  //   client,
-  //   service,
-  //   network,
-  //   account,
-  //   0n,
-  //   TESTNET_DEPLOY_AMOUNT
-  // )
-  // console.log('Invariant deployed:', invariantHash)
-
-  const invariant = await Invariant.load(client, service, invariantHash)
-
-  //   const fee = 55n
-  //   const tickSpacing = 10n
-
-  const poolKey = {
-    tokenX: 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472',
-    tokenY: 'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908',
-    feeTier: {
-      fee: 100n,
-      tickSpacing: 10n
-    }
+  if (isLocal) {
+    const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
+      client,
+      service,
+      network,
+      account,
+      0n,
+      600000000000n
+    )
+    invariantContractPackage = invariantContractPackageHash
+    invariantContract = await Invariant.load(client, service, invariantContractHash)
+    invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
   }
 
-  console.log(await invariant.getInvariantConfig())
-  console.log(await invariant.getPosition(account, network, 0n))
-  console.log(await invariant.getTick(poolKey, 10n))
-  console.log(await invariant.getTickmapChunk(poolKey, 10n, 10n))
-  console.log(await invariant.getPositionsCount(account))
+  let token0Address = 'a6e5a67c7834df44c1923c346dfa6cef0df4be4932cbd9102779819633b885d5'
+  let token0ContractPackage = '8a52cb3f956a94dd89635701e2225275ddf145f26394acf2414653dbb0db8699'
+  let token0Contract = await Erc20.load(client, service, token0Address)
+  let token1Address = 'ff1e3e482ddb5c021386acd7af168917159f434d5302463b748693c8db1c4592'
+  let token1ContractPackage = 'a9129e520e38ba142d81cdeebf05691b0e404206820792209ae188fbdc15428d'
+  let token1Contract = await Erc20.load(client, service, token1Address)
 
-  // console.log('Init SDK!')
-  // {
-  //   console.log('Wasm logs!')
-  //   const sqrtPriceA: SqrtPrice = { v: 234878324943782000000000000n }
-  //   const sqrtPriceB: SqrtPrice = { v: 87854456421658000000000000n }
-  //   const liquidity: Liquidity = { v: 983983249092n }
-  //   const result = await callWasm(wasm.getDeltaX, sqrtPriceA, sqrtPriceB, liquidity, true)
-  //   console.log('Wrapped wasm call result = ', result) // { v: 70109n }
-  // }
-  // {
-  //   console.log('Contract calls logs!')
-  //   const fee = 55n
-  //   const tickSpacing = 10n
-  //   const token0 = 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472'
-  //   const token1 = 'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
-  //   const initSqrtPrice = 10n ** 24n
-  //   const initTick = 0n
-  //   console.log(initSqrtPrice, initTick)
-  //   console.log(token0, token1)
-  //   const poolKey = {
-  //     tokenX: token0,
-  //     tokenY: token1,
-  //     feeTier: {
-  //       fee,
-  //       tickSpacing
-  //     }
-  //   }
-  //   // await invariant.addFeeTier(account, network, 55n, 10n)
-  //   const feeTiers = await invariant.getFeeTiers()
-  //   console.log(feeTiers)
-  //   // await invariant.createPool(
-  //   //   account,
-  //   //   network,
-  //   //   token0,
-  //   //   token1,
-  //   //   fee,
-  //   //   tickSpacing,
-  //   //   initSqrtPrice,
-  //   //   initTick
-  //   // )
-  //   let pool = await invariant.getPool(poolKey)
-  //   console.log(pool)
-  //   // await invariant.changeFeeReceiver(
-  //   //   account,
-  //   //   network,
-  //   //   token0,
-  //   //   token1,
-  //   //   fee,
-  //   //   tickSpacing,
-  //   //   'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908'
-  //   // )
-  //   pool = await invariant.getPool(poolKey)
-  //   console.log(pool)
-  // }
-  // console.log('Invariant loaded')
+  if (isLocal) {
+    const [token0ContractPackageHash, token0ContractHash] = await Erc20.deploy(
+      client,
+      service,
+      network,
+      account,
+      '0',
+      1000000000000000n,
+      '',
+      '',
+      0n,
+      300000000000n
+    )
+    const [token1ContractPackageHash, token1ContractHash] = await Erc20.deploy(
+      client,
+      service,
+      network,
+      account,
+      '1',
+      1000000000000000n,
+      '',
+      '',
+      0n,
+      300000000000n
+    )
+    token0ContractPackage = token0ContractPackageHash
+    token1ContractPackage = token1ContractPackageHash
+    token0Contract = await Erc20.load(client, service, token0ContractHash)
+    token1Contract = await Erc20.load(client, service, token1ContractHash)
+    token0Address = token0Contract.contract.contractHash?.replace('hash-', '') ?? ''
+    token1Address = token1Contract.contract.contractHash?.replace('hash-', '') ?? ''
+  }
 
-  // // const config = await invariant.getInvariantConfig()
+  const addFeeTierResult = await invariantContract.addFeeTier(account, network, 0n, 1n)
+  console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
 
-  // // console.log(feeTiers)
-  // // console.log(config)
+  const [tokenX, tokenY] =
+    token0Address < token1Address ? [token0Address, token1Address] : [token1Address, token0Address]
 
-  // // const poolKey = {
-  // //   tokenX: '0101010101010101010101010101010101010101010101010101010101010101',
-  // //   tokenY: '0202020202020202020202020202020202020202020202020202020202020202',
-  // //   feeTier: {
-  // //     tickSpacing: 10n,
-  // //     fee: 100n
-  // //   }
-  // // }
+  const poolKey = {
+    tokenX,
+    tokenY,
+    feeTier: {
+      fee: 0n,
+      tickSpacing: 1n
+    }
+  }
+  const createPoolResult = await invariantContract.createPool(
+    account,
+    network,
+    token0ContractPackage,
+    token1ContractPackage,
+    0n,
+    1n,
+    1000000000000000000000000n,
+    0n
+  )
+  console.log('createPool', createPoolResult.execution_results[0].result)
 
-  // // const pool = await invariant.getPool(poolKey)
-  // // console.log(pool)
+  const approveResult1 = await token0Contract.approve(
+    account,
+    network,
+    Key.Hash,
+    invariantContractPackage,
+    1000000000000000n
+  )
+  console.log('approve', approveResult1.execution_results[0].result)
 
-  // // {
-  // //   await invariant.changeProtocolFee(account, network, 200n)
-  // //   const config = await invariant.getInvariantConfig()
-  // //   console.log(config)
-  // // }
+  const approveResult2 = await token1Contract.approve(
+    account,
+    network,
+    Key.Hash,
+    invariantContractPackage,
+    1000000000000000n
+  )
+  console.log('approve', approveResult2.execution_results[0].result)
 
-  // const invariantHash = await Invariant.deploy(
-  //   client,
-  //   service,
-  //   network,
-  //   account,
-  //   0n,
-  //   TESTNET_DEPLOY_AMOUNT
-  // )
-  // const invariant = await Invariant.load(client, service, invariantHash)
+  const createPositionResult = await invariantContract.createPosition(
+    account,
+    network,
+    token0ContractPackage,
+    token1ContractPackage,
+    0n,
+    1n,
+    -10n,
+    10n,
+    1000000000000000n,
+    1000000000000000000000000n,
+    1000000000000000000000000n
+  )
+  console.log('createPosition', createPositionResult.execution_results[0].result)
 
-  // const addFeeTierResult1 = await invariant.addFeeTier(account, network, 0n, 1n)
-  // console.log(addFeeTierResult1.execution_results[0].result)
-  // const addFeeTierResult2 = await invariant.addFeeTier(account, network, 0n, 1n)
-  // console.log(addFeeTierResult2.execution_results[0].result)
-  // const addFeeTierResult3 = await invariant.addFeeTier(account, network, 0n, 0n)
-  // console.log(addFeeTierResult3.execution_results[0].result)
+  console.log(
+    'token 0 invariant balance',
+    await token0Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
+  console.log(
+    'token 1 invariant balance',
+    await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
+
+  const swapResult = await invariantContract.swap(
+    account,
+    network,
+    token0ContractPackage,
+    token1ContractPackage,
+    0n,
+    1n,
+    true,
+    10n,
+    true,
+    0n
+  )
+  console.log('swap', swapResult.execution_results[0].result)
+
+  console.log(
+    'token 0 invariant balance',
+    await token0Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
+  console.log(
+    'token 1 invariant balance',
+    await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
+  )
+
+  console.log(await invariantContract.getPosition(account, network, 0n))
+  console.log(await invariantContract.getTickmapChunk(poolKey, 10n))
 }
 
 main()

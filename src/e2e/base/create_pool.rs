@@ -46,6 +46,7 @@ fn test_create_pool() {
 }
 
 #[test]
+#[should_panic]
 fn test_create_pool_with_same_tokens() {
     let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
 
@@ -75,6 +76,7 @@ fn test_create_pool_with_same_tokens() {
 }
 
 #[test]
+#[should_panic]
 fn test_create_pool_x_to_y_and_y_to_x() {
     let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
     let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
@@ -115,6 +117,7 @@ fn test_create_pool_x_to_y_and_y_to_x() {
 }
 
 #[test]
+#[should_panic]
 fn test_create_pool_fee_tier_not_added() {
     let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
     let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
@@ -139,6 +142,7 @@ fn test_create_pool_fee_tier_not_added() {
 }
 
 #[test]
+#[should_panic]
 fn test_create_pool_init_tick_not_divided_by_tick_spacing() {
     let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
     let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
@@ -204,6 +208,7 @@ fn test_create_pool_init_sqrt_price_minimal_difference_from_tick() {
 }
 
 #[test]
+#[should_panic]
 fn test_create_pool_init_sqrt_price_has_closer_init_tick() {
     let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
     let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
@@ -250,6 +255,7 @@ fn test_create_pool_init_sqrt_price_has_closer_init_tick() {
 }
 
 #[test]
+#[should_panic]
 fn test_create_pool_init_sqrt_price_has_closer_init_tick_spacing_over_one() {
     let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
     let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));

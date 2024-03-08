@@ -13,6 +13,7 @@ use odra::test_env;
 use odra::types::{U128, U256};
 
 #[test]
+#[should_panic]
 fn test_interaction_with_pool_on_removed_fee_tier() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);

@@ -11,13 +11,14 @@ import {
   decodeBase16
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
-import { Network } from './network'
+import { Network } from './enums'
 import {
   bigintToByteArray,
   callWasm,
   decodeFeeTiers,
   decodeInvariantConfig,
   decodePool,
+  decodePoolKeys,
   decodePosition,
   decodePositionLength,
   decodeTick,
@@ -57,7 +58,7 @@ export class Invariant {
     deployer: Keys.AsymmetricKey,
     fee: bigint = 0n,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
-  ): Promise<string> {
+  ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
 
     const wasm = await getDeploymentData(CONTRACT_NAME)
@@ -119,7 +120,10 @@ export class Invariant {
       throw new Error('Contract package not found in block state')
     }
 
-    return ContractPackage.versions[0].contractHash.replace('contract-', '')
+    return [
+      contractPackageHash.replace('hash-', ''),
+      ContractPackage.versions[0].contractHash.replace('contract-', '')
+    ]
   }
 
   static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
@@ -394,7 +398,7 @@ export class Invariant {
     )
   }
 
-  async getPosition(account: Keys.AsymmetricKey, network: Network, index: bigint) {
+  async getPosition(account: Keys.AsymmetricKey, index: bigint) {
     const stateRootHash = await this.service.getStateRootHash()
     const buffor: number[] = []
     const indexBytes = bigintToByteArray(index)
@@ -448,18 +452,19 @@ export class Invariant {
     return decodeTick(rawBytes)
   }
 
-  async getTickmapChunk(poolKey: any, tickIndex: bigint, tickSpacing: bigint) {
+  async getTickmapChunk(poolKey: any, tickIndex: bigint) {
     const wasm = await loadWasm()
     const stateRootHash = await this.service.getStateRootHash()
-    const chunkIndex = await callWasm(wasm.tickToChunk, tickIndex, tickSpacing)
+    const chunkIndex = await callWasm(wasm.tickToChunk, tickIndex, poolKey.feeTier.tickSpacing)
     const indexBytes = bigintToByteArray(chunkIndex)
+    const preparedIndexBytes = indexBytes.concat(Array(2 - indexBytes.length).fill(0))
     const poolKeyBytes = encodePoolKey(poolKey)
     const buffor: number[] = []
 
     buffor.push(...'tickmap'.split('').map(c => c.charCodeAt(0)))
     buffor.push('#'.charCodeAt(0))
     buffor.push(...'bitmap'.split('').map(c => c.charCodeAt(0)))
-    buffor.push(...indexBytes)
+    buffor.push(...preparedIndexBytes)
     buffor.push(...poolKeyBytes)
 
     const key = hash(new Uint8Array(buffor))
@@ -500,6 +505,42 @@ export class Invariant {
     const rawBytes = (response.CLValue! as any).bytes
     return decodePositionLength(rawBytes)
   }
+
+  async getPositions(account: Keys.AsymmetricKey) {
+    const positionsCount = await this.getPositionsCount(account)
+    const positions = []
+    for (let i = 0n; i < positionsCount; i++) {
+      positions.push(await this.getPosition(account, i))
+    }
+  }
+
+  async swap(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint,
+    xToY: boolean,
+    amount: bigint,
+    byAmountIn: boolean,
+    sqrtPriceLimit: bigint
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+
+    return await sendTx(this.contract, this.service, this.paymentAmount, account, network, 'swap', {
+      token_0: CLValueBuilder.key(token0Key),
+      token_1: CLValueBuilder.key(token1Key),
+      fee: CLValueBuilder.u128(BigNumber.from(fee)),
+      tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
+      x_to_y: CLValueBuilder.bool(xToY),
+      amount: CLValueBuilder.u256(BigNumber.from(amount)),
+      by_amount_in: CLValueBuilder.bool(byAmountIn),
+      sqrt_price_limit: CLValueBuilder.u128(BigNumber.from(sqrtPriceLimit))
+    })
+  }
+
   async withdrawProtocolFee(
     account: Keys.AsymmetricKey,
     network: Network,
@@ -525,5 +566,27 @@ export class Invariant {
         tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
       }
     )
+  }
+
+  private async getPoolKeys() {
+    const key = hash('pool_keys')
+    const stateRootHash = await this.service.getStateRootHash()
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+
+    return decodePoolKeys(rawBytes)
+  }
+
+  async getPools() {
+    const poolKeys = await this.getPoolKeys()
+    const pools = await Promise.all(poolKeys.map(async poolKey => await this.getPool(poolKey)))
+    return pools
   }
 }
