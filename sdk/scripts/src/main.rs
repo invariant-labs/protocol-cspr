@@ -134,7 +134,7 @@ fn main() {
             println!("Remainder = {:?}", remainder);
         }
     }
-    //  Ticks
+    // Ticks
     {
         println!("Construct ticks mapping key");
         let mut buffor: Vec<u8> = Vec::new();
@@ -171,6 +171,39 @@ fn main() {
         let encoded = hex::encode(result.as_bytes());
         println!("Ticks query Hash = {}", encoded);
     }
+    {
+        println!("Decode tick query result");
+        let bytes = hex::decode("01040000005469636b0a00000001090000004c697175696469747900090000004c697175696469747900090000005371727450726963650a000000a1edccce1bc2d30900000046656547726f777468000900000046656547726f777468000000000000000000").unwrap();
+        let (value, bytes): (Option<String>, &[u8]) = Option::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = i32::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = bool::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U128::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = u64::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        assert!(bytes.len() == 0);
+    }
     // Tickmap
     {
         println!("Construct tickmap mapping key");
@@ -192,6 +225,7 @@ fn main() {
         };
 
         let key = (346u16, pool_key);
+        println!("Chunk index bytes = {:?}", 346u16.to_bytes().unwrap());
         buffor.extend_from_slice(b"tickmap");
         buffor.extend_from_slice(b"#");
         buffor.extend_from_slice(b"bitmap");
@@ -208,6 +242,17 @@ fn main() {
         let encoded = hex::encode(result.as_bytes());
         println!("Tickmap query Hash = {}", encoded);
     }
+    // Decode Tickmap
+    {
+        // println!("Decode tickmap query result");
+        // let bytes = hex::decode("0000000050000000").unwrap();
+        // let (value, bytes): (Option<String>, &[u8]) = Option::from_bytes(&bytes).unwrap();
+        // println!("Value = {:?}", value);
+        // println!("Bytes = {:?}", bytes);
+        // let (value, bytes) = u64::from_bytes(&bytes).unwrap();
+        // println!("Value = {:?}", value);
+        // assert!(bytes.len() == 0);
+    }
     // Positions
     {
         println!("Construct positions mapping key");
@@ -221,10 +266,14 @@ fn main() {
         );
         let key = (account_hex, 0u32);
 
+        println!("account = {:?}", account_hex);
+        println!("account bytes = {:?}", account_hex.to_bytes().unwrap());
+        println!("v = {:?}", 0u32.to_bytes().unwrap());
         buffor.extend_from_slice(b"positions");
         buffor.extend_from_slice(b"#");
         buffor.extend_from_slice(b"positions");
-        buffor.extend_from_slice(&key.to_bytes().unwrap());
+        buffor.extend_from_slice(&account_hex.to_bytes().unwrap());
+        buffor.extend_from_slice(&0u32.to_bytes().unwrap());
 
         // Hash the buffer using Blake2b.
         let result = Params::new()
@@ -237,7 +286,54 @@ fn main() {
         let encoded = hex::encode(result.as_bytes());
         println!("Positions query Hash = {}", encoded);
     }
-    // Positions
+    // Decode Positions
+    {
+        println!("Decode positions query result");
+        let bytes = hex::decode("0108000000506f736974696f6e07000000506f6f6c4b657901c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c47201da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb2290807000000466565546965720a00000050657263656e7461676501640a000000090000004c697175696469747900f6ffffff0a0000000900000046656547726f777468000900000046656547726f7774680000000000000000000b000000546f6b656e416d6f756e74000b000000546f6b656e416d6f756e7400").unwrap();
+        let (value, bytes): (Option<String>, &[u8]) = Option::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = Address::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = Address::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U128::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = u32::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = i32::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = i32::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = u64::from_bytes(&bytes).unwrap();
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        let (value, bytes) = String::from_bytes(&bytes).unwrap();
+        println!("Struct Name = {:?}", value);
+        let (value, bytes) = U256::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        assert!(bytes.len() == 0)
+    }
+    // Positions length
     {
         println!("Construct positions length mapping key");
         let mut buffor: Vec<u8> = Vec::new();
@@ -265,6 +361,14 @@ fn main() {
         // Convert the hash to hex.
         let encoded = hex::encode(result.as_bytes());
         println!("Positions length query Hash = {}", encoded);
+    }
+    // Decode Positions length
+    {
+        println!("Decode positions length query result");
+        let bytes = hex::decode("01000000").unwrap();
+        let (value, bytes) = u32::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        assert!(bytes.len() == 0);
     }
     // Decode mapping result
     {

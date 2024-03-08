@@ -1,10 +1,9 @@
 import { ALICE, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Invariant } from './invariant'
 import { Network } from './network'
-import { callWasm, createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
+import { createAccountKeys, initCasperClientAndService } from './utils'
 const main = async () => {
   const createKeys = false
-  const wasm = await loadWasm()
 
   if (createKeys) {
     createAccountKeys()
@@ -67,10 +66,23 @@ const main = async () => {
 
   const invariant = await Invariant.load(client, service, invariantHash)
 
-  console.log(await callWasm(wasm.tickToChunk, 10n, 10n))
-  console.log(account.accountHex())
+  //   const fee = 55n
+  //   const tickSpacing = 10n
+
+  const poolKey = {
+    tokenX: 'c34b7847a3fe4d5d12e4975b4eddfed10d25f0cb165d740a4a74606172d7c472',
+    tokenY: 'da1b9f07767375414fc7649ac8719be5d7104f49bc8c030bd51c45b0dbb22908',
+    feeTier: {
+      fee: 100n,
+      tickSpacing: 10n
+    }
+  }
+
   console.log(await invariant.getInvariantConfig())
-  console.log(await invariant.getPosition())
+  console.log(await invariant.getPosition(account, network, 0n))
+  console.log(await invariant.getTick(poolKey, 10n))
+  console.log(await invariant.getTickmapChunk(poolKey, 10n, 10n))
+  console.log(await invariant.getPositionsCount(account))
 
   // console.log('Init SDK!')
   // {

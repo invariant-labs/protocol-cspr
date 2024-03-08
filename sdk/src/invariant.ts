@@ -13,13 +13,19 @@ import {
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './network'
 import {
+  bigintToByteArray,
+  callWasm,
   decodeFeeTiers,
   decodeInvariantConfig,
   decodePool,
+  decodePosition,
+  decodePositionLength,
+  decodeTick,
   encodePoolKey,
   getDeploymentData,
   hash,
   integerSafeCast,
+  loadWasm,
   sendTx
 } from './utils'
 
@@ -388,20 +394,111 @@ export class Invariant {
     )
   }
 
-  async getPosition() {
+  async getPosition(account: Keys.AsymmetricKey, network: Network, index: bigint) {
     const stateRootHash = await this.service.getStateRootHash()
-    console.log('Root hash:', stateRootHash)
-    // const response = await this.service.getDictionaryItemByName(
-    //   stateRootHash,
-    //   this.contract.contractHash!,
-    //   'state',
-    //   hash('position'),
-    //   { rawData: true }
-    // )
+    const buffor: number[] = []
+    const indexBytes = bigintToByteArray(index)
+    buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
+    // Value indicating that bytes are related to `AccountHash` not `ContractPackageHash`
+    buffor.push(0)
+    buffor.push(...account.accountHash())
+    buffor.push(...indexBytes.concat(Array(4 - indexBytes.length).fill(0)))
 
-    // const rawBytes = (response.CLValue! as any).bytes
+    const key = hash(new Uint8Array(buffor))
 
-    // return decodePool(rawBytes)
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    console.log('Position Bytes', rawBytes)
+    return decodePosition(rawBytes)
+  }
+
+  async getTick(poolKey: any, index: bigint) {
+    const stateRootHash = await this.service.getStateRootHash()
+    const buffor: number[] = []
+    const indexBytes = bigintToByteArray(index)
+    const preparedIndexBytes = indexBytes.concat(Array(4 - indexBytes.length).fill(0))
+    const poolKeyBytes = encodePoolKey(poolKey)
+
+    buffor.push(...'ticks'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'ticks'.split('').map(c => c.charCodeAt(0)))
+    buffor.push(...poolKeyBytes)
+    buffor.push(...preparedIndexBytes)
+
+    const key = hash(new Uint8Array(buffor))
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    return decodeTick(rawBytes)
+  }
+
+  async getTickmapChunk(poolKey: any, tickIndex: bigint, tickSpacing: bigint) {
+    const wasm = await loadWasm()
+    const stateRootHash = await this.service.getStateRootHash()
+    const chunkIndex = await callWasm(wasm.tickToChunk, tickIndex, tickSpacing)
+    const indexBytes = bigintToByteArray(chunkIndex)
+    const poolKeyBytes = encodePoolKey(poolKey)
+    const buffor: number[] = []
+
+    buffor.push(...'tickmap'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'bitmap'.split('').map(c => c.charCodeAt(0)))
+    buffor.push(...indexBytes)
+    buffor.push(...poolKeyBytes)
+
+    const key = hash(new Uint8Array(buffor))
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    console.log('Tickmap chunk Bytes', rawBytes)
+    // TODO add deserialization
+  }
+
+  async getPositionsCount(account: Keys.AsymmetricKey) {
+    const stateRootHash = await this.service.getStateRootHash()
+    const buffor: number[] = []
+    buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'positions_length'.split('').map(c => c.charCodeAt(0)))
+    // Value indicating that bytes are related to `AccountHash` not `ContractPackageHash`
+    buffor.push(0)
+    buffor.push(...account.accountHash())
+
+    const key = hash(new Uint8Array(buffor))
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    return decodePositionLength(rawBytes)
   }
   async withdrawProtocolFee(
     account: Keys.AsymmetricKey,
