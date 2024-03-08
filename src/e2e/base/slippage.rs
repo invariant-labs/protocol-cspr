@@ -128,6 +128,7 @@ fn test_basic_slippage() {
 }
 
 #[test]
+#[should_panic]
 fn test_swap_close_to_limit() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);

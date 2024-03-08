@@ -11,7 +11,7 @@ import {
   decodeBase16
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
-import { Network } from './network'
+import { Network } from './enums'
 import {
   decodeFeeTiers,
   decodeInvariantConfig,
@@ -52,7 +52,7 @@ export class Invariant {
     deployer: Keys.AsymmetricKey,
     fee: bigint = 0n,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
-  ): Promise<string> {
+  ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
 
     const wasm = await getDeploymentData(CONTRACT_NAME)
@@ -114,7 +114,10 @@ export class Invariant {
       throw new Error('Contract package not found in block state')
     }
 
-    return ContractPackage.versions[0].contractHash.replace('contract-', '')
+    return [
+      contractPackageHash.replace('hash-', ''),
+      ContractPackage.versions[0].contractHash.replace('contract-', '')
+    ]
   }
 
   static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
@@ -387,6 +390,33 @@ export class Invariant {
         index: CLValueBuilder.u32(integerSafeCast(index))
       }
     )
+  }
+
+  async swap(
+    account: Keys.AsymmetricKey,
+    network: Network,
+    token0: string,
+    token1: string,
+    fee: bigint,
+    tickSpacing: bigint,
+    xToY: boolean,
+    amount: bigint,
+    byAmountIn: boolean,
+    sqrtPriceLimit: bigint
+  ) {
+    const token0Key = new CLByteArray(decodeBase16(token0))
+    const token1Key = new CLByteArray(decodeBase16(token1))
+
+    return await sendTx(this.contract, this.service, this.paymentAmount, account, network, 'swap', {
+      token_0: CLValueBuilder.key(token0Key),
+      token_1: CLValueBuilder.key(token1Key),
+      fee: CLValueBuilder.u128(BigNumber.from(fee)),
+      tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
+      x_to_y: CLValueBuilder.bool(xToY),
+      amount: CLValueBuilder.u256(BigNumber.from(amount)),
+      by_amount_in: CLValueBuilder.bool(byAmountIn),
+      sqrt_price_limit: CLValueBuilder.u128(BigNumber.from(sqrtPriceLimit))
+    })
   }
 
   async withdrawProtocolFee(

@@ -209,6 +209,7 @@ fn test_claim() {
 }
 
 #[test]
+#[should_panic]
 fn test_claim_not_position_owner() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);

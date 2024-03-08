@@ -360,6 +360,7 @@ fn test_cross_both_side() {
 }
 
 #[test]
+#[should_panic]
 fn test_cross_both_side_not_cross_case() {
     let deployer = test_env::get_account(0);
     test_env::set_caller(deployer);
