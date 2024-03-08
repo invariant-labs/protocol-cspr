@@ -97,24 +97,13 @@ const main = async () => {
     token1ContractPackage = token1ContractPackageHash
     token0Contract = await Erc20.load(client, service, token0ContractHash)
     token1Contract = await Erc20.load(client, service, token1ContractHash)
-    token0Address = token0Contract.contract.contractHash?.replace('hash-', '') ?? ''
-    token1Address = token1Contract.contract.contractHash?.replace('hash-', '') ?? ''
+    token0Address = token0Contract.contract.contractHash!
+    token1Address = token1Contract.contract.contractHash!
   }
 
   const addFeeTierResult = await invariantContract.addFeeTier(account, network, 0n, 1n)
   console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
 
-  const [tokenX, tokenY] =
-    token0Address < token1Address ? [token0Address, token1Address] : [token1Address, token0Address]
-
-  const poolKey = {
-    tokenX,
-    tokenY,
-    feeTier: {
-      fee: 0n,
-      tickSpacing: 1n
-    }
-  }
   const createPoolResult = await invariantContract.createPool(
     account,
     network,
@@ -192,8 +181,13 @@ const main = async () => {
     await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
   )
 
-  console.log(await invariantContract.getPosition(account, 0n))
-  console.log(await invariantContract.getTickmapChunk(poolKey, 10n))
+  const position = await invariantContract.getPosition(account, 0n)
+  const poolKey = position.poolKey
+  console.log(await invariantContract.getFeeTiers())
+  console.log(await invariantContract.getPool(poolKey))
+  console.log(await invariantContract.getPools())
+  console.log(await invariantContract.isTickInitialized(poolKey, 10n))
+  console.log(await invariantContract.getPositions(account))
 }
 
 main()

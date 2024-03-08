@@ -34,6 +34,13 @@ pub fn tick_to_chunk(tick: i32, tick_spacing: i32) -> u16 {
 }
 
 #[wasm_wrapper]
+pub fn tick_to_pos(tick: i32, tick_spacing: i32) -> u8 {
+    let bitmap_index = (tick + MAX_TICK) / tick_spacing;
+    let pos: u8 = (bitmap_index % CHUNK_SIZE) as u8;
+    pos
+}
+
+#[wasm_wrapper]
 pub fn get_max_chunk(tick_spacing: u32) -> u32 {
     let max_tick = get_max_tick(tick_spacing);
     let max_bitmap_index = (max_tick + MAX_TICK) / tick_spacing as i32;

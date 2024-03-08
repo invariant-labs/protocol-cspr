@@ -15,6 +15,7 @@ import { Network } from './enums'
 import {
   bigintToByteArray,
   callWasm,
+  decodeChunk,
   decodeFeeTiers,
   decodeInvariantConfig,
   decodePool,
@@ -23,6 +24,7 @@ import {
   decodePositionLength,
   decodeTick,
   encodePoolKey,
+  getBitAtIndex,
   getDeploymentData,
   hash,
   integerSafeCast,
@@ -421,7 +423,6 @@ export class Invariant {
     )
 
     const rawBytes = (response.CLValue! as any).bytes
-    console.log('Position Bytes', rawBytes)
     return decodePosition(rawBytes)
   }
 
@@ -452,10 +453,8 @@ export class Invariant {
     return decodeTick(rawBytes)
   }
 
-  async getTickmapChunk(poolKey: any, tickIndex: bigint) {
-    const wasm = await loadWasm()
+  private async getTickmapChunk(poolKey: any, chunkIndex: bigint) {
     const stateRootHash = await this.service.getStateRootHash()
-    const chunkIndex = await callWasm(wasm.tickToChunk, tickIndex, poolKey.feeTier.tickSpacing)
     const indexBytes = bigintToByteArray(chunkIndex)
     const preparedIndexBytes = indexBytes.concat(Array(2 - indexBytes.length).fill(0))
     const poolKeyBytes = encodePoolKey(poolKey)
@@ -478,8 +477,7 @@ export class Invariant {
     )
 
     const rawBytes = (response.CLValue! as any).bytes
-    console.log('Tickmap chunk Bytes', rawBytes)
-    // TODO add deserialization
+    return decodeChunk(rawBytes)
   }
 
   async getPositionsCount(account: Keys.AsymmetricKey) {
@@ -512,6 +510,7 @@ export class Invariant {
     for (let i = 0n; i < positionsCount; i++) {
       positions.push(await this.getPosition(account, i))
     }
+    return positions
   }
 
   async swap(
@@ -580,8 +579,15 @@ export class Invariant {
     )
 
     const rawBytes = (response.CLValue! as any).bytes
-
     return decodePoolKeys(rawBytes)
+  }
+
+  async isTickInitialized(poolKey: any, tickIndex: bigint) {
+    const wasm = await loadWasm()
+    const chunkIndex = await callWasm(wasm.tickToChunk, tickIndex, poolKey.feeTier.tickSpacing)
+    const tickPosition = await callWasm(wasm.tickToPos, tickIndex, poolKey.feeTier.tickSpacing)
+    const chunk = await this.getTickmapChunk(poolKey, chunkIndex)
+    return getBitAtIndex(chunk, tickPosition)
   }
 
   async getPools() {

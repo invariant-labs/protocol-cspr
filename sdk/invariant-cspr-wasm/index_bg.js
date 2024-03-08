@@ -728,75 +728,6 @@ export function isValidTick(js_tick_index, js_tick_spacing, js_sqrt_price) {
 }
 
 /**
-* @param {any} js_sqrt_price
-* @param {any} js_tick_spacing
-* @returns {any}
-*/
-export function calculateTick(js_sqrt_price, js_tick_spacing) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.calculateTick(retptr, addHeapObject(js_sqrt_price), addHeapObject(js_tick_spacing));
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        var r2 = getInt32Memory0()[retptr / 4 + 2];
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
-* @param {any} js_x
-* @param {any} js_lower_tick
-* @param {any} js_upper_tick
-* @param {any} js_current_sqrt_price
-* @param {any} js_rounding_up
-* @returns {any}
-*/
-export function getLiquidityByX(js_x, js_lower_tick, js_upper_tick, js_current_sqrt_price, js_rounding_up) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.getLiquidityByX(retptr, addHeapObject(js_x), addHeapObject(js_lower_tick), addHeapObject(js_upper_tick), addHeapObject(js_current_sqrt_price), addHeapObject(js_rounding_up));
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        var r2 = getInt32Memory0()[retptr / 4 + 2];
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
-* @param {any} js_y
-* @param {any} js_lower_tick
-* @param {any} js_upper_tick
-* @param {any} js_current_sqrt_price
-* @param {any} js_rounding_up
-* @returns {any}
-*/
-export function getLiquidityByY(js_y, js_lower_tick, js_upper_tick, js_current_sqrt_price, js_rounding_up) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm.getLiquidityByY(retptr, addHeapObject(js_y), addHeapObject(js_lower_tick), addHeapObject(js_upper_tick), addHeapObject(js_current_sqrt_price), addHeapObject(js_rounding_up));
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        var r2 = getInt32Memory0()[retptr / 4 + 2];
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
 * @returns {bigint}
 */
 export function getGlobalMaxSqrtPrice() {
@@ -875,6 +806,27 @@ export function tickToChunk(js_tick, js_tick_spacing) {
 }
 
 /**
+* @param {any} js_tick
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function tickToPos(js_tick, js_tick_spacing) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.tickToPos(retptr, addHeapObject(js_tick), addHeapObject(js_tick_spacing));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
 * @param {any} js_tick_spacing
 * @returns {bigint}
 */
@@ -901,6 +853,75 @@ export function getChunkSize() {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         wasm.getChunkSize(retptr);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {any} js_sqrt_price
+* @param {any} js_tick_spacing
+* @returns {any}
+*/
+export function calculateTick(js_sqrt_price, js_tick_spacing) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.calculateTick(retptr, addHeapObject(js_sqrt_price), addHeapObject(js_tick_spacing));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {any} js_x
+* @param {any} js_lower_tick
+* @param {any} js_upper_tick
+* @param {any} js_current_sqrt_price
+* @param {any} js_rounding_up
+* @returns {any}
+*/
+export function getLiquidityByX(js_x, js_lower_tick, js_upper_tick, js_current_sqrt_price, js_rounding_up) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.getLiquidityByX(retptr, addHeapObject(js_x), addHeapObject(js_lower_tick), addHeapObject(js_upper_tick), addHeapObject(js_current_sqrt_price), addHeapObject(js_rounding_up));
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var r2 = getInt32Memory0()[retptr / 4 + 2];
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* @param {any} js_y
+* @param {any} js_lower_tick
+* @param {any} js_upper_tick
+* @param {any} js_current_sqrt_price
+* @param {any} js_rounding_up
+* @returns {any}
+*/
+export function getLiquidityByY(js_y, js_lower_tick, js_upper_tick, js_current_sqrt_price, js_rounding_up) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        wasm.getLiquidityByY(retptr, addHeapObject(js_y), addHeapObject(js_lower_tick), addHeapObject(js_upper_tick), addHeapObject(js_current_sqrt_price), addHeapObject(js_rounding_up));
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var r2 = getInt32Memory0()[retptr / 4 + 2];

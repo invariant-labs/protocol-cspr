@@ -208,6 +208,39 @@ export function isTokenX(js_token_candidate: any, js_token_to_compare: any): any
 */
 export function isValidTick(js_tick_index: any, js_tick_spacing: any, js_sqrt_price: any): any;
 /**
+* @returns {bigint}
+*/
+export function getGlobalMaxSqrtPrice(): bigint;
+/**
+* @returns {bigint}
+*/
+export function getGlobalMinSqrtPrice(): bigint;
+/**
+* @returns {bigint}
+*/
+export function getTickSearchRange(): bigint;
+/**
+* @param {any} js_tick
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function tickToChunk(js_tick: any, js_tick_spacing: any): bigint;
+/**
+* @param {any} js_tick
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function tickToPos(js_tick: any, js_tick_spacing: any): bigint;
+/**
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function getMaxChunk(js_tick_spacing: any): bigint;
+/**
+* @returns {bigint}
+*/
+export function getChunkSize(): bigint;
+/**
 * @param {any} js_sqrt_price
 * @param {any} js_tick_spacing
 * @returns {any}
@@ -231,33 +264,6 @@ export function getLiquidityByX(js_x: any, js_lower_tick: any, js_upper_tick: an
 * @returns {any}
 */
 export function getLiquidityByY(js_y: any, js_lower_tick: any, js_upper_tick: any, js_current_sqrt_price: any, js_rounding_up: any): any;
-/**
-* @returns {bigint}
-*/
-export function getGlobalMaxSqrtPrice(): bigint;
-/**
-* @returns {bigint}
-*/
-export function getGlobalMinSqrtPrice(): bigint;
-/**
-* @returns {bigint}
-*/
-export function getTickSearchRange(): bigint;
-/**
-* @param {any} js_tick
-* @param {any} js_tick_spacing
-* @returns {bigint}
-*/
-export function tickToChunk(js_tick: any, js_tick_spacing: any): bigint;
-/**
-* @param {any} js_tick_spacing
-* @returns {bigint}
-*/
-export function getMaxChunk(js_tick_spacing: any): bigint;
-/**
-* @returns {bigint}
-*/
-export function getChunkSize(): bigint;
 /**
 * @param {any} token_0
 * @param {any} token_1

@@ -387,6 +387,17 @@ export const decodeTick = (rawBytes: any) => {
   }
 }
 
+export const decodeChunk = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const [chunk, remainder] = decodeU64(bytes)
+
+  if (remainder!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return chunk
+}
+
 export const decodePositionLength = (rawBytes: any) => {
   const bytes = parseBytes(rawBytes)
   const [length, remainder] = decodeU32(bytes)
@@ -424,9 +435,11 @@ export const encodePoolKey = (poolKey: any): number[] => {
   buffor.push(...feeTierStructBytes)
   buffor.push(10, 0, 0, 0)
   buffor.push(...percentageSturctBytes)
-  buffor.push(feeBytes.length)
+  if (poolKey.feeTier.fee > 0) {
+    buffor.push(feeBytes.length)
+  }
   buffor.push(...feeBytes)
-  buffor.push(...[Number(poolKey.feeTier.tickSpacing), 0, 0, 0])
+  buffor.push(...[integerSafeCast(poolKey.feeTier.tickSpacing), 0, 0, 0])
 
   return buffor
 }
@@ -478,4 +491,11 @@ export const integerSafeCast = (value: bigint): number => {
     throw new Error('Integer value is outside the safe range for Numbers')
   }
   return Number(value)
+}
+
+export const getBitAtIndex = (v: bigint, index: bigint): boolean => {
+  const binary = v.toString(2)
+  const reversedBinaryString = binary.split('').reverse().join('')
+  const bitAtIndex = reversedBinaryString[integerSafeCast(index)]
+  return bitAtIndex === '1'
 }

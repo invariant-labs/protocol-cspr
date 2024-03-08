@@ -243,14 +243,13 @@ fn main() {
     }
     // Decode Tickmap
     {
-        // println!("Decode tickmap query result");
-        // let bytes = hex::decode("0000000050000000").unwrap();
-        // let (value, bytes): (Option<String>, &[u8]) = Option::from_bytes(&bytes).unwrap();
-        // println!("Value = {:?}", value);
-        // println!("Bytes = {:?}", bytes);
-        // let (value, bytes) = u64::from_bytes(&bytes).unwrap();
-        // println!("Value = {:?}", value);
-        // assert!(bytes.len() == 0);
+        println!("Decode tickmap query result");
+        let bytes = hex::decode("1000000000000000").unwrap();
+        let (value, bytes) = u64::from_bytes(&bytes).unwrap();
+        println!("Value = {:?}", value);
+        println!("Bytes = {:?}", bytes);
+
+        assert!(bytes.len() == 0);
     }
     // Positions
     {
@@ -508,12 +507,22 @@ fn main() {
     // Serialize Pool key
     {
         println!("Serializing pool key");
-        let token_0 = Address::Contract(ContractPackageHash::from([0x01; 32]));
-        let token_1 = Address::Contract(ContractPackageHash::from([0x02; 32]));
+        let token_0 = Address::Contract(
+            ContractPackageHash::from_formatted_str(
+                "contract-package-0b5909f48bc37829d9357bb457ba69e55d74dd3c073c486ecaa05a6a1b416252",
+            )
+            .unwrap(),
+        );
+        let token_1 = Address::Contract(
+            ContractPackageHash::from_formatted_str(
+                "contract-package-6aff160bf8b578fa4134962287c2464afee1c0ebde5e062288e001961d7136e3",
+            )
+            .unwrap(),
+        );
 
         let fee_tier = FeeTier {
-            fee: Percentage { v: U128::from(100) },
-            tick_spacing: 10,
+            fee: Percentage { v: U128::from(0) },
+            tick_spacing: 1,
         };
 
         let pool_key = PoolKey::new(token_0, token_1, fee_tier.clone()).unwrap();
@@ -528,12 +537,24 @@ fn main() {
         let tick_spacing_bytes = fee_tier.tick_spacing.to_bytes().unwrap();
         let fee_bytes = fee_tier.fee.to_bytes().unwrap();
 
+        println!("Pool Key = {:?}", pool_key_bytes);
         buffor.extend_from_slice(&pool_key_struct_bytes);
         buffor.extend_from_slice(&token_0_bytes);
         buffor.extend_from_slice(&token_1_bytes);
         buffor.extend_from_slice(&fee_tier_struct_bytes);
         buffor.extend_from_slice(&fee_bytes);
         buffor.extend_from_slice(&tick_spacing_bytes);
+
+        // Hash the buffer using Blake2b.
+        let result = Params::new()
+            .hash_length(32) // Output hash length in bytes
+            .to_state()
+            .update(&buffor)
+            .finalize();
+
+        // Convert the hash to hex.
+        let encoded = hex::encode(result.as_bytes());
+        println!("Hash = {}", encoded);
 
         assert_eq!(buffor, pool_key_bytes);
     }
