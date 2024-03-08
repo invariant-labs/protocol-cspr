@@ -357,6 +357,9 @@ impl Entrypoints for Invariant {
         let protocol_fee = Percentage::new(fee);
         let caller = contract_env::caller();
 
+        self.pool_keys.set(PoolKeys::default());
+        self.fee_tiers.set(FeeTiers::default());
+
         self.config.set(InvariantConfig {
             admin: caller,
             protocol_fee,
