@@ -192,7 +192,7 @@ const main = async () => {
     await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
   )
 
-  console.log(await invariantContract.getPosition(account, network, 0n))
+  console.log(await invariantContract.getPosition(account, 0n))
   console.log(await invariantContract.getTickmapChunk(poolKey, 10n))
 }
 
