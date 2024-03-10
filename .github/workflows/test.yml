@@ -13,18 +13,18 @@ jobs:
     name: Test decimal dependency
     runs-on: ubuntu-latest
     steps:
-        - name: Checkout source code
-          uses: actions/checkout@v3
-  
-        - name: Test decimal
-          working-directory: ./src/decimal
-          run: |
-            cargo test
+      - name: Checkout source code
+        uses: actions/checkout@v3
 
-        - name: Test decimal core
-          working-directory: ./src/decimal/decimal_core
-          run: |
-            cargo test
+      - name: Test decimal
+        working-directory: ./src/decimal
+        run: |
+          cargo test
+
+      - name: Test decimal core
+        working-directory: ./src/decimal/decimal_core
+        run: |
+          cargo test
 
   linting:
     name: Linting (fmt + clippy)
@@ -36,7 +36,7 @@ jobs:
 
       - name: Add rustfmt clippy components
         run: |
-            rustup component add rustfmt clippy
+          rustup component add rustfmt clippy
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
@@ -49,7 +49,7 @@ jobs:
         with:
           command: clippy
           args: --all-targets -- --no-deps -D warnings
-  
+
   tests_mock_vm:
     name: Tests MockVM (uint + e2e)
     runs-on: ubuntu-latest
@@ -67,13 +67,13 @@ jobs:
 
       - name: Install Rust toolchain
         run: |
-            rustup install nightly-2023-04-20
-            rustup target add wasm32-unknown-unknown   
+          rustup install nightly-2023-04-20
+          rustup target add wasm32-unknown-unknown
 
       - name: Check if cargo odra exists
         id: check-odra-exists
         continue-on-error: true
-        run: cargo odra --version 
+        run: cargo odra --version
 
       - name: Install cargo odra
         if: ${{ steps.check-odra-exists.outcome == 'failure' }}
@@ -103,21 +103,21 @@ jobs:
 
       - name: Install WABT
         run: |
-            sudo apt install wabt
+          sudo apt install wabt
 
       - name: Add rustfmt component
         run: |
-            rustup component add rustfmt
+          rustup component add rustfmt
 
       - name: Install Rust toolchain
         run: |
-            rustup install nightly-2023-04-20
-            rustup target add wasm32-unknown-unknown   
+          rustup install nightly-2023-04-20
+          rustup target add wasm32-unknown-unknown
 
       - name: Check if cargo odra exists
         id: check-odra-exists
         continue-on-error: true
-        run: cargo odra --version 
+        run: cargo odra --version
 
       - name: Install cargo odra
         if: ${{ steps.check-odra-exists.outcome == 'failure' }}
@@ -147,16 +147,16 @@ jobs:
 
       - name: Install WABT
         run: |
-            sudo apt install wabt
+          sudo apt install wabt
 
       - name: Add rustfmt component
         run: |
-            rustup component add rustfmt
+          rustup component add rustfmt
 
       - name: Install Rust toolchain
         run: |
-            rustup install nightly-2023-04-20
-            rustup target add wasm32-unknown-unknown
+          rustup install nightly-2023-04-20
+          rustup target add wasm32-unknown-unknown
 
       - name: Check if cargo odra exists
         id: check-odra-exists
@@ -191,16 +191,16 @@ jobs:
 
       - name: Install WABT
         run: |
-            sudo apt install wabt
+          sudo apt install wabt
 
       - name: Install Rust toolchain
         run: |
-            rustup install nightly-2023-04-20
-            rustup target add wasm32-unknown-unknown
+          rustup install nightly-2023-04-20
+          rustup target add wasm32-unknown-unknown
 
       - name: Add rustfmt component
         run: |
-            rustup component add rustfmt
+          rustup component add rustfmt
 
       - name: Install cargo odra
         run: |
@@ -218,6 +218,10 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
+
+      - name: Install WABT
+        run: |
+          sudo apt install wabt
 
       - name: Build SDK
         working-directory: ./sdk
