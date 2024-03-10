@@ -13,14 +13,22 @@ import {
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './enums'
 import {
+  bigintToByteArray,
+  callWasm,
+  decodeChunk,
   decodeFeeTiers,
   decodeInvariantConfig,
   decodePool,
   decodePoolKeys,
+  decodePosition,
+  decodePositionLength,
+  decodeTick,
   encodePoolKey,
+  getBitAtIndex,
   getDeploymentData,
   hash,
   integerSafeCast,
+  loadWasm,
   sendTx
 } from './utils'
 
@@ -392,6 +400,119 @@ export class Invariant {
     )
   }
 
+  async getPosition(account: Keys.AsymmetricKey, index: bigint) {
+    const stateRootHash = await this.service.getStateRootHash()
+    const buffor: number[] = []
+    const indexBytes = bigintToByteArray(index)
+    buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
+    // Value indicating that bytes are related to `AccountHash` not `ContractPackageHash`
+    buffor.push(0)
+    buffor.push(...account.accountHash())
+    buffor.push(...indexBytes.concat(Array(4 - indexBytes.length).fill(0)))
+
+    const key = hash(new Uint8Array(buffor))
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    return decodePosition(rawBytes)
+  }
+
+  async getTick(poolKey: any, index: bigint) {
+    const stateRootHash = await this.service.getStateRootHash()
+    const buffor: number[] = []
+    const indexBytes = bigintToByteArray(index)
+    const preparedIndexBytes = indexBytes.concat(Array(4 - indexBytes.length).fill(0))
+    const poolKeyBytes = encodePoolKey(poolKey)
+
+    buffor.push(...'ticks'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'ticks'.split('').map(c => c.charCodeAt(0)))
+    buffor.push(...poolKeyBytes)
+    buffor.push(...preparedIndexBytes)
+
+    const key = hash(new Uint8Array(buffor))
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    return decodeTick(rawBytes)
+  }
+
+  private async getTickmapChunk(poolKey: any, chunkIndex: bigint) {
+    const stateRootHash = await this.service.getStateRootHash()
+    const indexBytes = bigintToByteArray(chunkIndex)
+    const preparedIndexBytes = indexBytes.concat(Array(2 - indexBytes.length).fill(0))
+    const poolKeyBytes = encodePoolKey(poolKey)
+    const buffor: number[] = []
+
+    buffor.push(...'tickmap'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'bitmap'.split('').map(c => c.charCodeAt(0)))
+    buffor.push(...preparedIndexBytes)
+    buffor.push(...poolKeyBytes)
+
+    const key = hash(new Uint8Array(buffor))
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    return decodeChunk(rawBytes)
+  }
+
+  async getPositionsCount(account: Keys.AsymmetricKey) {
+    const stateRootHash = await this.service.getStateRootHash()
+    const buffor: number[] = []
+    buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
+    buffor.push('#'.charCodeAt(0))
+    buffor.push(...'positions_length'.split('').map(c => c.charCodeAt(0)))
+    // Value indicating that bytes are related to `AccountHash` not `ContractPackageHash`
+    buffor.push(0)
+    buffor.push(...account.accountHash())
+
+    const key = hash(new Uint8Array(buffor))
+
+    const response = await this.service.getDictionaryItemByName(
+      stateRootHash,
+      this.contract.contractHash!,
+      'state',
+      key,
+      { rawData: true }
+    )
+
+    const rawBytes = (response.CLValue! as any).bytes
+    return decodePositionLength(rawBytes)
+  }
+
+  async getPositions(account: Keys.AsymmetricKey) {
+    const positionsCount = await this.getPositionsCount(account)
+    const positions = []
+    for (let i = 0n; i < positionsCount; i++) {
+      positions.push(await this.getPosition(account, i))
+    }
+    return positions
+  }
+
   async swap(
     account: Keys.AsymmetricKey,
     network: Network,
@@ -458,16 +579,20 @@ export class Invariant {
     )
 
     const rawBytes = (response.CLValue! as any).bytes
-
     return decodePoolKeys(rawBytes)
+  }
+
+  async isTickInitialized(poolKey: any, tickIndex: bigint) {
+    const wasm = await loadWasm()
+    const chunkIndex = await callWasm(wasm.tickToChunk, tickIndex, poolKey.feeTier.tickSpacing)
+    const tickPosition = await callWasm(wasm.tickToPos, tickIndex, poolKey.feeTier.tickSpacing)
+    const chunk = await this.getTickmapChunk(poolKey, chunkIndex)
+    return getBitAtIndex(chunk, tickPosition)
   }
 
   async getPools() {
     const poolKeys = await this.getPoolKeys()
-    const pools = []
-    for (const poolKey of poolKeys) {
-      pools.push(await this.getPool(poolKey))
-    }
+    const pools = await Promise.all(poolKeys.map(async poolKey => await this.getPool(poolKey)))
     return pools
   }
 }

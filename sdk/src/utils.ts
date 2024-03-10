@@ -306,6 +306,108 @@ export const decodePool = (rawBytes: any) => {
   }
 }
 
+export const decodePosition = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const remainingBytes = decodeOption(bytes)
+  const poolKeyRemainder = decodeString(remainingBytes)[1]
+  const [tokenX, tokenXRemainder] = decodeAddress(poolKeyRemainder)
+  const [tokenY, tokenYRemainder] = decodeAddress(tokenXRemainder)
+  const feeTierRemainder = decodeString(tokenYRemainder)[1]
+  const percentageRemainder = decodeString(feeTierRemainder)[1]
+  const [fee, feeRemainder] = decodeU128(percentageRemainder)
+  const [tickSpacing, tickSpacingRemainder] = decodeU32(feeRemainder)
+  const liquidityTypeRemainder = decodeString(tickSpacingRemainder)[1]
+  const [liquidity, liquidityRemainder] = decodeU256(liquidityTypeRemainder)
+  const [lowerTickIndex, lowerTickIndexRemainder] = decodeI32(liquidityRemainder)
+  const [upperTickIndex, upperTickIndexRemainder] = decodeI32(lowerTickIndexRemainder)
+  const feeGrowthXTypeRemainder = decodeString(upperTickIndexRemainder)[1]
+  const [feeGrowthInsideX, feeGrowthInsideXRemainder] = decodeU256(feeGrowthXTypeRemainder)
+  const feeGrowthYTypeRemainder = decodeString(feeGrowthInsideXRemainder)[1]
+  const [feeGrowthInsideY, feeGrowthInsideYRemainder] = decodeU256(feeGrowthYTypeRemainder)
+  const [lastBlockNumber, lastBlockNumberRemainder] = decodeU64(feeGrowthInsideYRemainder)
+  const tokensOwedXTypeRemainder = decodeString(lastBlockNumberRemainder)[1]
+  const [tokenOwedX, tokenOwedXRemainder] = decodeU256(tokensOwedXTypeRemainder)
+  const tokensOwedYTypeRemainder = decodeString(tokenOwedXRemainder)[1]
+  const [tokenOwedY, remainder] = decodeU256(tokensOwedYTypeRemainder)
+
+  if (remainder!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return {
+    poolKey: {
+      tokenX,
+      tokenY,
+      feeTier: {
+        fee,
+        tickSpacing
+      }
+    },
+    liquidity,
+    lowerTickIndex,
+    upperTickIndex,
+    feeGrowthInsideX,
+    feeGrowthInsideY,
+    lastBlockNumber,
+    tokenOwedX,
+    tokenOwedY
+  }
+}
+
+export const decodeTick = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const remainingBytes = decodeOption(bytes)
+  const [index, indexRemainder] = decodeI32(remainingBytes)
+  const [sign, signRemainder] = decodeBool(indexRemainder)
+  const liquidityChangeTypeRemainder = decodeString(signRemainder)[1]
+  const [liquidityChange, liquidtyChangeRemainder] = decodeU128(liquidityChangeTypeRemainder)
+  const liquidityGrossTypeRemainder = decodeString(liquidtyChangeRemainder)[1]
+  const [liquidityGross, liquidityGrossRemainder] = decodeU128(liquidityGrossTypeRemainder)
+  const sqrtPriceTypeRemainder = decodeString(liquidityGrossRemainder)[1]
+  const [sqrtPrice, sqrtPriceRemainder] = decodeU256(sqrtPriceTypeRemainder)
+  const feeGrowthOutsideXTypeRemainder = decodeString(sqrtPriceRemainder)[1]
+  const [feeGrowthOutsideX, feeGrowthOutsideXRemainder] = decodeU256(feeGrowthOutsideXTypeRemainder)
+  const feeGrowthOutsideYTypeRemainder = decodeString(feeGrowthOutsideXRemainder)[1]
+  const [feeGrowthOutsideY, feeGrowthOutsideYRemainder] = decodeU256(feeGrowthOutsideYTypeRemainder)
+  const [secondsOutside, remainder] = decodeU64(feeGrowthOutsideYRemainder)
+
+  if (remainder!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return {
+    index,
+    sign,
+    liquidityChange,
+    liquidityGross,
+    sqrtPrice,
+    feeGrowthOutsideX,
+    feeGrowthOutsideY,
+    secondsOutside
+  }
+}
+
+export const decodeChunk = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const [chunk, remainder] = decodeU64(bytes)
+
+  if (remainder!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return chunk
+}
+
+export const decodePositionLength = (rawBytes: any) => {
+  const bytes = parseBytes(rawBytes)
+  const [length, remainder] = decodeU32(bytes)
+
+  if (remainder!.length != 0) {
+    throw new Error('There are remaining bytes left')
+  }
+
+  return length
+}
 export const parseBytes = (rawBytes: any): Uint8Array => {
   return new Uint8Array(
     String(rawBytes)
@@ -333,9 +435,11 @@ export const encodePoolKey = (poolKey: any): number[] => {
   buffor.push(...feeTierStructBytes)
   buffor.push(10, 0, 0, 0)
   buffor.push(...percentageSturctBytes)
-  buffor.push(feeBytes.length)
+  if (poolKey.feeTier.fee > 0) {
+    buffor.push(feeBytes.length)
+  }
   buffor.push(...feeBytes)
-  buffor.push(...[Number(poolKey.feeTier.tickSpacing), 0, 0, 0])
+  buffor.push(...[integerSafeCast(poolKey.feeTier.tickSpacing), 0, 0, 0])
 
   return buffor
 }
@@ -387,4 +491,11 @@ export const integerSafeCast = (value: bigint): number => {
     throw new Error('Integer value is outside the safe range for Numbers')
   }
   return Number(value)
+}
+
+export const getBitAtIndex = (v: bigint, index: bigint): boolean => {
+  const binary = v.toString(2)
+  const reversedBinaryString = binary.split('').reverse().join('')
+  const bitAtIndex = reversedBinaryString[integerSafeCast(index)]
+  return bitAtIndex === '1'
 }

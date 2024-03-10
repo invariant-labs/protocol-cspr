@@ -16,7 +16,7 @@ use contracts::{events::*, unwrap_invariant_result, InvariantConfig, InvariantEr
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, Tick, Tickmap, Ticks,
 };
-use decimal::Decimal;
+use decimal::*;
 use math::clamm::{calculate_min_amount_out, compute_swap_step, SwapResult};
 use math::get_tick_at_sqrt_price;
 use math::liquidity::Liquidity;
@@ -29,7 +29,6 @@ use odra::types::event::OdraEvent;
 use odra::types::{Address, U128, U256};
 use odra::{OdraType, UnwrapOrRevert, Variable};
 use traceable_result::*;
-
 #[derive(OdraType, Debug, PartialEq)]
 pub struct QuoteResult {
     pub amount_in: TokenAmount,

@@ -5,7 +5,6 @@ import { Invariant } from './invariant'
 import { createAccountKeys, initCasperClientAndService } from './utils'
 const main = async () => {
   const createKeys = false
-  // const wasm = await loadWasm()
 
   if (createKeys) {
     createAccountKeys()
@@ -35,6 +34,18 @@ const main = async () => {
   let invariantAddress = '6f9672545b2600f4f135124bc5fcce3eabcf1d43d828a9c9a227434e13aedc8d'
   let invariantContractPackage = 'f34deac596aeb27b7b9d9418922d9e72ed28bf723a21b1c399c040346ab27d38'
   let invariantContract = await Invariant.load(client, service, invariantAddress)
+
+  const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
+    client,
+    service,
+    network,
+    account,
+    0n,
+    2446489177947n
+  )
+  invariantContractPackage = invariantContractPackageHash
+  invariantContract = await Invariant.load(client, service, invariantContractHash)
+  invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
 
   if (isLocal) {
     const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
@@ -86,40 +97,9 @@ const main = async () => {
     token1ContractPackage = token1ContractPackageHash
     token0Contract = await Erc20.load(client, service, token0ContractHash)
     token1Contract = await Erc20.load(client, service, token1ContractHash)
-    token0Address = token0Contract.contract.contractHash?.replace('hash-', '') ?? ''
-    token1Address = token1Contract.contract.contractHash?.replace('hash-', '') ?? ''
+    token0Address = token0Contract.contract.contractHash!
+    token1Address = token1Contract.contract.contractHash!
   }
-
-  // console.log('balance', await token0Contract.balanceOf(Key.Account, accountAddress))
-  // console.log('balance', await token1Contract.balanceOf(Key.Account, accountAddress))
-
-  // const approveResult = await token0Contract.approve(
-  //   account,
-  //   network,
-  //   Key.Account,
-  //   dummyAddress,
-  //   1000000000000000n
-  // )
-  // console.log('approve', approveResult.execution_results[0].result)
-
-  // console.log(
-  //   'allowance',
-  //   await token0Contract.allowance(Key.Account, accountAddress, Key.Account, dummyAddress)
-  // )
-
-  // const transferFromResult = await token0Contract.transferFrom(
-  //   dummy,
-  //   network,
-  //   Key.Account,
-  //   accountAddress,
-  //   Key.Account,
-  //   dummyAddress,
-  //   10000n
-  // )
-  // console.log('transferFrom', transferFromResult.execution_results[0].result)
-
-  // console.log('balance', await token0Contract.balanceOf(Key.Account, accountAddress))
-  // console.log('balance', await token0Contract.balanceOf(Key.Account, dummyAddress))
 
   const addFeeTierResult = await invariantContract.addFeeTier(account, network, 0n, 1n)
   console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
@@ -200,6 +180,14 @@ const main = async () => {
     'token 1 invariant balance',
     await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
   )
+
+  const position = await invariantContract.getPosition(account, 0n)
+  const poolKey = position.poolKey
+  console.log(await invariantContract.getFeeTiers())
+  console.log(await invariantContract.getPool(poolKey))
+  console.log(await invariantContract.getPools())
+  console.log(await invariantContract.isTickInitialized(poolKey, 10n))
+  console.log(await invariantContract.getPositions(account))
 }
 
 main()
