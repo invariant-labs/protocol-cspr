@@ -17,12 +17,14 @@ const main = async () => {
   let account = ALICE
   let accountAddress = account.publicKey.toAccountHashStr().replace('account-hash-', '')
   const dummy = BOB
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const dummyAddress = dummy.publicKey.toAccountHashStr().replace('account-hash-', '')
   let network = Network.Local
   let nodeUrl = LOCAL_NODE_URL
 
   if (!isLocal) {
     account = TEST
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     accountAddress = account.publicKey.toAccountHashStr().replace('account-hash-', '')
     network = Network.Testnet
     nodeUrl = TESTNET_NODE_URL
