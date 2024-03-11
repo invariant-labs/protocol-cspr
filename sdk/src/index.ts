@@ -161,14 +161,11 @@ const main = async () => {
   const swapResult = await invariantContract.swap(
     account,
     network,
-    token0ContractPackage,
-    token1ContractPackage,
-    0n,
-    1n,
+    poolKey,
     true,
-    10n,
+    { v: 10n },
     true,
-    0n
+    { v: 0n }
   )
   console.log('swap', swapResult.execution_results[0].result)
 

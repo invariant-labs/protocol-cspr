@@ -188,7 +188,7 @@ export const decodeBool = (bytes: Uint8Array): [boolean, Uint8Array] => {
   return [value, remainder!]
 }
 
-export const decodeInvariantConfig = (rawBytes: any) => {
+export const decodeInvariantConfig = (rawBytes: string) => {
   const bytes = parseBytes(rawBytes)
   const structNameRemainder = decodeString(bytes)[1]
   const [admin, adminRemainder] = decodeAddress(structNameRemainder)
@@ -205,7 +205,7 @@ export const decodeInvariantConfig = (rawBytes: any) => {
   }
 }
 
-export const decodePoolKeys = (rawBytes: any): PoolKey[] => {
+export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
   const bytes = parseBytes(rawBytes)
   const stringRemainder = decodeString(bytes)[1]
 
@@ -239,7 +239,7 @@ export const decodePoolKeys = (rawBytes: any): PoolKey[] => {
 
   return poolKeys
 }
-export const decodeFeeTiers = (rawBytes: any): FeeTier[] => {
+export const decodeFeeTiers = (rawBytes: string): FeeTier[] => {
   const bytes = parseBytes(rawBytes)
   const stringRemainder = decodeString(bytes)[1]
 
@@ -267,7 +267,7 @@ export const decodeFeeTiers = (rawBytes: any): FeeTier[] => {
 
   return feeTiers
 }
-export const decodePool = (rawBytes: any): Pool => {
+export const decodePool = (rawBytes: string): Pool => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const liquidityTypeRemainder = decodeString(remainingBytes)[1]
@@ -307,7 +307,7 @@ export const decodePool = (rawBytes: any): Pool => {
   }
 }
 
-export const decodePosition = (rawBytes: any): Position => {
+export const decodePosition = (rawBytes: string): Position => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const poolKeyRemainder = decodeString(remainingBytes)[1]
@@ -355,7 +355,7 @@ export const decodePosition = (rawBytes: any): Position => {
   }
 }
 
-export const decodeTick = (rawBytes: any): Tick => {
+export const decodeTick = (rawBytes: string): Tick => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const [index, indexRemainder] = decodeI32(remainingBytes)
@@ -388,7 +388,7 @@ export const decodeTick = (rawBytes: any): Tick => {
   }
 }
 
-export const decodeChunk = (rawBytes: any): bigint => {
+export const decodeChunk = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
   const [chunk, remainder] = decodeU64(bytes)
 
@@ -399,7 +399,7 @@ export const decodeChunk = (rawBytes: any): bigint => {
   return chunk
 }
 
-export const decodePositionLength = (rawBytes: any): bigint => {
+export const decodePositionLength = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
   const [length, remainder] = decodeU32(bytes)
 
@@ -409,7 +409,7 @@ export const decodePositionLength = (rawBytes: any): bigint => {
 
   return length
 }
-export const parseBytes = (rawBytes: any): Uint8Array => {
+export const parseBytes = (rawBytes: string): Uint8Array => {
   return new Uint8Array(
     String(rawBytes)
       .match(/.{1,2}/g)!
@@ -417,7 +417,7 @@ export const parseBytes = (rawBytes: any): Uint8Array => {
   )
 }
 
-export const encodePoolKey = (poolKey: any): number[] => {
+export const encodePoolKey = (poolKey: PoolKey): number[] => {
   const buffor: number[] = []
   const poolKeyStructBytes = 'PoolKey'.split('').map(c => c.charCodeAt(0))
   const tokenXBytes = hexToBytes(poolKey.tokenX)
