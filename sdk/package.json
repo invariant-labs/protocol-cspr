@@ -14,7 +14,8 @@
     "wasm:strip": "cd contracts && wasm-strip invariant.wasm && wasm-strip erc20.wasm",
     "node:start": "casper-node-launcher-js node v1.5.3",
     "node:start:d": "casper-node-launcher-js node v1.5.3 --daemon",
-    "node:stop": "casper-node-launcher-js stop"
+    "node:stop": "casper-node-launcher-js stop",
+    "clean:target": "rm -rf ./target/tests"
   },
   "dependencies": {
     "@casperlabs/ts-results": "^3.3.5",
