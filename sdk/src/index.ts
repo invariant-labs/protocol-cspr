@@ -65,10 +65,10 @@ const main = async () => {
 
   let token0Address = 'a6e5a67c7834df44c1923c346dfa6cef0df4be4932cbd9102779819633b885d5'
   let token0ContractPackage = '8a52cb3f956a94dd89635701e2225275ddf145f26394acf2414653dbb0db8699'
-  let token0Contract = await Erc20.load(client, service, token0Address)
+  let token0Contract = await Erc20.load(client, service, network, token0Address)
   let token1Address = 'ff1e3e482ddb5c021386acd7af168917159f434d5302463b748693c8db1c4592'
   let token1ContractPackage = 'a9129e520e38ba142d81cdeebf05691b0e404206820792209ae188fbdc15428d'
-  let token1Contract = await Erc20.load(client, service, token1Address)
+  let token1Contract = await Erc20.load(client, service, network, token1Address)
 
   if (isLocal) {
     const [token0ContractPackageHash, token0ContractHash] = await Erc20.deploy(
@@ -97,8 +97,8 @@ const main = async () => {
     )
     token0ContractPackage = token0ContractPackageHash
     token1ContractPackage = token1ContractPackageHash
-    token0Contract = await Erc20.load(client, service, token0ContractHash)
-    token1Contract = await Erc20.load(client, service, token1ContractHash)
+    token0Contract = await Erc20.load(client, service, network, token0ContractHash)
+    token1Contract = await Erc20.load(client, service, network, token1ContractHash)
     token0Address = token0Contract.contract.contractHash!
     token1Address = token1Contract.contract.contractHash!
   }
@@ -120,7 +120,6 @@ const main = async () => {
 
   const approveResult1 = await token0Contract.approve(
     account,
-    network,
     Key.Hash,
     invariantContractPackage,
     1000000000000000n
@@ -129,7 +128,6 @@ const main = async () => {
 
   const approveResult2 = await token1Contract.approve(
     account,
-    network,
     Key.Hash,
     invariantContractPackage,
     1000000000000000n

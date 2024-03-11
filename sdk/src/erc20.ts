@@ -22,15 +22,18 @@ export class Erc20 {
   service: CasperServiceByJsonRPC
   contract: Contracts.Contract
   paymentAmount: bigint
+  network: Network
 
   private constructor(
     client: CasperClient,
     service: CasperServiceByJsonRPC,
+    network: Network,
     contractHash: string,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
   ) {
     this.client = client
     this.service = service
+    this.network = network
     this.contract = new Contracts.Contract(this.client)
     this.contract.setContractHash(contractHash)
     this.paymentAmount = paymentAmount
@@ -41,7 +44,7 @@ export class Erc20 {
     service: CasperServiceByJsonRPC,
     network: Network,
     deployer: Keys.AsymmetricKey,
-    nameSuffix: string,
+    namedKeysName: string,
     initial_supply: bigint = 0n,
     name: string = '',
     symbol: string = '',
@@ -53,7 +56,7 @@ export class Erc20 {
     const wasm = await getDeploymentData(CONTRACT_NAME)
 
     const args = RuntimeArgs.fromMap({
-      odra_cfg_package_hash_key_name: CLValueBuilder.string(CONTRACT_NAME + nameSuffix),
+      odra_cfg_package_hash_key_name: CLValueBuilder.string(namedKeysName),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
@@ -93,9 +96,7 @@ export class Erc20 {
       throw new Error('Account not found in block state')
     }
 
-    const contractPackageHash = Account.namedKeys.find(
-      (i: any) => i.name === CONTRACT_NAME + nameSuffix
-    )?.key
+    const contractPackageHash = Account.namedKeys.find((i: any) => i.name === namedKeysName)?.key
 
     if (!contractPackageHash) {
       throw new Error('Contract package not found in account named keys')
@@ -113,11 +114,16 @@ export class Erc20 {
     ]
   }
 
-  static async load(client: CasperClient, service: CasperServiceByJsonRPC, contractHash: string) {
-    return new Erc20(client, service, 'hash-' + contractHash)
+  static async load(
+    client: CasperClient,
+    service: CasperServiceByJsonRPC,
+    network: Network,
+    contractHash: string
+  ) {
+    return new Erc20(client, service, network, 'hash-' + contractHash)
   }
 
-  async setContractHash(contractHash: string) {
+  setContractHash(contractHash: string) {
     this.contract.setContractHash('hash-' + contractHash)
   }
 
@@ -161,13 +167,7 @@ export class Erc20 {
     return BigInt(response.data._hex)
   }
 
-  async approve(
-    account: Keys.AsymmetricKey,
-    network: Network,
-    spenderHash: Key,
-    spender: string,
-    amount: bigint
-  ) {
+  async approve(account: Keys.AsymmetricKey, spenderHash: Key, spender: string, amount: bigint) {
     const spenderBytes = new Uint8Array([spenderHash, ...decodeBase16(spender)])
     const spenderKey = new CLByteArray(spenderBytes)
 
@@ -176,7 +176,7 @@ export class Erc20 {
       this.service,
       this.paymentAmount,
       account,
-      network,
+      this.network,
       'approve',
       {
         spender: spenderKey,
@@ -187,7 +187,6 @@ export class Erc20 {
 
   async transfer(
     account: Keys.AsymmetricKey,
-    network: Network,
     recipientHash: Key,
     recipient: string,
     amount: bigint
@@ -200,7 +199,7 @@ export class Erc20 {
       this.service,
       this.paymentAmount,
       account,
-      network,
+      this.network,
       'transfer',
       {
         recipient: recipientKey,
@@ -209,9 +208,26 @@ export class Erc20 {
     )
   }
 
+  async mint(account: Keys.AsymmetricKey, addressHash: Key, address: string, amount: bigint) {
+    const addressBytes = new Uint8Array([addressHash, ...decodeBase16(address)])
+    const addressKey = new CLByteArray(addressBytes)
+
+    return await sendTx(
+      this.contract,
+      this.service,
+      this.paymentAmount,
+      account,
+      this.network,
+      'mint',
+      {
+        address: addressKey,
+        amount: CLValueBuilder.u256(BigNumber.from(amount))
+      }
+    )
+  }
+
   async transferFrom(
     account: Keys.AsymmetricKey,
-    network: Network,
     ownerHash: Key,
     owner: string,
     recipientHash: Key,
@@ -228,7 +244,7 @@ export class Erc20 {
       this.service,
       this.paymentAmount,
       account,
-      network,
+      this.network,
       'transfer_from',
       {
         owner: ownerKey,
