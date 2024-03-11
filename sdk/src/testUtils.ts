@@ -22,8 +22,6 @@ export const deployInvariantAndTokens = async (
     600000000000n
   )
   const invariantContractPackage = invariantContractPackageHash
-  const invariantContract = await Invariant.load(client, service, invariantContractHash)
-  const invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
 
   const [token0ContractPackageHash, token0ContractHash] = await Erc20.deploy(
     client,
@@ -51,41 +49,32 @@ export const deployInvariantAndTokens = async (
   )
   const token0ContractPackage = token0ContractPackageHash
   const token1ContractPackage = token1ContractPackageHash
-  const token0Contract = await Erc20.load(client, service, token0ContractHash)
-  const token1Contract = await Erc20.load(client, service, token1ContractHash)
-  const token0Address = token0Contract.contract.contractHash!
-  const token1Address = token1Contract.contract.contractHash!
 
   const tokens = (await callWasm(wasm.isTokenX, token0ContractPackage, token1ContractPackage))
     ? {
         tokenX: {
-          contract: token0Contract,
-          address: token0Address,
+          loadHash: token0ContractHash,
           packageHash: token0ContractPackage
         },
         tokenY: {
-          contract: token1Contract,
-          address: token1Address,
+          loadHash: token1ContractHash,
           packageHash: token1ContractPackage
         }
       }
     : {
         tokenX: {
-          contract: token1Contract,
-          address: token1Address,
+          loadHash: token1ContractHash,
           packageHash: token1ContractPackage
         },
         tokenY: {
-          contract: token0Contract,
-          address: token0Address,
+          loadHash: token0ContractHash,
           packageHash: token0ContractPackage
         }
       }
 
   return {
     invariant: {
-      contract: invariantContract,
-      address: invariantAddress,
+      loadHash: invariantContractHash,
       packageHash: invariantContractPackage
     },
     ...tokens
