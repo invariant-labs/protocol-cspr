@@ -1,4 +1,4 @@
-import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
+import { ALICE, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
@@ -15,7 +15,7 @@ let token1Address: string
 let token0ContractPackage: string
 let token1ContractPackage: string
 const aliceAddress = ALICE.publicKey.toAccountHashStr().replace('account-hash-', '')
-const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
+// const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
 
 const fee = 1000000000n
 const tickSpacing = 1n
