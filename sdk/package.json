@@ -10,7 +10,7 @@
     "wasm:package": "cd ./invariant-cspr-wasm && npm pkg set type='module'",
     "lint": "eslint . --ext .ts",
     "build": "npx tsc",
-    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest",
+    "test": "NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand",
     "wasm:strip": "cd contracts && wasm-strip invariant.wasm && wasm-strip erc20.wasm",
     "node:start": "casper-node-launcher-js node v1.5.3",
     "node:start:d": "casper-node-launcher-js node v1.5.3 --daemon",
