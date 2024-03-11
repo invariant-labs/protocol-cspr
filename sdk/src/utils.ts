@@ -293,12 +293,12 @@ export const decodePool = (rawBytes: any) => {
 
   return {
     liquidity,
-    sqrtPrice,
+    sqrtPrice: { v: sqrtPrice },
     currentTickIndex,
-    feeGrowthGlobalX,
-    feeGrowthGlobalY,
-    feeProtocolTokenX,
-    feeProtocolTokenY,
+    feeGrowthGlobalX: { v: feeGrowthGlobalX },
+    feeGrowthGlobalY: { v: feeGrowthGlobalY },
+    feeProtocolTokenX: { v: feeProtocolTokenX },
+    feeProtocolTokenY: { v: feeProtocolTokenY },
     startTimestamp,
     lastTimestamp,
     feeReceiver,
@@ -326,9 +326,9 @@ export const decodePosition = (rawBytes: any) => {
   const [feeGrowthInsideY, feeGrowthInsideYRemainder] = decodeU256(feeGrowthYTypeRemainder)
   const [lastBlockNumber, lastBlockNumberRemainder] = decodeU64(feeGrowthInsideYRemainder)
   const tokensOwedXTypeRemainder = decodeString(lastBlockNumberRemainder)[1]
-  const [tokenOwedX, tokenOwedXRemainder] = decodeU256(tokensOwedXTypeRemainder)
+  const [tokensOwedX, tokenOwedXRemainder] = decodeU256(tokensOwedXTypeRemainder)
   const tokensOwedYTypeRemainder = decodeString(tokenOwedXRemainder)[1]
-  const [tokenOwedY, remainder] = decodeU256(tokensOwedYTypeRemainder)
+  const [tokensOwedY, remainder] = decodeU256(tokensOwedYTypeRemainder)
 
   if (remainder!.length != 0) {
     throw new Error('There are remaining bytes left')
@@ -339,18 +339,18 @@ export const decodePosition = (rawBytes: any) => {
       tokenX,
       tokenY,
       feeTier: {
-        fee,
+        fee: { v: fee },
         tickSpacing
       }
     },
-    liquidity,
+    liquidity: { v: liquidity },
     lowerTickIndex,
     upperTickIndex,
-    feeGrowthInsideX,
-    feeGrowthInsideY,
+    feeGrowthInsideX: { v: feeGrowthInsideX },
+    feeGrowthInsideY: { v: feeGrowthInsideY },
     lastBlockNumber,
-    tokenOwedX,
-    tokenOwedY
+    tokensOwedX: { v: tokensOwedX },
+    tokensOwedY: { v: tokensOwedY }
   }
 }
 
@@ -423,7 +423,7 @@ export const encodePoolKey = (poolKey: any): number[] => {
   const tokenYBytes = hexToBytes(poolKey.tokenY)
   const feeTierStructBytes = 'FeeTier'.split('').map(c => c.charCodeAt(0))
   const percentageSturctBytes = 'Percentage'.split('').map(c => c.charCodeAt(0))
-  const feeBytes = bigintToByteArray(poolKey.feeTier.fee)
+  const feeBytes = bigintToByteArray(poolKey.feeTier.fee.v)
 
   buffor.push(7, 0, 0, 0)
   buffor.push(...poolKeyStructBytes)
@@ -435,7 +435,7 @@ export const encodePoolKey = (poolKey: any): number[] => {
   buffor.push(...feeTierStructBytes)
   buffor.push(10, 0, 0, 0)
   buffor.push(...percentageSturctBytes)
-  if (poolKey.feeTier.fee > 0) {
+  if (poolKey.feeTier.fee.v > 0) {
     buffor.push(feeBytes.length)
   }
   buffor.push(...feeBytes)
@@ -470,20 +470,87 @@ export const callWasm = async (
   fn: Promise<any> | any,
   ...params: WasmCallParams[]
 ): Promise<any> => {
-  const preparedParams = params.map(param => {
-    if (typeof param === 'object') {
-      return { v: param.v.toString() }
-    }
-    return param
-  })
-
+  const preparedParams = params.map(param => prepareWasmParms(param))
   const callResult = await fn(...preparedParams)
+  return parse(callResult)
+}
 
-  if (typeof callResult === 'object') {
-    return { v: BigInt(callResult.v) }
+export const prepareWasmParms = (
+  value: any,
+  stringify: boolean = false,
+  numberize: boolean = false
+) => {
+  if (isArray(value)) {
+    return value.map((element: any) => prepareWasmParms(element))
   }
 
-  return callResult
+  if (isObject(value)) {
+    const newValue: { [key: string]: any } = {}
+
+    Object.entries(value as { [key: string]: any }).forEach(([key, value]) => {
+      if (key === 'v') {
+        newValue[key] = prepareWasmParms(value, true)
+      } else {
+        newValue[key] = prepareWasmParms(value, false, true)
+      }
+    })
+
+    return newValue
+  }
+
+  if (isBoolean(value)) {
+    return value
+  }
+
+  try {
+    if (stringify) {
+      return value.toString()
+    } else if (numberize) {
+      return integerSafeCast(value)
+    } else {
+      return value
+    }
+  } catch (e) {
+    return value
+  }
+}
+
+export const parse = (value: any) => {
+  if (isArray(value)) {
+    return value.map((element: any) => parse(element))
+  }
+
+  if (isObject(value)) {
+    const newValue: { [key: string]: any } = {}
+
+    Object.entries(value as { [key: string]: any }).forEach(([key, value]) => {
+      newValue[key] = parse(value)
+    })
+
+    return newValue
+  }
+
+  if (isBoolean(value)) {
+    return value
+  }
+
+  try {
+    return BigInt(value)
+  } catch (e) {
+    return value
+  }
+}
+
+const isBoolean = (value: any): boolean => {
+  return typeof value === 'boolean'
+}
+
+const isArray = (value: any): boolean => {
+  return Array.isArray(value)
+}
+
+const isObject = (value: any): boolean => {
+  return typeof value === 'object' && value !== null
 }
 
 export const integerSafeCast = (value: bigint): number => {

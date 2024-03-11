@@ -533,10 +533,10 @@ export function toTokenAmount(js_val, js_scale) {
 * @param {any} js_tick_spacing
 * @returns {any}
 */
-export function _newFeeTier(js_fee, js_tick_spacing) {
+export function newFeeTier(js_fee, js_tick_spacing) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm._newFeeTier(retptr, addHeapObject(js_fee), addHeapObject(js_tick_spacing));
+        wasm.newFeeTier(retptr, addHeapObject(js_fee), addHeapObject(js_tick_spacing));
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var r2 = getInt32Memory0()[retptr / 4 + 2];
@@ -935,15 +935,15 @@ export function getLiquidityByY(js_y, js_lower_tick, js_upper_tick, js_current_s
 }
 
 /**
-* @param {any} token_0
-* @param {any} token_1
-* @param {any} fee_tier
+* @param {any} js_token_0
+* @param {any} js_token_1
+* @param {any} js_fee_tier
 * @returns {any}
 */
-export function _newPoolKey(token_0, token_1, fee_tier) {
+export function newPoolKey(js_token_0, js_token_1, js_fee_tier) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        wasm._newPoolKey(retptr, addHeapObject(token_0), addHeapObject(token_1), addHeapObject(fee_tier));
+        wasm.newPoolKey(retptr, addHeapObject(js_token_0), addHeapObject(js_token_1), addHeapObject(js_fee_tier));
         var r0 = getInt32Memory0()[retptr / 4 + 0];
         var r1 = getInt32Memory0()[retptr / 4 + 1];
         var r2 = getInt32Memory0()[retptr / 4 + 2];

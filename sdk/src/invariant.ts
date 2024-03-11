@@ -10,6 +10,7 @@ import {
   RuntimeArgs,
   decodeBase16
 } from 'casper-js-sdk'
+import type { FeeTier, Liquidity, PoolKey, SqrtPrice } from 'invariant-cspr-wasm'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './enums'
 import {
@@ -136,12 +137,7 @@ export class Invariant {
     this.contract.setContractHash('hash-' + contractHash)
   }
 
-  async addFeeTier(
-    account: Keys.AsymmetricKey,
-    network: Network,
-    fee: bigint,
-    tickSpacing: bigint
-  ) {
+  async addFeeTier(account: Keys.AsymmetricKey, network: Network, feeTier: FeeTier) {
     return await sendTx(
       this.contract,
       this.service,
@@ -150,8 +146,8 @@ export class Invariant {
       network,
       'add_fee_tier',
       {
-        fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing))
+        fee: CLValueBuilder.u128(BigNumber.from(feeTier.fee.v)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(feeTier.tickSpacing))
       }
     )
   }
@@ -179,15 +175,13 @@ export class Invariant {
   async createPool(
     account: Keys.AsymmetricKey,
     network: Network,
-    token0: string,
-    token1: string,
-    fee: bigint,
-    tickSpacing: bigint,
-    initSqrtPrice: bigint,
-    initTick: bigint
+    poolKey: PoolKey,
+    initSqrtPrice: SqrtPrice
   ) {
-    const token0Key = new CLByteArray(decodeBase16(token0))
-    const token1Key = new CLByteArray(decodeBase16(token1))
+    const wasm = await loadWasm()
+    const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
+    const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
+    const initTick = await callWasm(wasm.calculateTick, initSqrtPrice, poolKey.feeTier.tickSpacing)
 
     return await sendTx(
       this.contract,
@@ -199,9 +193,9 @@ export class Invariant {
       {
         token_0: CLValueBuilder.key(token0Key),
         token_1: CLValueBuilder.key(token1Key),
-        fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
-        init_sqrt_price: CLValueBuilder.u128(BigNumber.from(initSqrtPrice)),
+        fee: CLValueBuilder.u128(BigNumber.from(poolKey.feeTier.fee.v)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(poolKey.feeTier.tickSpacing)),
+        init_sqrt_price: CLValueBuilder.u128(BigNumber.from(initSqrtPrice.v)),
         init_tick: CLValueBuilder.i32(integerSafeCast(initTick))
       }
     )
@@ -307,6 +301,11 @@ export class Invariant {
     const key = hash(new Uint8Array(buffor))
 
     const stateRootHash = await this.service.getStateRootHash()
+    console.log({
+      key,
+      stateRootHash,
+      contract: this.contract.contractHash!
+    })
 
     const response = await this.service.getDictionaryItemByName(
       stateRootHash,
@@ -324,18 +323,15 @@ export class Invariant {
   async createPosition(
     account: Keys.AsymmetricKey,
     network: Network,
-    token0: string,
-    token1: string,
-    fee: bigint,
-    tickSpacing: bigint,
+    poolKey: PoolKey,
     lowerTick: bigint,
     upperTick: bigint,
-    liquidityDelta: bigint,
-    slippageLimitLower: bigint,
-    slippageLimitUpper: bigint
+    liquidityDelta: Liquidity,
+    slippageLimitLower: SqrtPrice,
+    slippageLimitUpper: SqrtPrice
   ) {
-    const token0Key = new CLByteArray(decodeBase16(token0))
-    const token1Key = new CLByteArray(decodeBase16(token1))
+    const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
+    const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
 
     return await sendTx(
       this.contract,
@@ -347,13 +343,13 @@ export class Invariant {
       {
         token_0: CLValueBuilder.key(token0Key),
         token_1: CLValueBuilder.key(token1Key),
-        fee: CLValueBuilder.u128(BigNumber.from(fee)),
-        tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
+        fee: CLValueBuilder.u128(BigNumber.from(poolKey.feeTier.fee.v)),
+        tick_spacing: CLValueBuilder.u32(integerSafeCast(poolKey.feeTier.tickSpacing)),
         lower_tick: CLValueBuilder.i32(integerSafeCast(lowerTick)),
         upper_tick: CLValueBuilder.i32(integerSafeCast(upperTick)),
-        liquidity_delta: CLValueBuilder.u256(BigNumber.from(liquidityDelta)),
-        slippage_limit_lower: CLValueBuilder.u128(BigNumber.from(slippageLimitLower)),
-        slippage_limit_upper: CLValueBuilder.u128(BigNumber.from(slippageLimitUpper))
+        liquidity_delta: CLValueBuilder.u256(BigNumber.from(liquidityDelta.v)),
+        slippage_limit_lower: CLValueBuilder.u128(BigNumber.from(slippageLimitLower.v)),
+        slippage_limit_upper: CLValueBuilder.u128(BigNumber.from(slippageLimitUpper.v))
       }
     )
   }

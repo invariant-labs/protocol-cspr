@@ -6,6 +6,7 @@ use odra::OdraType;
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
+use wasm_wrapper::wasm_wrapper;
 
 #[derive(OdraType, Eq, PartialEq, Debug, Serialize, Deserialize, Tsify)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -52,14 +53,11 @@ impl PoolKey {
     }
 }
 
-#[wasm_bindgen(js_name = "_newPoolKey")]
+#[wasm_wrapper]
 pub fn new_pool_key(
-    token_0: JsValue,
-    token_1: JsValue,
-    fee_tier: JsValue,
-) -> Result<JsValue, JsValue> {
-    let token_0: String = convert!(token_0)?;
-    let token_1: String = convert!(token_1)?;
-    let fee_tier: FeeTier = convert!(fee_tier)?;
-    resolve!(PoolKey::new(token_0, token_1, fee_tier))
+    token_0: String,
+    token_1: String,
+    fee_tier: FeeTier,
+) -> Result<PoolKey, InvariantError> {
+    Ok(PoolKey::new(token_0, token_1, fee_tier)?)
 }
