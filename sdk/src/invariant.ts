@@ -10,7 +10,15 @@ import {
   RuntimeArgs,
   decodeBase16
 } from 'casper-js-sdk'
-import type { FeeTier, Liquidity, PoolKey, SqrtPrice } from 'invariant-cspr-wasm'
+import type {
+  FeeTier,
+  Liquidity,
+  Pool,
+  PoolKey,
+  Position,
+  SqrtPrice,
+  Tick
+} from 'invariant-cspr-wasm'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
 import { Network } from './enums'
 import {
@@ -268,7 +276,7 @@ export class Invariant {
     return decodeInvariantConfig(rawBytes)
   }
 
-  async getFeeTiers() {
+  async getFeeTiers(): Promise<FeeTier[]> {
     const key = hash('fee_tiers')
     const stateRootHash = await this.service.getStateRootHash()
     const response = await this.service.getDictionaryItemByName(
@@ -284,12 +292,14 @@ export class Invariant {
     return decodeFeeTiers(rawBytes)
   }
 
-  async feeTierExist(fee: bigint, tickSpacing: bigint): Promise<boolean> {
+  async feeTierExist(feeTier: FeeTier): Promise<boolean> {
     const feeTiers = await this.getFeeTiers()
-    return feeTiers.some(tier => tier.percentage === fee && tier.tickSpacing === tickSpacing)
+    return feeTiers.some(
+      tier => tier.fee.v === feeTier.fee.v && tier.tickSpacing === feeTier.tickSpacing
+    )
   }
 
-  async getPool(poolKey: any) {
+  async getPool(poolKey: any): Promise<Pool> {
     const buffor: number[] = []
 
     const poolKeyBytes = encodePoolKey(poolKey)
@@ -391,7 +401,7 @@ export class Invariant {
     )
   }
 
-  async getPosition(account: Keys.AsymmetricKey, index: bigint) {
+  async getPosition(account: Keys.AsymmetricKey, index: bigint): Promise<Position> {
     const stateRootHash = await this.service.getStateRootHash()
     const buffor: number[] = []
     const indexBytes = bigintToByteArray(index)
@@ -417,7 +427,7 @@ export class Invariant {
     return decodePosition(rawBytes)
   }
 
-  async getTick(poolKey: any, index: bigint) {
+  async getTick(poolKey: any, index: bigint): Promise<Tick> {
     const stateRootHash = await this.service.getStateRootHash()
     const buffor: number[] = []
     const indexBytes = bigintToByteArray(index)
@@ -444,7 +454,7 @@ export class Invariant {
     return decodeTick(rawBytes)
   }
 
-  private async getTickmapChunk(poolKey: any, chunkIndex: bigint) {
+  private async getTickmapChunk(poolKey: any, chunkIndex: bigint): Promise<bigint> {
     const stateRootHash = await this.service.getStateRootHash()
     const indexBytes = bigintToByteArray(chunkIndex)
     const preparedIndexBytes = indexBytes.concat(Array(2 - indexBytes.length).fill(0))
@@ -471,7 +481,7 @@ export class Invariant {
     return decodeChunk(rawBytes)
   }
 
-  async getPositionsCount(account: Keys.AsymmetricKey) {
+  async getPositionsCount(account: Keys.AsymmetricKey): Promise<bigint> {
     const stateRootHash = await this.service.getStateRootHash()
     const buffor: number[] = []
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
@@ -495,7 +505,7 @@ export class Invariant {
     return decodePositionLength(rawBytes)
   }
 
-  async getPositions(account: Keys.AsymmetricKey) {
+  async getPositions(account: Keys.AsymmetricKey): Promise<Position[]> {
     const positionsCount = await this.getPositionsCount(account)
     const positions = []
     for (let i = 0n; i < positionsCount; i++) {
@@ -558,7 +568,7 @@ export class Invariant {
     )
   }
 
-  private async getPoolKeys() {
+  private async getPoolKeys(): Promise<PoolKey[]> {
     const key = hash('pool_keys')
     const stateRootHash = await this.service.getStateRootHash()
     const response = await this.service.getDictionaryItemByName(
@@ -573,7 +583,7 @@ export class Invariant {
     return decodePoolKeys(rawBytes)
   }
 
-  async isTickInitialized(poolKey: any, tickIndex: bigint) {
+  async isTickInitialized(poolKey: any, tickIndex: bigint): Promise<boolean> {
     const wasm = await loadWasm()
     const chunkIndex = await callWasm(wasm.tickToChunk, tickIndex, poolKey.feeTier.tickSpacing)
     const tickPosition = await callWasm(wasm.tickToPos, tickIndex, poolKey.feeTier.tickSpacing)
@@ -581,7 +591,7 @@ export class Invariant {
     return getBitAtIndex(chunk, tickPosition)
   }
 
-  async getPools() {
+  async getPools(): Promise<Pool[]> {
     const poolKeys = await this.getPoolKeys()
     const pools = await Promise.all(poolKeys.map(async poolKey => await this.getPool(poolKey)))
     return pools

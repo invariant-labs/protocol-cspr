@@ -23,6 +23,7 @@ import {
 } from 'casper-js-sdk'
 import fs from 'fs'
 import { readFile } from 'fs/promises'
+import { FeeTier, Pool, PoolKey, Position, Tick } from 'invariant-cspr-wasm'
 import path from 'path'
 import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
@@ -204,7 +205,7 @@ export const decodeInvariantConfig = (rawBytes: any) => {
   }
 }
 
-export const decodePoolKeys = (rawBytes: any) => {
+export const decodePoolKeys = (rawBytes: any): PoolKey[] => {
   const bytes = parseBytes(rawBytes)
   const stringRemainder = decodeString(bytes)[1]
 
@@ -228,7 +229,7 @@ export const decodePoolKeys = (rawBytes: any) => {
     poolKeys.push({
       tokenX,
       tokenY,
-      feeTier: { fee, tickSpacing }
+      feeTier: { fee: { v: fee }, tickSpacing }
     })
   }
 
@@ -238,25 +239,25 @@ export const decodePoolKeys = (rawBytes: any) => {
 
   return poolKeys
 }
-export const decodeFeeTiers = (rawBytes: any) => {
+export const decodeFeeTiers = (rawBytes: any): FeeTier[] => {
   const bytes = parseBytes(rawBytes)
   const stringRemainder = decodeString(bytes)[1]
 
   const result = decodeU32(stringRemainder)
   const feeTierCount = result[0]
   let remainingBytes = result[1]
-  const feeTiers = []
+  const feeTiers: FeeTier[] = []
 
   for (let i = 0; i < feeTierCount; i++) {
     remainingBytes = decodeString(remainingBytes)[1]
-    const [feeType, feeTypeRemainder] = decodeString(remainingBytes)
+    const feeTypeRemainder = decodeString(remainingBytes)[1]
     remainingBytes = feeTypeRemainder
     const [fee, feeRemainder] = decodeU128(remainingBytes)
     remainingBytes = feeRemainder
     const [tickSpacing, remainder] = decodeU32(remainingBytes)
     remainingBytes = remainder
 
-    const feeTier = { [feeType]: fee, tickSpacing }
+    const feeTier = { fee: { v: fee }, tickSpacing }
     feeTiers.push(feeTier)
   }
 
@@ -266,7 +267,7 @@ export const decodeFeeTiers = (rawBytes: any) => {
 
   return feeTiers
 }
-export const decodePool = (rawBytes: any) => {
+export const decodePool = (rawBytes: any): Pool => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const liquidityTypeRemainder = decodeString(remainingBytes)[1]
@@ -285,14 +286,14 @@ export const decodePool = (rawBytes: any) => {
   const [startTimestamp, startTimestampRemainder] = decodeU64(feeProtocolTokenYRemainder)
   const [lastTimestamp, lastTimestampRemainder] = decodeU64(startTimestampRemainder)
   const [feeReceiver, feeReceiverRemainder] = decodeAddress(lastTimestampRemainder)
-  const [oracle, remainder] = decodeBool(feeReceiverRemainder)
+  const [oracleInitialized, remainder] = decodeBool(feeReceiverRemainder)
 
   if (remainder!.length != 0) {
     throw new Error('There are remaining bytes left')
   }
 
   return {
-    liquidity,
+    liquidity: { v: liquidity },
     sqrtPrice: { v: sqrtPrice },
     currentTickIndex,
     feeGrowthGlobalX: { v: feeGrowthGlobalX },
@@ -302,11 +303,11 @@ export const decodePool = (rawBytes: any) => {
     startTimestamp,
     lastTimestamp,
     feeReceiver,
-    oracle
+    oracleInitialized
   }
 }
 
-export const decodePosition = (rawBytes: any) => {
+export const decodePosition = (rawBytes: any): Position => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const poolKeyRemainder = decodeString(remainingBytes)[1]
@@ -354,7 +355,7 @@ export const decodePosition = (rawBytes: any) => {
   }
 }
 
-export const decodeTick = (rawBytes: any) => {
+export const decodeTick = (rawBytes: any): Tick => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const [index, indexRemainder] = decodeI32(remainingBytes)
@@ -378,16 +379,16 @@ export const decodeTick = (rawBytes: any) => {
   return {
     index,
     sign,
-    liquidityChange,
-    liquidityGross,
-    sqrtPrice,
-    feeGrowthOutsideX,
-    feeGrowthOutsideY,
+    liquidityChange: { v: liquidityChange },
+    liquidityGross: { v: liquidityGross },
+    sqrtPrice: { v: sqrtPrice },
+    feeGrowthOutsideX: { v: feeGrowthOutsideX },
+    feeGrowthOutsideY: { v: feeGrowthOutsideY },
     secondsOutside
   }
 }
 
-export const decodeChunk = (rawBytes: any) => {
+export const decodeChunk = (rawBytes: any): bigint => {
   const bytes = parseBytes(rawBytes)
   const [chunk, remainder] = decodeU64(bytes)
 
@@ -398,7 +399,7 @@ export const decodeChunk = (rawBytes: any) => {
   return chunk
 }
 
-export const decodePositionLength = (rawBytes: any) => {
+export const decodePositionLength = (rawBytes: any): bigint => {
   const bytes = parseBytes(rawBytes)
   const [length, remainder] = decodeU32(bytes)
 
