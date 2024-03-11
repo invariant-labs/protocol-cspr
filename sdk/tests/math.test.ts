@@ -1,5 +1,5 @@
 import { FeeTier, PoolKey, Position } from 'invariant-cspr-wasm'
-import { ALICE, LOCAL_NODE_URL } from '../src/consts'
+import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
@@ -14,9 +14,9 @@ let hashes: {
 
 describe('test get liquidity by x', () => {
   const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
-  const account = ALICE
-  // const positionOwner = BOB
-  // const positionOwnerHash = positionOwner.publicKey.toAccountHashStr().replace('account-hash-', '')
+  const deployer = ALICE
+  const positionOwner = BOB
+  const positionOwnerHash = positionOwner.publicKey.toAccountHashStr().replace('account-hash-', '')
   const network = Network.Local
   const providedAmount = { v: 430000n }
   let feeTier: FeeTier
@@ -24,7 +24,7 @@ describe('test get liquidity by x', () => {
 
   beforeEach(async () => {
     const wasm = await loadWasm()
-    hashes = await deployInvariantAndTokens(client, service, account)
+    hashes = await deployInvariantAndTokens(client, service, deployer)
 
     feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
     poolKey = await callWasm(
@@ -35,27 +35,9 @@ describe('test get liquidity by x', () => {
     )
 
     const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
-    const tokenX = await Erc20.load(client, service, hashes.tokenX.loadHash)
-    const tokenY = await Erc20.load(client, service, hashes.tokenY.loadHash)
-    await invariant.addFeeTier(account, network, feeTier)
+    await invariant.addFeeTier(deployer, network, feeTier)
     const initSqrtPrice = { v: 1005012269622000000000000n }
-    await invariant.createPool(account, network, poolKey, initSqrtPrice)
-
-    await tokenX.approve(
-      account,
-      network,
-      Key.Hash,
-      hashes.invariant.packageHash,
-      1000000000000000n
-    )
-
-    await tokenY.approve(
-      account,
-      network,
-      Key.Hash,
-      hashes.invariant.packageHash,
-      1000000000000000n
-    )
+    await invariant.createPool(deployer, network, poolKey, initSqrtPrice)
   })
 
   it('test get liquidity by x', async () => {
@@ -86,7 +68,7 @@ describe('test get liquidity by x', () => {
       const upperTickIndex = 120n
       const pool = await invariant.getPool(poolKey)
 
-      const { l } = await callWasm(
+      const { l, amount } = await callWasm(
         wasm.getLiquidityByX,
         providedAmount,
         lowerTickIndex,
@@ -95,10 +77,15 @@ describe('test get liquidity by x', () => {
         true
       )
 
-      // TODO add mint
+      const erc20 = await Erc20.load(client, service, network, hashes.tokenX.loadHash)
+      await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
+      await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
+      await erc20.setContractHash(hashes.tokenY.loadHash)
+      await erc20.mint(positionOwner, Key.Account, positionOwnerHash, amount.v)
+      await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, amount.v)
 
       await invariant.createPosition(
-        account,
+        positionOwner,
         network,
         poolKey,
         lowerTickIndex,
@@ -108,7 +95,7 @@ describe('test get liquidity by x', () => {
         pool.sqrtPrice
       )
 
-      const position = await invariant.getPosition(account, 0n)
+      const position = await invariant.getPosition(positionOwner, 0n)
       const expectedPosition: Position = {
         poolKey,
         liquidity: l,
@@ -139,10 +126,13 @@ describe('test get liquidity by x', () => {
       )
 
       expect(amount.v).toBe(0n)
-      // TODO add mint
+
+      const erc20 = await Erc20.load(client, service, network, hashes.tokenX.loadHash)
+      await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
+      await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
 
       await invariant.createPosition(
-        account,
+        positionOwner,
         network,
         poolKey,
         lowerTickIndex,
@@ -152,7 +142,7 @@ describe('test get liquidity by x', () => {
         pool.sqrtPrice
       )
 
-      const position = await invariant.getPosition(account, 1n)
+      const position = await invariant.getPosition(positionOwner, 1n)
       const expectedPosition: Position = {
         poolKey,
         liquidity: l,
@@ -169,154 +159,150 @@ describe('test get liquidity by x', () => {
   })
 })
 
-// describe('test get liquidity by y', () => {
-//   const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
-//   const account = ALICE
-//   const network = Network.Local
-//   const providedAmount = { v: 47600000000n }
-//   let feeTier: FeeTier
-//   let poolKey: PoolKey
+describe('test get liquidity by y', () => {
+  const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
+  const deployer = ALICE
+  const positionOwner = BOB
+  const positionOwnerHash = positionOwner.publicKey.toAccountHashStr().replace('account-hash-', '')
+  const network = Network.Local
+  const providedAmount = { v: 47600000000n }
+  let feeTier: FeeTier
+  let poolKey: PoolKey
 
-//   beforeEach(async () => {
-//     const wasm = await loadWasm()
-//     hashes = await deployInvariantAndTokens(client, service, account)
+  beforeEach(async () => {
+    const wasm = await loadWasm()
+    hashes = await deployInvariantAndTokens(client, service, deployer)
 
-//     feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
-//     poolKey = await callWasm(
-//       wasm.newPoolKey,
-//       hashes.tokenX.packageHash,
-//       hashes.tokenY.packageHash,
-//       feeTier
-//     )
+    feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
+    poolKey = await callWasm(
+      wasm.newPoolKey,
+      hashes.tokenX.packageHash,
+      hashes.tokenY.packageHash,
+      feeTier
+    )
 
-//     const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
-//     const tokenX = await Erc20.load(client, service, hashes.tokenX.loadHash)
-//     const tokenY = await Erc20.load(client, service, hashes.tokenY.loadHash)
-//     await invariant.addFeeTier(account, network, feeTier)
-//     const initSqrtPrice = { v: 367897834491000000000000n }
-//     await invariant.createPool(account, network, poolKey, initSqrtPrice)
+    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
 
-//     await tokenX.approve(
-//       account,
-//       network,
-//       Key.Hash,
-//       hashes.invariant.packageHash,
-//       1000000000000000n
-//     )
+    await invariant.addFeeTier(deployer, network, feeTier)
+    const initSqrtPrice = { v: 367897834491000000000000n }
+    await invariant.createPool(deployer, network, poolKey, initSqrtPrice)
+  })
 
-//     await tokenY.approve(
-//       account,
-//       network,
-//       Key.Hash,
-//       hashes.invariant.packageHash,
-//       1000000000000000n
-//     )
-//   })
+  it('test get liquidity by y', async () => {
+    const wasm = await loadWasm()
+    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    // Below range
+    {
+      const lowerTickIndex = -22000n
+      const upperTickIndex = -21000n
 
-//   it('test get liquidity by y', async () => {
-//     const wasm = await loadWasm()
-//     const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
-//     // Below range
-//     {
-//       const lowerTickIndex = -22000n
-//       const upperTickIndex = -21000n
+      const pool = await invariant.getPool(poolKey)
 
-//       const pool = await invariant.getPool(poolKey)
+      const { l, amount } = await callWasm(
+        wasm.getLiquidityByY,
+        providedAmount,
+        lowerTickIndex,
+        upperTickIndex,
+        pool.sqrtPrice,
+        true
+      )
 
-//       const { l, amount } = await callWasm(
-//         wasm.getLiquidityByY,
-//         providedAmount,
-//         lowerTickIndex,
-//         upperTickIndex,
-//         pool.sqrtPrice,
-//         true
-//       )
+      expect(amount.v).toBe(0n)
 
-//       expect(amount.v).toBe(0n)
+      const erc20 = await Erc20.load(client, service, network, hashes.tokenY.loadHash)
+      await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
+      await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
 
-//       await invariant.createPosition(
-//         account,
-//         network,
-//         poolKey,
-//         lowerTickIndex,
-//         upperTickIndex,
-//         l,
-//         pool.sqrtPrice,
-//         pool.sqrtPrice
-//       )
+      await invariant.createPosition(
+        positionOwner,
+        network,
+        poolKey,
+        lowerTickIndex,
+        upperTickIndex,
+        l,
+        pool.sqrtPrice,
+        pool.sqrtPrice
+      )
 
-//       const position = await invariant.getPosition(account, 0n)
-//       const expectedPosition: Position = {
-//         poolKey,
-//         liquidity: l,
-//         lowerTickIndex,
-//         upperTickIndex,
-//         feeGrowthInsideX: { v: 0n },
-//         feeGrowthInsideY: { v: 0n },
-//         lastBlockNumber: 0n,
-//         tokensOwedX: { v: 0n },
-//         tokensOwedY: { v: 0n }
-//       }
+      const position = await invariant.getPosition(positionOwner, 0n)
+      const expectedPosition: Position = {
+        poolKey,
+        liquidity: l,
+        lowerTickIndex,
+        upperTickIndex,
+        feeGrowthInsideX: { v: 0n },
+        feeGrowthInsideY: { v: 0n },
+        lastBlockNumber: 0n,
+        tokensOwedX: { v: 0n },
+        tokensOwedY: { v: 0n }
+      }
 
-//       positionEquals(position, expectedPosition)
-//     }
-//     // In range
-//     {
-//       const lowerTickIndex = -25000n
-//       const upperTickIndex = -19000n
-//       const pool = await invariant.getPool(poolKey)
+      positionEquals(position, expectedPosition)
+    }
+    // In range
+    {
+      const lowerTickIndex = -25000n
+      const upperTickIndex = -19000n
+      const pool = await invariant.getPool(poolKey)
 
-//       const { l } = await callWasm(
-//         wasm.getLiquidityByY,
-//         providedAmount,
-//         lowerTickIndex,
-//         upperTickIndex,
-//         pool.sqrtPrice,
-//         true
-//       )
+      const { l, amount } = await callWasm(
+        wasm.getLiquidityByY,
+        providedAmount,
+        lowerTickIndex,
+        upperTickIndex,
+        pool.sqrtPrice,
+        true
+      )
 
-//       await invariant.createPosition(
-//         account,
-//         network,
-//         poolKey,
-//         lowerTickIndex,
-//         upperTickIndex,
-//         l,
-//         pool.sqrtPrice,
-//         pool.sqrtPrice
-//       )
+      const erc20 = await Erc20.load(client, service, network, hashes.tokenY.loadHash)
+      await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
+      await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
+      await erc20.setContractHash(hashes.tokenX.loadHash)
+      await erc20.mint(positionOwner, Key.Account, positionOwnerHash, amount.v)
+      await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, amount.v)
 
-//       const position = await invariant.getPosition(account, 1n)
-//       const expectedPosition: Position = {
-//         poolKey,
-//         liquidity: l,
-//         lowerTickIndex,
-//         upperTickIndex,
-//         feeGrowthInsideX: { v: 0n },
-//         feeGrowthInsideY: { v: 0n },
-//         lastBlockNumber: 0n,
-//         tokensOwedX: { v: 0n },
-//         tokensOwedY: { v: 0n }
-//       }
+      await invariant.createPosition(
+        positionOwner,
+        network,
+        poolKey,
+        lowerTickIndex,
+        upperTickIndex,
+        l,
+        pool.sqrtPrice,
+        pool.sqrtPrice
+      )
 
-//       positionEquals(position, expectedPosition)
-//     }
-//     // Above Range
-//     {
-//       const lowerTickIndex = -10000n
-//       const upperTickIndex = 0n
-//       const pool = await invariant.getPool(poolKey)
+      const position = await invariant.getPosition(positionOwner, 1n)
+      const expectedPosition: Position = {
+        poolKey,
+        liquidity: l,
+        lowerTickIndex,
+        upperTickIndex,
+        feeGrowthInsideX: { v: 0n },
+        feeGrowthInsideY: { v: 0n },
+        lastBlockNumber: 0n,
+        tokensOwedX: { v: 0n },
+        tokensOwedY: { v: 0n }
+      }
 
-//       await assertThrowsAsync(
-//         callWasm(
-//           wasm.getLiquidityByY,
-//           providedAmount,
-//           lowerTickIndex,
-//           upperTickIndex,
-//           pool.sqrtPrice,
-//           true
-//         )
-//       )
-//     }
-//   })
-// })
+      positionEquals(position, expectedPosition)
+    }
+    // Above Range
+    {
+      const lowerTickIndex = -10000n
+      const upperTickIndex = 0n
+      const pool = await invariant.getPool(poolKey)
+
+      await assertThrowsAsync(
+        callWasm(
+          wasm.getLiquidityByY,
+          providedAmount,
+          lowerTickIndex,
+          upperTickIndex,
+          pool.sqrtPrice,
+          true
+        )
+      )
+    }
+  })
+})
