@@ -3,7 +3,7 @@
 set -e
 
 npm run node:start &
-sleep 5
+sleep 10
 npm run test &
 test_pid=$!
 
