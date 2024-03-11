@@ -35,7 +35,7 @@ const main = async () => {
 
   let invariantAddress = '6f9672545b2600f4f135124bc5fcce3eabcf1d43d828a9c9a227434e13aedc8d'
   let invariantContractPackage = 'f34deac596aeb27b7b9d9418922d9e72ed28bf723a21b1c399c040346ab27d38'
-  let invariantContract = await Invariant.load(client, service, invariantAddress)
+  let invariantContract = await Invariant.load(client, service, network, invariantAddress)
 
   const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
     client,
@@ -46,7 +46,7 @@ const main = async () => {
     2446489177947n
   )
   invariantContractPackage = invariantContractPackageHash
-  invariantContract = await Invariant.load(client, service, invariantContractHash)
+  invariantContract = await Invariant.load(client, service, network, invariantContractHash)
   invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
 
   if (isLocal) {
@@ -59,7 +59,7 @@ const main = async () => {
       600000000000n
     )
     invariantContractPackage = invariantContractPackageHash
-    invariantContract = await Invariant.load(client, service, invariantContractHash)
+    invariantContract = await Invariant.load(client, service, network, invariantContractHash)
     invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
   }
 
@@ -103,12 +103,11 @@ const main = async () => {
     token1Address = token1Contract.contract.contractHash!
   }
 
-  const addFeeTierResult = await invariantContract.addFeeTier(account, network, 0n, 1n)
+  const addFeeTierResult = await invariantContract.addFeeTier(account, 0n, 1n)
   console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
 
   const createPoolResult = await invariantContract.createPool(
     account,
-    network,
     token0ContractPackage,
     token1ContractPackage,
     0n,
@@ -136,7 +135,6 @@ const main = async () => {
 
   const createPositionResult = await invariantContract.createPosition(
     account,
-    network,
     token0ContractPackage,
     token1ContractPackage,
     0n,
@@ -160,7 +158,6 @@ const main = async () => {
 
   const swapResult = await invariantContract.swap(
     account,
-    network,
     token0ContractPackage,
     token1ContractPackage,
     0n,
