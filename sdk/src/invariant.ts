@@ -301,11 +301,6 @@ export class Invariant {
     const key = hash(new Uint8Array(buffor))
 
     const stateRootHash = await this.service.getStateRootHash()
-    console.log({
-      key,
-      stateRootHash,
-      contract: this.contract.contractHash!
-    })
 
     const response = await this.service.getDictionaryItemByName(
       stateRootHash,
