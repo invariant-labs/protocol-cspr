@@ -1,4 +1,4 @@
-import { ALICE, LOCAL_NODE_URL } from '../src/consts'
+import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
@@ -15,7 +15,7 @@ let token1Address: string
 let token0ContractPackage: string
 let token1ContractPackage: string
 const aliceAddress = ALICE.publicKey.toAccountHashStr().replace('account-hash-', '')
-// const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
+const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
 
 const fee = 1000000000n
 const tickSpacing = 1n
@@ -142,57 +142,50 @@ describe('protocol fee', () => {
     }
   })
 
-  //   it('should change fee receiver', async () => {
-  //     await invariant.changeFeeReceiver(
-  //       ALICE,
-  //       token0ContractPackage,
-  //       token1ContractPackage,
-  //       fee,
-  //       tickSpacing,
-  //       bobAddress
-  //     )
+  it('should change fee receiver', async () => {
+    await invariant.changeFeeReceiver(
+      ALICE,
+      token0ContractPackage,
+      token1ContractPackage,
+      fee,
+      tickSpacing,
+      Key.Account,
+      bobAddress
+    )
 
-  //     erc20.setContractHash(token0Address)
-  //     const token0Before = await erc20.balanceOf(Key.Account, bobAddress)
-  //     erc20.setContractHash(token1Address)
-  //     const token1Before = await erc20.balanceOf(Key.Account, bobAddress)
+    erc20.setContractHash(token0Address)
+    const token0Before = await erc20.balanceOf(Key.Account, bobAddress)
+    erc20.setContractHash(token1Address)
+    const token1Before = await erc20.balanceOf(Key.Account, bobAddress)
 
-  //     // TODO: get pool before and assert protocol protocol fee
+    const withdrawProtocolFeeResult = await invariant.withdrawProtocolFee(
+      ALICE,
+      token0ContractPackage,
+      token1ContractPackage,
+      fee,
+      tickSpacing
+    )
+    expect(withdrawProtocolFeeResult.execution_results[0].result.Failure).toBeDefined()
 
-  //     const withdrawProtocolFeeResult = await invariant.withdrawProtocolFee(
-  //       ALICE,
-  //       token0ContractPackage,
-  //       token1ContractPackage,
-  //       fee,
-  //       tickSpacing
-  //     )
-  //     expect(withdrawProtocolFeeResult.execution_results[0].result.Failure).toBeDefined()
+    await invariant.withdrawProtocolFee(
+      BOB,
+      token0ContractPackage,
+      token1ContractPackage,
+      fee,
+      tickSpacing
+    )
 
-  //     await invariant.withdrawProtocolFee(
-  //       BOB,
-  //       token0ContractPackage,
-  //       token1ContractPackage,
-  //       fee,
-  //       tickSpacing
-  //     )
+    erc20.setContractHash(token0Address)
+    const token0After = await erc20.balanceOf(Key.Account, bobAddress)
+    erc20.setContractHash(token1Address)
+    const token1After = await erc20.balanceOf(Key.Account, bobAddress)
 
-  //     // TODO: get pool after and assert protocol protocol fee
-
-  //     erc20.setContractHash(token0Address)
-  //     const token0After = await erc20.balanceOf(Key.Account, bobAddress)
-  //     erc20.setContractHash(token1Address)
-  //     const token1After = await erc20.balanceOf(Key.Account, bobAddress)
-
-  //     expect(await erc20.balanceOf(Key.Account, aliceAddress)).toBe(999945015n)
-  //     expect(await erc20.balanceOf(Key.Account, aliceAddress)).toBe(999945015n)
-  //     expect(token0After + token1After).toBe(100n)
-
-  //     if (await callWasm(wasm.isTokenX, token0ContractPackage, token1ContractPackage)) {
-  //       expect(token0After).toBe(token0Before + 1n)
-  //       expect(token1After).toBe(token1Before)
-  //     } else {
-  //       expect(token0After).toBe(token0Before)
-  //       expect(token1After).toBe(token1Before + 1n)
-  //     }
-  //   })
+    if (await callWasm(wasm.isTokenX, token0ContractPackage, token1ContractPackage)) {
+      expect(token0After).toBe(token0Before + 1n)
+      expect(token1After).toBe(token1Before)
+    } else {
+      expect(token0After).toBe(token0Before)
+      expect(token1After).toBe(token1Before + 1n)
+    }
+  })
 })

@@ -11,7 +11,7 @@ import {
   decodeBase16
 } from 'casper-js-sdk'
 import { DEFAULT_PAYMENT_AMOUNT, TESTNET_NODE_URL } from './consts'
-import { Network } from './enums'
+import { Key, Network } from './enums'
 import {
   bigintToByteArray,
   callWasm,
@@ -210,11 +210,16 @@ export class Invariant {
     token1: string,
     fee: bigint,
     tickSpacing: bigint,
+    newFeeReceiverHash: Key,
     newFeeReceiver: string
   ) {
     const token0Key = new CLByteArray(decodeBase16(token0))
     const token1Key = new CLByteArray(decodeBase16(token1))
-    const feeReceiverKey = new CLByteArray(decodeBase16(newFeeReceiver))
+    const newFeeReceiverBytes = new Uint8Array([
+      newFeeReceiverHash,
+      ...decodeBase16(newFeeReceiver)
+    ])
+    const newFeeReceiverKey = new CLByteArray(newFeeReceiverBytes)
 
     return await sendTx(
       this.contract,
@@ -228,7 +233,7 @@ export class Invariant {
         token_1: CLValueBuilder.key(token1Key),
         fee: CLValueBuilder.u128(BigNumber.from(fee)),
         tick_spacing: CLValueBuilder.u32(integerSafeCast(tickSpacing)),
-        fee_receiver: CLValueBuilder.key(feeReceiverKey)
+        fee_receiver: newFeeReceiverKey
       }
     )
   }
