@@ -2,6 +2,8 @@
 
 set -e
 
+npm run i
+
 npm run node:start &
 sleep 5
 npm run test &
