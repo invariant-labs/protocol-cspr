@@ -2,7 +2,13 @@ import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Key, Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
-import { callWasm, createAccountKeys, initCasperClient, loadWasm } from './utils'
+import {
+  callWasm,
+  createAccountKeys,
+  getAccountHashFromKey,
+  initCasperClient,
+  loadWasm
+} from './utils'
 const main = async () => {
   const createKeys = false
   const wasm = await loadWasm()
@@ -16,17 +22,17 @@ const main = async () => {
   const isLocal = true
 
   let account = ALICE
-  let accountAddress = account.publicKey.toAccountHashStr().replace('account-hash-', '')
+  let accountAddress = getAccountHashFromKey(account)
   const dummy = BOB
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  const dummyAddress = dummy.publicKey.toAccountHashStr().replace('account-hash-', '')
+  const dummyAddress = getAccountHashFromKey(dummy)
   let network = Network.Local
   let nodeUrl = LOCAL_NODE_URL
 
   if (!isLocal) {
     account = TEST
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-    accountAddress = account.publicKey.toAccountHashStr().replace('account-hash-', '')
+    accountAddress = getAccountHashFromKey(account)
     network = Network.Testnet
     nodeUrl = TESTNET_NODE_URL
   }

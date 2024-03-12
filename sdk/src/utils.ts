@@ -294,3 +294,7 @@ export const extractContractHash = (contractPackageHash: string): string => {
 export const extractContractPackageHash = (contractPackage: ContractPackageJson): string => {
   return contractPackage.versions[0].contractHash.replace('contract-', '')
 }
+
+export const getAccountHashFromKey = (key: Keys.AsymmetricKey): string => {
+  return key.publicKey.toAccountHashStr().replace('account-hash-', '')
+}

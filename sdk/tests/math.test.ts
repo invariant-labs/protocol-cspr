@@ -9,7 +9,7 @@ import {
   loadChai,
   positionEquals
 } from '../src/testUtils'
-import { callWasm, initCasperClient, loadWasm } from '../src/utils'
+import { callWasm, getAccountHashFromKey, initCasperClient, loadWasm } from '../src/utils'
 
 let hashes: {
   invariant: { loadHash: string; packageHash: string }
@@ -21,7 +21,7 @@ describe('test get liquidity by x', () => {
   const client = initCasperClient(LOCAL_NODE_URL)
   const deployer = ALICE
   const positionOwner = BOB
-  const positionOwnerHash = positionOwner.publicKey.toAccountHashStr().replace('account-hash-', '')
+  const positionOwnerHash = getAccountHashFromKey(positionOwner)
   const network = Network.Local
   const providedAmount = { v: 430000n }
   let feeTier: FeeTier
@@ -168,7 +168,7 @@ describe('test get liquidity by y', () => {
   const client = initCasperClient(LOCAL_NODE_URL)
   const deployer = ALICE
   const positionOwner = BOB
-  const positionOwnerHash = positionOwner.publicKey.toAccountHashStr().replace('account-hash-', '')
+  const positionOwnerHash = getAccountHashFromKey(positionOwner)
   const network = Network.Local
   const providedAmount = { v: 47600000000n }
   let feeTier: FeeTier
