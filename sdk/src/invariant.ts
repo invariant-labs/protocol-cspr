@@ -393,7 +393,7 @@ export class Invariant {
     const stateRootHash = await this.service.getStateRootHash()
     const buffor: number[] = []
     const indexBytes = bigintToByteArray(index)
-    console.log(indexBytes)
+
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
     buffor.push('#'.charCodeAt(0))
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
@@ -401,7 +401,7 @@ export class Invariant {
     buffor.push(0)
     buffor.push(...account.accountHash())
     buffor.push(...indexBytes.concat(Array(4 - indexBytes.length).fill(0)))
-    console.log(indexBytes)
+
     const key = hash(new Uint8Array(buffor))
 
     const response = await this.service.getDictionaryItemByName(
@@ -433,8 +433,6 @@ export class Invariant {
     const preparedIndexBytes = indexBytes.concat(Array(4 - indexBytes.length).fill(filler))
 
     const poolKeyBytes = encodePoolKey(poolKey)
-    console.log(poolKeyBytes)
-    console.log(preparedIndexBytes)
 
     buffor.push(...'ticks'.split('').map(c => c.charCodeAt(0)))
     buffor.push('#'.charCodeAt(0))
