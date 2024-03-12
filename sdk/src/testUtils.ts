@@ -1,5 +1,6 @@
 import { CasperClient, CasperServiceByJsonRPC, Keys } from 'casper-js-sdk'
 import type { InvariantError, Position } from 'invariant-cspr-wasm'
+import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
@@ -99,16 +100,24 @@ export const assertThrowsAsync = async (fn: Promise<any>, word?: InvariantError)
   throw new Error('Function did not throw error')
 }
 
-export const positionEquals = (position: Position, expectedPosition: Position) => {
-  expect(position.poolKey.tokenX).toEqual(expectedPosition.poolKey.tokenX)
-  expect(position.poolKey.tokenY).toEqual(expectedPosition.poolKey.tokenY)
-  expect(position.poolKey.feeTier.fee.v).toEqual(expectedPosition.poolKey.feeTier.fee.v)
-  expect(position.poolKey.feeTier.tickSpacing).toEqual(expectedPosition.poolKey.feeTier.tickSpacing)
-  expect(position.lowerTickIndex).toEqual(expectedPosition.lowerTickIndex)
-  expect(position.upperTickIndex).toEqual(expectedPosition.upperTickIndex)
-  expect(position.liquidity.v).toEqual(expectedPosition.liquidity.v)
-  expect(position.feeGrowthInsideX.v).toEqual(expectedPosition.feeGrowthInsideX.v)
-  expect(position.feeGrowthInsideY.v).toEqual(expectedPosition.feeGrowthInsideY.v)
-  expect(position.tokensOwedX.v).toEqual(expectedPosition.tokensOwedX.v)
-  expect(position.tokensOwedY.v).toEqual(expectedPosition.tokensOwedY.v)
+export const positionEquals = async (position: Position, expectedPosition: Position) => {
+  const chai = await loadChai()
+  chai.assert.equal(position.poolKey.tokenX, expectedPosition.poolKey.tokenX)
+  chai.assert.equal(position.poolKey.tokenY, expectedPosition.poolKey.tokenY)
+  chai.assert.equal(position.poolKey.feeTier.fee.v, expectedPosition.poolKey.feeTier.fee.v)
+  chai.assert.equal(
+    position.poolKey.feeTier.tickSpacing,
+    expectedPosition.poolKey.feeTier.tickSpacing
+  )
+  chai.assert.equal(position.lowerTickIndex, expectedPosition.lowerTickIndex)
+  chai.assert.equal(position.upperTickIndex, expectedPosition.upperTickIndex)
+  chai.assert.equal(position.liquidity.v, expectedPosition.liquidity.v)
+  chai.assert.equal(position.feeGrowthInsideX.v, expectedPosition.feeGrowthInsideX.v)
+  chai.assert.equal(position.feeGrowthInsideY.v, expectedPosition.feeGrowthInsideY.v)
+  chai.assert.equal(position.tokensOwedX.v, expectedPosition.tokensOwedX.v)
+  chai.assert.equal(position.tokensOwedY.v, expectedPosition.tokensOwedY.v)
+}
+
+export const loadChai = async () => {
+  return (await dynamicImport('chai', module)) as typeof import('chai')
 }

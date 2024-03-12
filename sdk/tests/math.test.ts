@@ -3,7 +3,12 @@ import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
-import { assertThrowsAsync, deployInvariantAndTokens, positionEquals } from '../src/testUtils'
+import {
+  assertThrowsAsync,
+  deployInvariantAndTokens,
+  loadChai,
+  positionEquals
+} from '../src/testUtils'
 import { callWasm, initCasperClientAndService, loadWasm } from '../src/utils'
 
 let hashes: {
@@ -24,6 +29,7 @@ describe('test get liquidity by x', () => {
 
   beforeEach(async () => {
     const wasm = await loadWasm()
+
     hashes = await deployInvariantAndTokens(client, service, deployer)
 
     feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
@@ -42,6 +48,7 @@ describe('test get liquidity by x', () => {
 
   it('test get liquidity by x', async () => {
     const wasm = await loadWasm()
+    const chai = await loadChai()
     const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
 
     // Below range
@@ -108,7 +115,7 @@ describe('test get liquidity by x', () => {
         tokensOwedY: { v: 0n }
       }
 
-      positionEquals(position, expectedPosition)
+      await positionEquals(position, expectedPosition)
     }
     // Above Range
     {
@@ -125,7 +132,7 @@ describe('test get liquidity by x', () => {
         true
       )
 
-      expect(amount.v).toBe(0n)
+      chai.assert.equal(amount.v, 0n)
 
       const erc20 = await Erc20.load(client, service, network, hashes.tokenX.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
@@ -154,7 +161,7 @@ describe('test get liquidity by x', () => {
         tokensOwedX: { v: 0n },
         tokensOwedY: { v: 0n }
       }
-      positionEquals(position, expectedPosition)
+      await positionEquals(position, expectedPosition)
     }
   })
 })
@@ -190,6 +197,8 @@ describe('test get liquidity by y', () => {
 
   it('test get liquidity by y', async () => {
     const wasm = await loadWasm()
+    const chai = await loadChai()
+
     const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
     // Below range
     {
@@ -207,7 +216,7 @@ describe('test get liquidity by y', () => {
         true
       )
 
-      expect(amount.v).toBe(0n)
+      chai.assert.equal(amount.v, 0n)
 
       const erc20 = await Erc20.load(client, service, network, hashes.tokenY.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
@@ -237,7 +246,7 @@ describe('test get liquidity by y', () => {
         tokensOwedY: { v: 0n }
       }
 
-      positionEquals(position, expectedPosition)
+      await positionEquals(position, expectedPosition)
     }
     // In range
     {
@@ -285,7 +294,7 @@ describe('test get liquidity by y', () => {
         tokensOwedY: { v: 0n }
       }
 
-      positionEquals(position, expectedPosition)
+      await positionEquals(position, expectedPosition)
     }
     // Above Range
     {
