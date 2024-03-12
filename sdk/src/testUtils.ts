@@ -1,4 +1,4 @@
-import { CasperClient, CasperServiceByJsonRPC, Keys } from 'casper-js-sdk'
+import { CasperClient, Keys } from 'casper-js-sdk'
 import type { InvariantError, Position } from 'invariant-cspr-wasm'
 import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
@@ -8,7 +8,6 @@ import { callWasm, loadWasm } from './utils'
 
 export const deployInvariantAndTokens = async (
   client: CasperClient,
-  service: CasperServiceByJsonRPC,
   account: Keys.AsymmetricKey,
   initialFee: bigint = 0n,
   intialSupply: bigint = 1000000000000000n
@@ -16,7 +15,6 @@ export const deployInvariantAndTokens = async (
   const wasm = await loadWasm()
   const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
     client,
-    service,
     Network.Local,
     account,
     initialFee,
@@ -26,7 +24,6 @@ export const deployInvariantAndTokens = async (
 
   const [token0ContractPackageHash, token0ContractHash] = await Erc20.deploy(
     client,
-    service,
     Network.Local,
     account,
     '0',
@@ -38,7 +35,6 @@ export const deployInvariantAndTokens = async (
   )
   const [token1ContractPackageHash, token1ContractHash] = await Erc20.deploy(
     client,
-    service,
     Network.Local,
     account,
     '1',
