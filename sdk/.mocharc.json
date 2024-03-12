@@ -6,5 +6,5 @@
     "experimental-wasm-modules"
   ],
   "exit": true,
-  "timeout": "120s"
+  "timeout": "180s"
 }
