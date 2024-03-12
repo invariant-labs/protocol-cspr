@@ -10,6 +10,15 @@ import {
 } from 'casper-js-sdk'
 import fs from 'fs'
 import { readFile } from 'fs/promises'
+import type {
+  Percentage,
+  Pool,
+  Position,
+  Price,
+  SqrtPrice,
+  Tick,
+  TokenAmount
+} from 'invariant-cspr-wasm'
 import path from 'path'
 import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
@@ -189,6 +198,94 @@ export const integerSafeCast = (value: bigint): number => {
 
 export const getBitAtIndex = (v: bigint, index: bigint): boolean => {
   return Boolean((v >> index) & BigInt(1))
+}
+
+export const calculateSqrtPriceAfterSlippage = async (
+  sqrtPrice: SqrtPrice,
+  slippage: Percentage,
+  up: boolean
+): Promise<SqrtPrice> => {
+  const wasm = await loadWasm()
+  const percentageDenominator = await callWasm(wasm.getPercentageDenominator)
+  const multiplier = percentageDenominator + (up ? slippage.v : -slippage.v)
+  const price = await sqrtPriceToPrice(sqrtPrice)
+  const priceWithSlippage = price.v * multiplier * percentageDenominator
+  const sqrtPriceWithSlippage =
+    (await priceToSqrtPrice({ v: priceWithSlippage })).v / percentageDenominator
+
+  return { v: sqrtPriceWithSlippage }
+}
+
+export const calculatePriceImpact = async (
+  startingSqrtPrice: SqrtPrice,
+  endingSqrtPrice: SqrtPrice
+): Promise<Percentage> => {
+  const wasm = await loadWasm()
+
+  const startingPrice = startingSqrtPrice.v * startingSqrtPrice.v
+  const endingPrice = endingSqrtPrice.v * endingSqrtPrice.v
+  const diff = startingPrice - endingPrice
+
+  const nominator = diff > 0n ? diff : -diff
+  const denominator = startingPrice > endingPrice ? startingPrice : endingPrice
+
+  return { v: (nominator * (await callWasm(wasm.getPercentageDenominator))) / denominator }
+}
+
+export const sqrtPriceToPrice = async (sqrtPrice: SqrtPrice): Promise<Price> => {
+  const wasm = await loadWasm()
+  const sqrtPriceDenominator = (await callWasm(wasm.getSqrtPriceDenominator)) as bigint
+  return { v: (sqrtPrice.v * sqrtPrice.v) / sqrtPriceDenominator }
+}
+
+export const priceToSqrtPrice = async (price: Price): Promise<SqrtPrice> => {
+  const wasm = await loadWasm()
+
+  return { v: sqrt(price.v * (await callWasm(wasm.getSqrtPriceDenominator))) }
+}
+
+const sqrt = (value: bigint): bigint => {
+  if (value < 0n) {
+    throw 'square root of negative numbers is not supported'
+  }
+
+  if (value < 2n) {
+    return value
+  }
+
+  return newtonIteration(value, 1n)
+}
+
+const newtonIteration = (n: bigint, x0: bigint): bigint => {
+  const x1 = (n / x0 + x0) >> 1n
+  if (x0 === x1 || x0 === x1 - 1n) {
+    return x0
+  }
+  return newtonIteration(n, x1)
+}
+
+export const calculateFee = async (
+  pool: Pool,
+  position: Position,
+  lowerTick: Tick,
+  upperTick: Tick
+): Promise<[TokenAmount, TokenAmount]> => {
+  const wasm = await loadWasm()
+  return await callWasm(
+    wasm._calculateFee,
+    lowerTick.index,
+    lowerTick.feeGrowthOutsideX,
+    lowerTick.feeGrowthOutsideY,
+    upperTick.index,
+    upperTick.feeGrowthOutsideX,
+    upperTick.feeGrowthOutsideY,
+    pool.currentTickIndex,
+    pool.feeGrowthGlobalX,
+    pool.feeGrowthGlobalY,
+    position.feeGrowthInsideX,
+    position.feeGrowthInsideY,
+    position.liquidity
+  )
 }
 
 export const extractContractHash = (contractPackageHash: string): string => {
