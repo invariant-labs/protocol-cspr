@@ -2,7 +2,7 @@ import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Key, Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
-import { callWasm, createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
+import { callWasm, createAccountKeys, initCasperClient, loadWasm } from './utils'
 const main = async () => {
   const createKeys = false
   const wasm = await loadWasm()
@@ -32,49 +32,46 @@ const main = async () => {
   }
   console.log(account, network)
 
-  const { client, service } = initCasperClientAndService(nodeUrl)
+  const client = initCasperClient(nodeUrl)
 
   let invariantAddress = '6f9672545b2600f4f135124bc5fcce3eabcf1d43d828a9c9a227434e13aedc8d'
   let invariantContractPackage = 'f34deac596aeb27b7b9d9418922d9e72ed28bf723a21b1c399c040346ab27d38'
-  let invariantContract = await Invariant.load(client, service, invariantAddress)
+  let invariantContract = await Invariant.load(client, invariantAddress)
 
   const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
     client,
-    service,
     network,
     account,
     0n,
     2446489177947n
   )
   invariantContractPackage = invariantContractPackageHash
-  invariantContract = await Invariant.load(client, service, invariantContractHash)
+  invariantContract = await Invariant.load(client, invariantContractHash)
   invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
 
   if (isLocal) {
     const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
       client,
-      service,
       network,
       account,
       0n,
       600000000000n
     )
     invariantContractPackage = invariantContractPackageHash
-    invariantContract = await Invariant.load(client, service, invariantContractHash)
+    invariantContract = await Invariant.load(client, invariantContractHash)
     invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
   }
 
   let token0Address = 'a6e5a67c7834df44c1923c346dfa6cef0df4be4932cbd9102779819633b885d5'
   let token0ContractPackage = '8a52cb3f956a94dd89635701e2225275ddf145f26394acf2414653dbb0db8699'
-  let token0Contract = await Erc20.load(client, service, network, token0Address)
+  let token0Contract = await Erc20.load(client, network, token0Address)
   let token1Address = 'ff1e3e482ddb5c021386acd7af168917159f434d5302463b748693c8db1c4592'
   let token1ContractPackage = 'a9129e520e38ba142d81cdeebf05691b0e404206820792209ae188fbdc15428d'
-  let token1Contract = await Erc20.load(client, service, network, token1Address)
+  let token1Contract = await Erc20.load(client, network, token1Address)
 
   if (isLocal) {
     const [token0ContractPackageHash, token0ContractHash] = await Erc20.deploy(
       client,
-      service,
       network,
       account,
       '0',
@@ -86,7 +83,6 @@ const main = async () => {
     )
     const [token1ContractPackageHash, token1ContractHash] = await Erc20.deploy(
       client,
-      service,
       network,
       account,
       '1',
@@ -98,8 +94,8 @@ const main = async () => {
     )
     token0ContractPackage = token0ContractPackageHash
     token1ContractPackage = token1ContractPackageHash
-    token0Contract = await Erc20.load(client, service, network, token0ContractHash)
-    token1Contract = await Erc20.load(client, service, network, token1ContractHash)
+    token0Contract = await Erc20.load(client, network, token0ContractHash)
+    token1Contract = await Erc20.load(client, network, token1ContractHash)
     token0Address = token0Contract.contract.contractHash!
     token1Address = token1Contract.contract.contractHash!
   }

@@ -2,9 +2,9 @@ import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { loadChai } from '../src/testUtils'
-import { initCasperClientAndService } from '../src/utils'
+import { initCasperClient } from '../src/utils'
 
-const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
+const client = initCasperClient(LOCAL_NODE_URL)
 let erc20: Erc20
 const aliceAddress = ALICE.publicKey.toAccountHashStr().replace('account-hash-', '')
 const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
@@ -13,7 +13,6 @@ describe('erc20', () => {
   beforeEach(async () => {
     const [, erc20ContractHash] = await Erc20.deploy(
       client,
-      service,
       Network.Local,
       ALICE,
       'erc20',
@@ -24,7 +23,7 @@ describe('erc20', () => {
       150000000000n
     )
 
-    erc20 = await Erc20.load(client, service, Network.Local, erc20ContractHash)
+    erc20 = await Erc20.load(client, Network.Local, erc20ContractHash)
   })
 
   it('should set metadata', async () => {
@@ -51,7 +50,6 @@ describe('erc20', () => {
     const chai = await loadChai()
     const [, erc20ContractHash] = await Erc20.deploy(
       client,
-      service,
       Network.Local,
       ALICE,
       'erc20',

@@ -5,7 +5,6 @@ import {
   CLByteArray,
   CLValueBuilder,
   CasperClient,
-  CasperServiceByJsonRPC,
   Contracts,
   Keys,
   RuntimeArgs,
@@ -19,20 +18,17 @@ const CONTRACT_NAME = 'erc20'
 
 export class Erc20 {
   client: CasperClient
-  service: CasperServiceByJsonRPC
   contract: Contracts.Contract
   paymentAmount: bigint
   network: Network
 
   private constructor(
     client: CasperClient,
-    service: CasperServiceByJsonRPC,
     network: Network,
     contractHash: string,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
   ) {
     this.client = client
-    this.service = service
     this.network = network
     this.contract = new Contracts.Contract(this.client)
     this.contract.setContractHash(contractHash)
@@ -41,11 +37,10 @@ export class Erc20 {
 
   static async deploy(
     client: CasperClient,
-    service: CasperServiceByJsonRPC,
     network: Network,
     deployer: Keys.AsymmetricKey,
     namedKeysName: string,
-    initial_supply: bigint = 0n,
+    initialSupply: bigint = 0n,
     name: string = '',
     symbol: string = '',
     decimals: bigint = 0n,
@@ -60,7 +55,7 @@ export class Erc20 {
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
-      initial_supply: CLValueBuilder.option(Some(CLValueBuilder.u256(Number(initial_supply)))),
+      initial_supply: CLValueBuilder.option(Some(CLValueBuilder.u256(Number(initialSupply)))),
       name: CLValueBuilder.string(name),
       symbol: CLValueBuilder.string(symbol),
       decimals: CLValueBuilder.u8(Number(decimals))
@@ -75,9 +70,9 @@ export class Erc20 {
       [deployer]
     )
 
-    await service.deploy(signedDeploy)
+    await client.nodeClient.deploy(signedDeploy)
 
-    const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
+    const deploymentResult = await client.nodeClient.waitForDeploy(signedDeploy, 100000)
 
     if (deploymentResult.execution_results[0].result.Failure) {
       throw new Error(
@@ -85,8 +80,8 @@ export class Erc20 {
       )
     }
 
-    const stateRootHash = await service.getStateRootHash()
-    const { Account } = await service.getBlockState(
+    const stateRootHash = await client.nodeClient.getStateRootHash()
+    const { Account } = await client.nodeClient.getBlockState(
       stateRootHash,
       deployer.publicKey.toAccountHashStr(),
       []
@@ -102,7 +97,11 @@ export class Erc20 {
       throw new Error('Contract package not found in account named keys')
     }
 
-    const { ContractPackage } = await service.getBlockState(stateRootHash, contractPackageHash, [])
+    const { ContractPackage } = await client.nodeClient.getBlockState(
+      stateRootHash,
+      contractPackageHash,
+      []
+    )
 
     if (!ContractPackage) {
       throw new Error('Contract package not found in block state')
@@ -114,13 +113,8 @@ export class Erc20 {
     ]
   }
 
-  static async load(
-    client: CasperClient,
-    service: CasperServiceByJsonRPC,
-    network: Network,
-    contractHash: string
-  ) {
-    return new Erc20(client, service, network, 'hash-' + contractHash)
+  static async load(client: CasperClient, network: Network, contractHash: string) {
+    return new Erc20(client, network, 'hash-' + contractHash)
   }
 
   setContractHash(contractHash: string) {
@@ -167,15 +161,15 @@ export class Erc20 {
     return BigInt(response.data._hex)
   }
 
-  async approve(account: Keys.AsymmetricKey, spenderHash: Key, spender: string, amount: bigint) {
+  async approve(signer: Keys.AsymmetricKey, spenderHash: Key, spender: string, amount: bigint) {
     const spenderBytes = new Uint8Array([spenderHash, ...decodeBase16(spender)])
     const spenderKey = new CLByteArray(spenderBytes)
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'approve',
       {
@@ -186,7 +180,7 @@ export class Erc20 {
   }
 
   async transfer(
-    account: Keys.AsymmetricKey,
+    signer: Keys.AsymmetricKey,
     recipientHash: Key,
     recipient: string,
     amount: bigint
@@ -196,9 +190,9 @@ export class Erc20 {
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'transfer',
       {
@@ -208,15 +202,15 @@ export class Erc20 {
     )
   }
 
-  async mint(account: Keys.AsymmetricKey, addressHash: Key, address: string, amount: bigint) {
+  async mint(signer: Keys.AsymmetricKey, addressHash: Key, address: string, amount: bigint) {
     const addressBytes = new Uint8Array([addressHash, ...decodeBase16(address)])
     const addressKey = new CLByteArray(addressBytes)
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'mint',
       {
@@ -227,7 +221,7 @@ export class Erc20 {
   }
 
   async transferFrom(
-    account: Keys.AsymmetricKey,
+    signer: Keys.AsymmetricKey,
     ownerHash: Key,
     owner: string,
     recipientHash: Key,
@@ -241,9 +235,9 @@ export class Erc20 {
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'transfer_from',
       {

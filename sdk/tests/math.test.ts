@@ -9,7 +9,7 @@ import {
   loadChai,
   positionEquals
 } from '../src/testUtils'
-import { callWasm, initCasperClientAndService, loadWasm } from '../src/utils'
+import { callWasm, initCasperClient, loadWasm } from '../src/utils'
 
 let hashes: {
   invariant: { loadHash: string; packageHash: string }
@@ -18,7 +18,7 @@ let hashes: {
 }
 
 describe('test get liquidity by x', () => {
-  const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
+  const client = initCasperClient(LOCAL_NODE_URL)
   const deployer = ALICE
   const positionOwner = BOB
   const positionOwnerHash = positionOwner.publicKey.toAccountHashStr().replace('account-hash-', '')
@@ -30,7 +30,7 @@ describe('test get liquidity by x', () => {
   beforeEach(async () => {
     const wasm = await loadWasm()
 
-    hashes = await deployInvariantAndTokens(client, service, deployer)
+    hashes = await deployInvariantAndTokens(client, deployer)
 
     feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
     poolKey = await callWasm(
@@ -40,7 +40,7 @@ describe('test get liquidity by x', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash)
     await invariant.addFeeTier(deployer, network, feeTier)
     const initSqrtPrice = { v: 1005012269622000000000000n }
     await invariant.createPool(deployer, network, poolKey, initSqrtPrice)
@@ -49,7 +49,7 @@ describe('test get liquidity by x', () => {
   it('test get liquidity by x', async () => {
     const wasm = await loadWasm()
     const chai = await loadChai()
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash)
 
     // Below range
     {
@@ -84,7 +84,7 @@ describe('test get liquidity by x', () => {
         true
       )
 
-      const erc20 = await Erc20.load(client, service, network, hashes.tokenX.loadHash)
+      const erc20 = await Erc20.load(client, network, hashes.tokenX.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
       await erc20.setContractHash(hashes.tokenY.loadHash)
@@ -134,7 +134,7 @@ describe('test get liquidity by x', () => {
 
       chai.assert.equal(amount.v, 0n)
 
-      const erc20 = await Erc20.load(client, service, network, hashes.tokenX.loadHash)
+      const erc20 = await Erc20.load(client, network, hashes.tokenX.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
 
@@ -167,7 +167,7 @@ describe('test get liquidity by x', () => {
 })
 
 describe('test get liquidity by y', () => {
-  const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
+  const client = initCasperClient(LOCAL_NODE_URL)
   const deployer = ALICE
   const positionOwner = BOB
   const positionOwnerHash = positionOwner.publicKey.toAccountHashStr().replace('account-hash-', '')
@@ -178,7 +178,7 @@ describe('test get liquidity by y', () => {
 
   beforeEach(async () => {
     const wasm = await loadWasm()
-    hashes = await deployInvariantAndTokens(client, service, deployer)
+    hashes = await deployInvariantAndTokens(client, deployer)
 
     feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
     poolKey = await callWasm(
@@ -188,7 +188,7 @@ describe('test get liquidity by y', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash)
 
     await invariant.addFeeTier(deployer, network, feeTier)
     const initSqrtPrice = { v: 367897834491000000000000n }
@@ -199,7 +199,7 @@ describe('test get liquidity by y', () => {
     const wasm = await loadWasm()
     const chai = await loadChai()
 
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash)
     // Below range
     {
       const lowerTickIndex = -22000n
@@ -218,7 +218,7 @@ describe('test get liquidity by y', () => {
 
       chai.assert.equal(amount.v, 0n)
 
-      const erc20 = await Erc20.load(client, service, network, hashes.tokenY.loadHash)
+      const erc20 = await Erc20.load(client, network, hashes.tokenY.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
 
@@ -263,7 +263,7 @@ describe('test get liquidity by y', () => {
         true
       )
 
-      const erc20 = await Erc20.load(client, service, network, hashes.tokenY.loadHash)
+      const erc20 = await Erc20.load(client, network, hashes.tokenY.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
       await erc20.setContractHash(hashes.tokenX.loadHash)
