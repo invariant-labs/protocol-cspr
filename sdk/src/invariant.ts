@@ -35,6 +35,8 @@ import { Key, Network } from './enums'
 import { bigintToByteArray, encodePoolKey, hash } from './parser'
 import {
   callWasm,
+  extractContractHash,
+  extractContractPackageHash,
   getBitAtIndex,
   getDeploymentData,
   integerSafeCast,
@@ -47,19 +49,19 @@ const CONTRACT_NAME = 'invariant'
 export class Invariant {
   client: CasperClient
   contract: Contracts.Contract
-  paymentAmount: bigint
   network: Network
+  paymentAmount: bigint
 
   private constructor(
     client: CasperClient,
-    network: Network,
     contractHash: string,
+    network: Network,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
   ) {
     this.client = client
-    this.network = network
     this.contract = new Contracts.Contract(this.client)
     this.contract.setContractHash(contractHash)
+    this.network = network
     this.paymentAmount = paymentAmount
   }
 
@@ -135,14 +137,11 @@ export class Invariant {
       throw new Error('Contract package not found in block state')
     }
 
-    return [
-      contractPackageHash.replace('hash-', ''),
-      ContractPackage.versions[0].contractHash.replace('contract-', '')
-    ]
+    return [extractContractHash(contractPackageHash), extractContractPackageHash(ContractPackage)]
   }
 
-  static async load(client: CasperClient, network: Network, contractHash: string) {
-    return new Invariant(client, network, 'hash-' + contractHash)
+  static async load(client: CasperClient, contractHash: string, network: Network) {
+    return new Invariant(client, 'hash-' + contractHash, network)
   }
 
   async setContractHash(contractHash: string) {
@@ -164,7 +163,7 @@ export class Invariant {
     )
   }
 
-  async removeFeeTier(signer: Keys.AsymmetricKey, network: Network, feeTier: FeeTier) {
+  async removeFeeTier(signer: Keys.AsymmetricKey, feeTier: FeeTier) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
@@ -361,12 +360,12 @@ export class Invariant {
     )
   }
 
-  async transferPosition(account: Keys.AsymmetricKey, index: bigint) {
+  async transferPosition(signer: Keys.AsymmetricKey, index: bigint) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'transfer_position',
       {
@@ -493,12 +492,14 @@ export class Invariant {
     return decodePositionLength(rawBytes)
   }
 
-  async getPositions(signer: Keys.AsymmetricKey): Promise<Position[]> {
-    const positionsCount = await this.getPositionsCount(signer)
-    const positions = []
-    for (let i = 0n; i < positionsCount; i++) {
-      positions.push(await this.getPosition(signer, i))
-    }
+  async getPositions(account: Keys.AsymmetricKey): Promise<Position[]> {
+    const positionsCount = await this.getPositionsCount(account)
+    const positions = await Promise.all(
+      Array.from(
+        { length: integerSafeCast(positionsCount) },
+        async (_, i) => await this.getPosition(account, BigInt(i))
+      )
+    )
     return positions
   }
 

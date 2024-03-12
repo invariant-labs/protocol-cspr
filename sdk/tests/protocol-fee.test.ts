@@ -74,7 +74,7 @@ describe('protocol fee', () => {
     erc20 = await Erc20.load(client, Network.Local, token1ContractHash)
     await erc20.approve(ALICE, Key.Hash, invariantContractPackage, fee)
 
-    invariant = await Invariant.load(client, Network.Local, invariantContractHash)
+    invariant = await Invariant.load(client, invariantContractHash, Network.Local)
 
     feeTier = await callWasm(wasm.newFeeTier, { v: fee }, tickSpacing)
     poolKey = await callWasm(wasm.newPoolKey, token0ContractPackage, token1ContractPackage, feeTier)

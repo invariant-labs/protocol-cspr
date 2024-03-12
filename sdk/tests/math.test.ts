@@ -40,7 +40,7 @@ describe('test get liquidity by x', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, network, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     await invariant.addFeeTier(deployer, feeTier)
     const initSqrtPrice = { v: 1005012269622000000000000n }
     await invariant.createPool(deployer, poolKey, initSqrtPrice)
@@ -49,7 +49,7 @@ describe('test get liquidity by x', () => {
   it('test get liquidity by x', async () => {
     const wasm = await loadWasm()
     const chai = await loadChai()
-    const invariant = await Invariant.load(client, network, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
 
     // Below range
     {
@@ -186,7 +186,7 @@ describe('test get liquidity by y', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, network, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
 
     await invariant.addFeeTier(deployer, feeTier)
     const initSqrtPrice = { v: 367897834491000000000000n }
@@ -197,7 +197,7 @@ describe('test get liquidity by y', () => {
     const wasm = await loadWasm()
     const chai = await loadChai()
 
-    const invariant = await Invariant.load(client, network, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     // Below range
     {
       const lowerTickIndex = -22000n

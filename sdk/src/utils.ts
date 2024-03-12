@@ -2,6 +2,7 @@ import {
   CLValue,
   CasperClient,
   CasperServiceByJsonRPC,
+  ContractPackageJson,
   Contracts,
   GetDeployResult,
   Keys,
@@ -188,4 +189,11 @@ export const integerSafeCast = (value: bigint): number => {
 
 export const getBitAtIndex = (v: bigint, index: bigint): boolean => {
   return Boolean((v >> index) & BigInt(1))
+}
+
+export const extractContractHash = (contractPackageHash: string): string => {
+  return contractPackageHash.replace('hash-', '')
+}
+export const extractContractPackageHash = (contractPackage: ContractPackageJson): string => {
+  return contractPackage.versions[0].contractHash.replace('contract-', '')
 }
