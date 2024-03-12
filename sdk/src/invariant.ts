@@ -31,7 +31,7 @@ import {
   decodePositionLength,
   decodeTick
 } from './decoder'
-import { Network } from './enums'
+import { Key, Network } from './enums'
 import { bigintToByteArray, encodePoolKey, hash } from './parser'
 import {
   callWasm,
@@ -202,10 +202,19 @@ export class Invariant {
     )
   }
 
-  async changeFeeReceiver(signer: Keys.AsymmetricKey, poolKey: PoolKey, newFeeReceiver: string) {
+  async changeFeeReceiver(
+    signer: Keys.AsymmetricKey,
+    poolKey: PoolKey,
+    newFeeReceiverHash: Key,
+    newFeeReceiver: string
+  ) {
     const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
     const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
-    const feeReceiverKey = new CLByteArray(decodeBase16(newFeeReceiver))
+    const newFeeReceiverBytes = new Uint8Array([
+      newFeeReceiverHash,
+      ...decodeBase16(newFeeReceiver)
+    ])
+    const newFeeReceiverKey = new CLByteArray(newFeeReceiverBytes)
 
     return await sendTx(
       this.contract,
@@ -219,7 +228,7 @@ export class Invariant {
         token_1: CLValueBuilder.key(token1Key),
         fee: CLValueBuilder.u128(BigNumber.from(poolKey.feeTier.fee.v)),
         tick_spacing: CLValueBuilder.u32(integerSafeCast(poolKey.feeTier.tickSpacing)),
-        fee_receiver: CLValueBuilder.key(feeReceiverKey)
+        fee_receiver: newFeeReceiverKey
       }
     )
   }

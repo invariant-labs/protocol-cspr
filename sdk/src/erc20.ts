@@ -140,9 +140,12 @@ export class Erc20 {
   async balanceOf(addressHash: Key, address: string): Promise<bigint> {
     const balanceKey = new Uint8Array([...BALANCES, addressHash, ...hexToBytes(address)])
 
-    const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
-
-    return BigInt(response.data._hex)
+    try {
+      const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
+      return BigInt(response.data._hex)
+    } catch (e) {
+      return 0n
+    }
   }
 
   async allowance(
