@@ -98,7 +98,7 @@ export const decodeInvariantConfig = (rawBytes: string) => {
 
   return {
     admin,
-    protocolFee: { v: protocolFee }
+    protocolFee: protocolFee
   }
 }
 
