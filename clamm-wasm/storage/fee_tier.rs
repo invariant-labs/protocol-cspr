@@ -4,10 +4,10 @@ use crate::{convert, resolve};
 use decimal::*;
 use odra::types::U128;
 use odra::OdraType;
-use wasm_bindgen::prelude::*;
-
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
+use wasm_bindgen::prelude::*;
+use wasm_wrapper::wasm_wrapper;
 
 #[derive(OdraType, Eq, PartialEq, Copy, Debug, Serialize, Deserialize, Tsify)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -41,9 +41,10 @@ impl FeeTier {
     }
 }
 
-#[wasm_bindgen(js_name = "_newFeeTier")]
-pub fn new_fee_tier(js_fee: JsValue, js_tick_spacing: JsValue) -> Result<JsValue, JsValue> {
-    let fee: Percentage = convert!(js_fee)?;
-    let tick_spacing: u32 = convert!(js_tick_spacing)?;
-    resolve!(FeeTier::new(fee, tick_spacing))
+#[wasm_wrapper]
+pub fn new_fee_tier(fee: Percentage, tick_spacing: u32) -> Result<FeeTier, InvariantError> {
+    // let fee: Percentage = convert!(js_fee)?;
+    // let tick_spacing: u32 = convert!(js_tick_spacing)?;
+    // resolve!(FeeTier::new(fee, tick_spacing))
+    Ok(FeeTier::new(fee, tick_spacing)?)
 }

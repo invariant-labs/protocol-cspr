@@ -2,9 +2,10 @@ import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
 import { Key, Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
-import { createAccountKeys, initCasperClientAndService } from './utils'
+import { callWasm, createAccountKeys, initCasperClientAndService, loadWasm } from './utils'
 const main = async () => {
   const createKeys = false
+  const wasm = await loadWasm()
 
   if (createKeys) {
     createAccountKeys()
@@ -103,18 +104,21 @@ const main = async () => {
     token1Address = token1Contract.contract.contractHash!
   }
 
-  const addFeeTierResult = await invariantContract.addFeeTier(account, 0n, 1n)
-  console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
-
-  const createPoolResult = await invariantContract.createPool(
-    account,
+  const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
+  const poolKey = await callWasm(
+    wasm.newPoolKey,
     token0ContractPackage,
     token1ContractPackage,
-    0n,
-    1n,
-    1000000000000000000000000n,
-    0n
+    feeTier
   )
+
+  const addFeeTierResult = await invariantContract.addFeeTier(account, feeTier)
+  console.log('addFeeTier', addFeeTierResult.execution_results[0].result)
+
+  const createPoolResult = await invariantContract.createPool(account, poolKey, {
+    v: 1000000000000000000000000n
+  })
+
   console.log('createPool', createPoolResult.execution_results[0].result)
 
   const approveResult1 = await token0Contract.approve(
@@ -135,15 +139,12 @@ const main = async () => {
 
   const createPositionResult = await invariantContract.createPosition(
     account,
-    token0ContractPackage,
-    token1ContractPackage,
-    0n,
-    1n,
+    poolKey,
     -10n,
     10n,
-    1000000000000000n,
-    1000000000000000000000000n,
-    1000000000000000000000000n
+    { v: 1000000000000000n },
+    { v: 1000000000000000000000000n },
+    { v: 1000000000000000000000000n }
   )
   console.log('createPosition', createPositionResult.execution_results[0].result)
 
@@ -156,17 +157,9 @@ const main = async () => {
     await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
   )
 
-  const swapResult = await invariantContract.swap(
-    account,
-    token0ContractPackage,
-    token1ContractPackage,
-    0n,
-    1n,
-    true,
-    10n,
-    true,
-    0n
-  )
+  const swapResult = await invariantContract.swap(account, poolKey, true, { v: 10n }, true, {
+    v: 0n
+  })
   console.log('swap', swapResult.execution_results[0].result)
 
   console.log(
@@ -178,8 +171,8 @@ const main = async () => {
     await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
   )
 
-  const position = await invariantContract.getPosition(account, 0n)
-  const poolKey = position.poolKey
+  console.log(await invariantContract.getInvariantConfig())
+  console.log(await invariantContract.getPosition(account, 0n))
   console.log(await invariantContract.getFeeTiers())
   console.log(await invariantContract.getPool(poolKey))
   console.log(await invariantContract.getPools())

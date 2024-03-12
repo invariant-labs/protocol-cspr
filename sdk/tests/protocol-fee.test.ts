@@ -1,10 +1,13 @@
+import { FeeTier, PoolKey } from 'invariant-cspr-wasm'
 import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
+import { loadChai } from '../src/testUtils'
 import { callWasm, initCasperClientAndService, loadWasm } from '../src/utils'
 
 let wasm: typeof import('invariant-cspr-wasm')
+let chai: typeof import('chai')
 
 const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
 let erc20: Erc20
@@ -20,9 +23,13 @@ const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
 const fee = 1000000000n
 const tickSpacing = 1n
 
+let feeTier: FeeTier
+let poolKey: PoolKey
+
 describe('protocol fee', () => {
-  beforeAll(async () => {
+  before(async () => {
     wasm = await loadWasm()
+    chai = await loadChai()
   })
 
   beforeEach(async () => {
@@ -72,45 +79,35 @@ describe('protocol fee', () => {
 
     invariant = await Invariant.load(client, service, Network.Local, invariantContractHash)
 
-    await invariant.addFeeTier(ALICE, fee, tickSpacing)
+    feeTier = await callWasm(wasm.newFeeTier, { v: fee }, tickSpacing)
+    poolKey = await callWasm(wasm.newPoolKey, token0ContractPackage, token1ContractPackage, feeTier)
 
-    await invariant.createPool(
-      ALICE,
-      token0ContractPackage,
-      token1ContractPackage,
-      fee,
-      tickSpacing,
-      1000000000000000000000000n,
-      0n
-    )
+    await invariant.addFeeTier(ALICE, feeTier)
+
+    await invariant.createPool(ALICE, poolKey, { v: 1000000000000000000000000n })
 
     await invariant.createPosition(
       ALICE,
-      token0ContractPackage,
-      token1ContractPackage,
-      fee,
-      tickSpacing,
+      poolKey,
       -10n,
       10n,
-      10000000000000n,
-      1000000000000000000000000n,
-      1000000000000000000000000n
+      { v: 10000000000000n },
+      { v: 1000000000000000000000000n },
+      { v: 1000000000000000000000000n }
     )
 
-    await invariant.swap(
-      ALICE,
-      token0ContractPackage,
-      token1ContractPackage,
-      fee,
-      tickSpacing,
-      true,
-      4999n,
-      true,
-      999505344804856076727628n
-    )
+    await invariant.swap(ALICE, poolKey, true, { v: 4999n }, true, { v: 999505344804856076727628n })
   })
 
   it('should withdraw protocol fee', async () => {
+    const feeTier = await callWasm(wasm.newFeeTier, { v: fee }, tickSpacing)
+    const poolKey = await callWasm(
+      wasm.newPoolKey,
+      token0ContractPackage,
+      token1ContractPackage,
+      feeTier
+    )
+
     erc20.setContractHash(token0Address)
     const token0Before = await erc20.balanceOf(Key.Account, aliceAddress)
     erc20.setContractHash(token1Address)
@@ -118,13 +115,7 @@ describe('protocol fee', () => {
 
     // TODO: get pool before and assert protocol protocol fee
 
-    await invariant.withdrawProtocolFee(
-      ALICE,
-      token0ContractPackage,
-      token1ContractPackage,
-      fee,
-      tickSpacing
-    )
+    await invariant.withdrawProtocolFee(ALICE, poolKey)
 
     // TODO: get pool after and assert protocol protocol fee
 
@@ -134,46 +125,26 @@ describe('protocol fee', () => {
     const token1After = await erc20.balanceOf(Key.Account, aliceAddress)
 
     if (await callWasm(wasm.isTokenX, token0ContractPackage, token1ContractPackage)) {
-      expect(token0After).toBe(token0Before + 1n)
-      expect(token1After).toBe(token1Before)
+      chai.assert.equal(token0After, token0Before + 1n)
+      chai.assert.equal(token1After, token1Before)
     } else {
-      expect(token0After).toBe(token0Before)
-      expect(token1After).toBe(token1Before + 1n)
+      chai.assert.equal(token0After, token0Before)
+      chai.assert.equal(token1After, token1Before + 1n)
     }
   })
 
   it('should change fee receiver', async () => {
-    await invariant.changeFeeReceiver(
-      ALICE,
-      token0ContractPackage,
-      token1ContractPackage,
-      fee,
-      tickSpacing,
-      Key.Account,
-      bobAddress
-    )
+    await invariant.changeFeeReceiver(ALICE, poolKey, Key.Account, bobAddress)
 
     erc20.setContractHash(token0Address)
     const token0Before = await erc20.balanceOf(Key.Account, bobAddress)
     erc20.setContractHash(token1Address)
     const token1Before = await erc20.balanceOf(Key.Account, bobAddress)
 
-    const withdrawProtocolFeeResult = await invariant.withdrawProtocolFee(
-      ALICE,
-      token0ContractPackage,
-      token1ContractPackage,
-      fee,
-      tickSpacing
-    )
-    expect(withdrawProtocolFeeResult.execution_results[0].result.Failure).toBeDefined()
+    const withdrawProtocolFeeResult = await invariant.withdrawProtocolFee(ALICE, poolKey)
+    chai.assert.notEqual(withdrawProtocolFeeResult.execution_results[0].result.Failure, undefined)
 
-    await invariant.withdrawProtocolFee(
-      BOB,
-      token0ContractPackage,
-      token1ContractPackage,
-      fee,
-      tickSpacing
-    )
+    await invariant.withdrawProtocolFee(BOB, poolKey)
 
     erc20.setContractHash(token0Address)
     const token0After = await erc20.balanceOf(Key.Account, bobAddress)
@@ -181,11 +152,11 @@ describe('protocol fee', () => {
     const token1After = await erc20.balanceOf(Key.Account, bobAddress)
 
     if (await callWasm(wasm.isTokenX, token0ContractPackage, token1ContractPackage)) {
-      expect(token0After).toBe(token0Before + 1n)
-      expect(token1After).toBe(token1Before)
+      chai.assert.equal(token0After, token0Before + 1n)
+      chai.assert.equal(token1After, token1Before)
     } else {
-      expect(token0After).toBe(token0Before)
-      expect(token1After).toBe(token1Before + 1n)
+      chai.assert.equal(token0After, token0Before)
+      chai.assert.equal(token1After, token1Before + 1n)
     }
   })
 })
