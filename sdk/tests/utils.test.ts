@@ -9,7 +9,7 @@ import {
   calculatePriceImpact,
   calculateSqrtPriceAfterSlippage,
   callWasm,
-  initCasperClientAndService,
+  initCasperClient,
   loadWasm,
   priceToSqrtPrice,
   sqrtPriceToPrice
@@ -177,12 +177,12 @@ describe('utils', () => {
     const targetSqrtPrice = { v: 999505344804856076727628n }
     const approvalAmount = 1000000000n
 
-    const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
+    const client = initCasperClient(LOCAL_NODE_URL)
     const deployer = ALICE
     const deployerAddress = deployer.publicKey.toAccountHashStr().replace('account-hash-', '')
     const network = Network.Local
 
-    const hashes = await deployInvariantAndTokens(client, service, deployer)
+    const hashes = await deployInvariantAndTokens(client, deployer)
 
     const feeTier = await callWasm(wasm.newFeeTier, { v: 10000000000n }, 1n)
     const poolKey = await callWasm(
@@ -192,12 +192,12 @@ describe('utils', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash)
     await invariant.addFeeTier(deployer, network, feeTier)
     const initSqrtPrice = { v: 1000000000000000000000000n }
     await invariant.createPool(deployer, network, poolKey, initSqrtPrice)
 
-    const erc20 = await Erc20.load(client, service, network, hashes.tokenX.loadHash)
+    const erc20 = await Erc20.load(client, network, hashes.tokenX.loadHash)
     await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
     await erc20.setContractHash(hashes.tokenY.loadHash)
     await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
