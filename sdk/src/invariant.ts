@@ -383,6 +383,7 @@ export class Invariant {
     const stateRootHash = await this.client.nodeClient.getStateRootHash()
     const buffor: number[] = []
     const indexBytes = bigintToByteArray(index)
+
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
     buffor.push('#'.charCodeAt(0))
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
@@ -408,8 +409,19 @@ export class Invariant {
   async getTick(poolKey: PoolKey, index: bigint): Promise<Tick> {
     const stateRootHash = await this.client.nodeClient.getStateRootHash()
     const buffor: number[] = []
-    const indexBytes = bigintToByteArray(index)
-    const preparedIndexBytes = indexBytes.concat(Array(4 - indexBytes.length).fill(0))
+
+    const indexBytes =
+      index < 0n
+        ? (() => {
+            const bytes = bigintToByteArray(-index)
+            const flipped = bytes.map(byte => 256 - byte)
+            return flipped
+          })()
+        : bigintToByteArray(index)
+
+    const filler = index < 0n ? 255 : 0
+    const preparedIndexBytes = indexBytes.concat(Array(4 - indexBytes.length).fill(filler))
+
     const poolKeyBytes = encodePoolKey(poolKey)
 
     buffor.push(...'ticks'.split('').map(c => c.charCodeAt(0)))

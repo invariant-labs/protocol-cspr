@@ -1,6 +1,5 @@
 use crate::errors::InvariantError;
 use crate::percentage::Percentage;
-use crate::{convert, resolve};
 use decimal::*;
 use odra::types::U128;
 use odra::OdraType;
@@ -43,8 +42,5 @@ impl FeeTier {
 
 #[wasm_wrapper]
 pub fn new_fee_tier(fee: Percentage, tick_spacing: u32) -> Result<FeeTier, InvariantError> {
-    // let fee: Percentage = convert!(js_fee)?;
-    // let tick_spacing: u32 = convert!(js_tick_spacing)?;
-    // resolve!(FeeTier::new(fee, tick_spacing))
     Ok(FeeTier::new(fee, tick_spacing)?)
 }

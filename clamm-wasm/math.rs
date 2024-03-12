@@ -1,7 +1,6 @@
 use crate::consts::MAX_TICK;
 use crate::types::{liquidity::*, sqrt_price::*, token_amount::*};
 use decimal::*;
-use js_sys::BigInt;
 use odra::types::{U256, U512};
 use serde::{Deserialize, Serialize};
 use traceable_result::*;

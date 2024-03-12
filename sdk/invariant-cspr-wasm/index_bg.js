@@ -505,6 +505,32 @@ export function calculateMinAmountOut(js_expected_amount_out, js_slippage) {
 /**
 * @returns {bigint}
 */
+export function getSecondsPerLiquidityScale() {
+    const ret = wasm.getSecondsPerLiquidityScale();
+    return takeObject(ret);
+}
+
+/**
+* @returns {bigint}
+*/
+export function getSecondsPerLiquidityDenominator() {
+    const ret = wasm.getSecondsPerLiquidityDenominator();
+    return takeObject(ret);
+}
+
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toSecondsPerLiquidity(js_val, js_scale) {
+    const ret = wasm.toSecondsPerLiquidity(addHeapObject(js_val), addHeapObject(js_scale));
+    return takeObject(ret);
+}
+
+/**
+* @returns {bigint}
+*/
 export function getTokenAmountScale() {
     const ret = wasm.getTokenAmountScale();
     return takeObject(ret);
@@ -604,6 +630,32 @@ export function toPercentage(js_val, js_scale) {
 /**
 * @returns {bigint}
 */
+export function getSqrtPriceScale() {
+    const ret = wasm.getSqrtPriceScale();
+    return takeObject(ret);
+}
+
+/**
+* @returns {bigint}
+*/
+export function getSqrtPriceDenominator() {
+    const ret = wasm.getSqrtPriceDenominator();
+    return takeObject(ret);
+}
+
+/**
+* @param {any} js_val
+* @param {any} js_scale
+* @returns {bigint}
+*/
+export function toSqrtPrice(js_val, js_scale) {
+    const ret = wasm.toSqrtPrice(addHeapObject(js_val), addHeapObject(js_scale));
+    return takeObject(ret);
+}
+
+/**
+* @returns {bigint}
+*/
 export function getFixedPointScale() {
     const ret = wasm.getFixedPointScale();
     return takeObject(ret);
@@ -630,16 +682,16 @@ export function toFixedPoint(js_val, js_scale) {
 /**
 * @returns {bigint}
 */
-export function getSqrtPriceScale() {
-    const ret = wasm.getSqrtPriceScale();
+export function getPriceScale() {
+    const ret = wasm.getPriceScale();
     return takeObject(ret);
 }
 
 /**
 * @returns {bigint}
 */
-export function getSqrtPriceDenominator() {
-    const ret = wasm.getSqrtPriceDenominator();
+export function getPriceDenominator() {
+    const ret = wasm.getPriceDenominator();
     return takeObject(ret);
 }
 
@@ -648,8 +700,8 @@ export function getSqrtPriceDenominator() {
 * @param {any} js_scale
 * @returns {bigint}
 */
-export function toSqrtPrice(js_val, js_scale) {
-    const ret = wasm.toSqrtPrice(addHeapObject(js_val), addHeapObject(js_scale));
+export function toPrice(js_val, js_scale) {
+    const ret = wasm.toPrice(addHeapObject(js_val), addHeapObject(js_scale));
     return takeObject(ret);
 }
 
@@ -979,32 +1031,6 @@ export function getFeeGrowthDenominator() {
 */
 export function toFeeGrowth(js_val, js_scale) {
     const ret = wasm.toFeeGrowth(addHeapObject(js_val), addHeapObject(js_scale));
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
-export function getSecondsPerLiquidityScale() {
-    const ret = wasm.getSecondsPerLiquidityScale();
-    return takeObject(ret);
-}
-
-/**
-* @returns {bigint}
-*/
-export function getSecondsPerLiquidityDenominator() {
-    const ret = wasm.getSecondsPerLiquidityDenominator();
-    return takeObject(ret);
-}
-
-/**
-* @param {any} js_val
-* @param {any} js_scale
-* @returns {bigint}
-*/
-export function toSecondsPerLiquidity(js_val, js_scale) {
-    const ret = wasm.toSecondsPerLiquidity(addHeapObject(js_val), addHeapObject(js_scale));
     return takeObject(ret);
 }
 
