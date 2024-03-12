@@ -23,10 +23,8 @@ import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
 import { Algo, WasmCallParams } from './schema'
 
-export const initCasperClientAndService = (nodeUrl: string) => {
-  const client = new CasperClient(nodeUrl)
-  const service = new CasperServiceByJsonRPC(nodeUrl)
-  return { client, service }
+export const initCasperClient = (nodeUrl: string) => {
+  return new CasperClient(nodeUrl)
 }
 
 export const sendTx = async (
@@ -198,10 +196,7 @@ export const integerSafeCast = (value: bigint): number => {
 }
 
 export const getBitAtIndex = (v: bigint, index: bigint): boolean => {
-  const binary = v.toString(2)
-  const reversedBinaryString = binary.split('').reverse().join('')
-  const bitAtIndex = reversedBinaryString[integerSafeCast(index)]
-  return bitAtIndex === '1'
+  return Boolean((v >> index) & BigInt(1))
 }
 
 export const calculateSqrtPriceAfterSlippage = async (
