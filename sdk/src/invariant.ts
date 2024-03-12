@@ -21,10 +21,7 @@ import type {
   TokenAmount
 } from 'invariant-cspr-wasm'
 import { DEFAULT_PAYMENT_AMOUNT } from './consts'
-import { Network } from './enums'
 import {
-  bigintToByteArray,
-  callWasm,
   decodeChunk,
   decodeFeeTiers,
   decodeInvariantConfig,
@@ -32,11 +29,14 @@ import {
   decodePoolKeys,
   decodePosition,
   decodePositionLength,
-  decodeTick,
-  encodePoolKey,
+  decodeTick
+} from './decoder'
+import { Network } from './enums'
+import { bigintToByteArray, encodePoolKey, hash } from './parser'
+import {
+  callWasm,
   getBitAtIndex,
   getDeploymentData,
-  hash,
   integerSafeCast,
   loadWasm,
   sendTx
