@@ -236,7 +236,7 @@ describe('utils', () => {
 
       const [x, y] = await calculateFee(pool, position, lowerTick, upperTick)
 
-      chai.assert.equal(y, { v: 0n })
+      chai.assert.deepEqual(y, { v: 0n })
 
       await erc20.setContractHash(hashes.tokenX.loadHash)
       const balanceXBeforeClaim = await erc20.balanceOf(Key.Account, deployerAddress)
