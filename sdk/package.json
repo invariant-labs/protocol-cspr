@@ -1,7 +1,16 @@
 {
   "name": "@invariant-labs/cspr-sdk",
-  "version": "1.0.0",
+  "version": "0.1.0",
+  "collaborators": [
+    "Invariant Labs"
+  ],
   "description": "",
+  "keywords": [
+    "Casper Network",
+    "DEX",
+    "SDK",
+    "odra"
+  ],
   "main": "index.js",
   "scripts": {
     "start": "npx tsc && node --experimental-wasm-modules target/src/index.js",
@@ -14,7 +23,8 @@
     "wasm:strip": "cd contracts && wasm-strip invariant.wasm && wasm-strip erc20.wasm",
     "node:start": "casper-node-launcher-js node v1.5.3",
     "node:start:d": "casper-node-launcher-js node v1.5.3 --daemon",
-    "node:stop": "casper-node-launcher-js stop"
+    "node:stop": "casper-node-launcher-js stop",
+    "docs:copy": "cp ../README.md README.md"
   },
   "dependencies": {
     "@casperlabs/ts-results": "^3.3.5",
@@ -27,9 +37,13 @@
     "tsimportlib": "^0.0.5",
     "typescript": "^5.3.3"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/invariant-labs/protocol-cspr",
+    "directory": "sdk"
+  },
   "devDependencies": {
     "@ethersproject/bignumber": "^5.7.0",
     "@types/chai": "^4.3.11",
