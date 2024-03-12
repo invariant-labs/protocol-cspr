@@ -15,7 +15,18 @@ import {
   CLValueBytesParsers,
   Result
 } from 'casper-js-sdk'
-import { FeeTier, Pool, PoolKey, Position, Tick } from 'invariant-cspr-wasm'
+import {
+  FeeGrowth,
+  FeeTier,
+  Liquidity,
+  Percentage,
+  Pool,
+  PoolKey,
+  Position,
+  SqrtPrice,
+  Tick,
+  TokenAmount
+} from 'invariant-cspr-wasm'
 import { Decimals } from './schema'
 
 const i32Parser = new CLI32BytesParser()
@@ -86,7 +97,7 @@ export const decodeInvariantConfig = (rawBytes: string) => {
   const bytes = parseBytes(rawBytes)
   const structNameRemainder = decodeString(bytes)[1]
   const [admin, adminRemainder] = decodeAddress(structNameRemainder)
-  const [protocolFee, remainder] = decodeDecimal(
+  const [protocolFee, remainder]: [Percentage, Uint8Array] = decodeDecimal(
     u128Parser,
     adminRemainder,
     'Couldnt parse protocol fee'
@@ -117,7 +128,7 @@ export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
     const [tokenY, tokenYRemainder] = decodeAddress(remainingBytes)
     remainingBytes = tokenYRemainder
     remainingBytes = decodeString(remainingBytes)[1]
-    const [fee, feeRemainder] = decodeDecimal(
+    const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
       u128Parser,
       remainingBytes,
       'Couldnt parse pool key fee'
@@ -153,7 +164,7 @@ export const decodeFeeTiers = (rawBytes: string): FeeTier[] => {
 
   for (let i = 0; i < feeTierCount; i++) {
     remainingBytes = decodeString(remainingBytes)[1]
-    const [fee, feeRemainder] = decodeDecimal(
+    const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
       u128Parser,
       remainingBytes,
       'Couldnt parse fee tier fee'
@@ -178,12 +189,12 @@ export const decodeFeeTiers = (rawBytes: string): FeeTier[] => {
 export const decodePool = (rawBytes: string): Pool => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
-  const [liquidity, liquidityRemainder] = decodeDecimal(
+  const [liquidity, liquidityRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     remainingBytes,
     'Couldnt parse liquidity'
   )
-  const [sqrtPrice, sqrtPriceRemainder] = decodeDecimal(
+  const [sqrtPrice, sqrtPriceRemainder]: [SqrtPrice, Uint8Array] = decodeDecimal(
     u128Parser,
     liquidityRemainder,
     'Couldnt parse sqrt price'
@@ -193,22 +204,22 @@ export const decodePool = (rawBytes: string): Pool => {
     sqrtPriceRemainder,
     'Couldnt parse current tick index'
   )
-  const [feeGrowthGlobalX, feeGrowthGlobalXRemainder] = decodeDecimal(
+  const [feeGrowthGlobalX, feeGrowthGlobalXRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     currentTickRemainder,
     'Couldnt parse fee growth global x'
   )
-  const [feeGrowthGlobalY, feeGrowthGlobalYRemainder] = decodeDecimal(
+  const [feeGrowthGlobalY, feeGrowthGlobalYRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthGlobalXRemainder,
     'Couldnt parse fee growth global y'
   )
-  const [feeProtocolTokenX, feeProtocolTokenXRemainder] = decodeDecimal(
+  const [feeProtocolTokenX, feeProtocolTokenXRemainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthGlobalYRemainder,
     'Couldnt parse fee protocol token x'
   )
-  const [feeProtocolTokenY, feeProtocolTokenYRemainder] = decodeDecimal(
+  const [feeProtocolTokenY, feeProtocolTokenYRemainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     feeProtocolTokenXRemainder,
     'Couldnt parse fee protocol token y'
@@ -252,7 +263,7 @@ export const decodePosition = (rawBytes: string): Position => {
   const [tokenX, tokenXRemainder] = decodeAddress(poolKeyRemainder)
   const [tokenY, tokenYRemainder] = decodeAddress(tokenXRemainder)
   const feeTierRemainder = decodeString(tokenYRemainder)[1]
-  const [fee, feeRemainder] = decodeDecimal(
+  const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
     u128Parser,
     feeTierRemainder,
     'Couldnt parse position fee'
@@ -262,7 +273,7 @@ export const decodePosition = (rawBytes: string): Position => {
     feeRemainder,
     'Couldnt parse position  tickspacing'
   )
-  const [liquidity, liquidityRemainder] = decodeDecimal(
+  const [liquidity, liquidityRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     tickSpacingRemainder,
     'Couldnt parse position liquidity'
@@ -277,12 +288,12 @@ export const decodePosition = (rawBytes: string): Position => {
     lowerTickIndexRemainder,
     'Couldnt parse position upper tick index'
   )
-  const [feeGrowthInsideX, feeGrowthInsideXRemainder] = decodeDecimal(
+  const [feeGrowthInsideX, feeGrowthInsideXRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     upperTickIndexRemainder,
     'Couldnt parse position fee growth inside x'
   )
-  const [feeGrowthInsideY, feeGrowthInsideYRemainder] = decodeDecimal(
+  const [feeGrowthInsideY, feeGrowthInsideYRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthInsideXRemainder,
     'Couldnt parse position fee growth inside y'
@@ -293,12 +304,12 @@ export const decodePosition = (rawBytes: string): Position => {
     'Couldnt parse position last block number'
   )
 
-  const [tokensOwedX, tokenOwedXRemainder] = decodeDecimal(
+  const [tokensOwedX, tokenOwedXRemainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     lastBlockNumberRemainder,
     'Couldnt parse position tokens owed x'
   )
-  const [tokensOwedY, remainder] = decodeDecimal(
+  const [tokensOwedY, remainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     tokenOwedXRemainder,
     'Couldnt parse position tokens owed y'
@@ -337,27 +348,27 @@ export const decodeTick = (rawBytes: string): Tick => {
     'Couldnt parse tick index'
   )
   const [sign, signRemainder] = decodeBool(indexRemainder)
-  const [liquidityChange, liquidtyChangeRemainder] = decodeDecimal(
+  const [liquidityChange, liquidtyChangeRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     signRemainder,
     'Couldnt parse tick liquidity change'
   )
-  const [liquidityGross, liquidityGrossRemainder] = decodeDecimal(
+  const [liquidityGross, liquidityGrossRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     liquidtyChangeRemainder,
     'Couldnt parse tick liquidity gross'
   )
-  const [sqrtPrice, sqrtPriceRemainder] = decodeDecimal(
+  const [sqrtPrice, sqrtPriceRemainder]: [SqrtPrice, Uint8Array] = decodeDecimal(
     u128Parser,
     liquidityGrossRemainder,
     'Couldnt parse tick sqrt price'
   )
-  const [feeGrowthOutsideX, feeGrowthOutsideXRemainder] = decodeDecimal(
+  const [feeGrowthOutsideX, feeGrowthOutsideXRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     sqrtPriceRemainder,
     'Couldnt parse tick sqrt fee growth outside x'
   )
-  const [feeGrowthOutsideY, feeGrowthOutsideYRemainder] = decodeDecimal(
+  const [feeGrowthOutsideY, feeGrowthOutsideYRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthOutsideXRemainder,
     'Couldnt parse tick fee growth outside y'

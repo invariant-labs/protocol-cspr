@@ -9,7 +9,14 @@ import {
   loadChai,
   positionEquals
 } from '../src/testUtils'
-import { callWasm, getAccountHashFromKey, initCasperClient, loadWasm } from '../src/utils'
+import {
+  callWasm,
+  createFeeTier,
+  createPoolKey,
+  getAccountHashFromKey,
+  initCasperClient,
+  loadWasm
+} from '../src/utils'
 
 let hashes: {
   invariant: { loadHash: string; packageHash: string }
@@ -28,17 +35,10 @@ describe('test get liquidity by x', () => {
   let poolKey: PoolKey
 
   beforeEach(async () => {
-    const wasm = await loadWasm()
-
     hashes = await deployInvariantAndTokens(client, deployer)
 
-    feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
-    poolKey = await callWasm(
-      wasm.newPoolKey,
-      hashes.tokenX.packageHash,
-      hashes.tokenY.packageHash,
-      feeTier
-    )
+    feeTier = await createFeeTier({ v: 6000000000n }, 10n)
+    poolKey = await createPoolKey(hashes.tokenX.packageHash, hashes.tokenY.packageHash, feeTier)
 
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     await invariant.addFeeTier(deployer, feeTier)
@@ -175,16 +175,10 @@ describe('test get liquidity by y', () => {
   let poolKey: PoolKey
 
   beforeEach(async () => {
-    const wasm = await loadWasm()
     hashes = await deployInvariantAndTokens(client, deployer)
 
-    feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
-    poolKey = await callWasm(
-      wasm.newPoolKey,
-      hashes.tokenX.packageHash,
-      hashes.tokenY.packageHash,
-      feeTier
-    )
+    feeTier = await createFeeTier({ v: 6000000000n }, 10n)
+    poolKey = await createPoolKey(hashes.tokenX.packageHash, hashes.tokenY.packageHash, feeTier)
 
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
 

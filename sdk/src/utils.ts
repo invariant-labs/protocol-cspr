@@ -11,8 +11,10 @@ import {
 import fs from 'fs'
 import { readFile } from 'fs/promises'
 import type {
+  FeeTier,
   Percentage,
   Pool,
+  PoolKey,
   Position,
   Price,
   SqrtPrice,
@@ -297,4 +299,18 @@ export const extractContractPackageHash = (contractPackage: ContractPackageJson)
 
 export const getAccountHashFromKey = (key: Keys.AsymmetricKey): string => {
   return key.publicKey.toAccountHashStr().replace('account-hash-', '')
+}
+
+export const createFeeTier = async (fee: Percentage, tickSpacing: bigint): Promise<FeeTier> => {
+  const wasm = await loadWasm()
+  return (await callWasm(wasm.newFeeTier, fee, tickSpacing)) as FeeTier
+}
+
+export const createPoolKey = async (
+  tokenXHash: string,
+  tokenYHash: string,
+  feeTier: FeeTier
+): Promise<PoolKey> => {
+  const wasm = await loadWasm()
+  return (await callWasm(wasm.newPoolKey, tokenXHash, tokenYHash, feeTier)) as PoolKey
 }

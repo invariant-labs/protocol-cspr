@@ -4,7 +4,14 @@ import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { loadChai } from '../src/testUtils'
-import { callWasm, getAccountHashFromKey, initCasperClient, loadWasm } from '../src/utils'
+import {
+  callWasm,
+  createFeeTier,
+  createPoolKey,
+  getAccountHashFromKey,
+  initCasperClient,
+  loadWasm
+} from '../src/utils'
 
 let wasm: typeof import('invariant-cspr-wasm')
 let chai: typeof import('chai')
@@ -76,8 +83,8 @@ describe('protocol fee', () => {
 
     invariant = await Invariant.load(client, invariantContractHash, Network.Local)
 
-    feeTier = await callWasm(wasm.newFeeTier, { v: fee }, tickSpacing)
-    poolKey = await callWasm(wasm.newPoolKey, token0ContractPackage, token1ContractPackage, feeTier)
+    feeTier = await createFeeTier({ v: fee }, tickSpacing)
+    poolKey = await createPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
 
     await invariant.addFeeTier(ALICE, feeTier)
 
@@ -97,13 +104,8 @@ describe('protocol fee', () => {
   })
 
   it('should withdraw protocol fee', async () => {
-    const feeTier = await callWasm(wasm.newFeeTier, { v: fee }, tickSpacing)
-    const poolKey = await callWasm(
-      wasm.newPoolKey,
-      token0ContractPackage,
-      token1ContractPackage,
-      feeTier
-    )
+    const feeTier = await createFeeTier({ v: fee }, tickSpacing)
+    const poolKey = await createPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
 
     erc20.setContractHash(token0Address)
     const token0Before = await erc20.balanceOf(Key.Account, aliceAddress)

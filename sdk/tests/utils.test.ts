@@ -9,6 +9,8 @@ import {
   calculatePriceImpact,
   calculateSqrtPriceAfterSlippage,
   callWasm,
+  createFeeTier,
+  createPoolKey,
   initCasperClient,
   loadWasm,
   priceToSqrtPrice,
@@ -168,7 +170,6 @@ describe('utils', () => {
   })
   it('test calculate fee', async () => {
     const chai = await loadChai()
-    const wasm = await loadWasm()
 
     const liquidityDelta = { v: 10000000000000n }
     const lowerTickIndex = -10n
@@ -184,9 +185,8 @@ describe('utils', () => {
 
     const hashes = await deployInvariantAndTokens(client, deployer)
 
-    const feeTier = await callWasm(wasm.newFeeTier, { v: 10000000000n }, 1n)
-    const poolKey = await callWasm(
-      wasm.newPoolKey,
+    const feeTier = await createFeeTier({ v: 10000000000n }, 1n)
+    const poolKey = await createPoolKey(
       hashes.tokenX.packageHash,
       hashes.tokenY.packageHash,
       feeTier
