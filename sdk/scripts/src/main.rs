@@ -154,7 +154,11 @@ fn main() {
         fee_tier,
         };
 
-        let key = (pool_key, 10u32);
+        let key = (pool_key.clone(), -10i32);
+        println!("pool_key = {:?}", pool_key.clone().to_bytes().unwrap());
+        println!("tick negative = {:?}", (-10i32).to_bytes().unwrap());
+        println!("tick positive = {:?}", (10i32).to_bytes().unwrap());
+        println!("tick positive = {:?}", (0i32).to_bytes().unwrap());
         buffor.extend_from_slice(b"ticks");
         buffor.extend_from_slice(b"#");
         buffor.extend_from_slice(b"ticks");
