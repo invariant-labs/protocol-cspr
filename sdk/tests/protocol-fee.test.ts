@@ -4,12 +4,12 @@ import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { loadChai } from '../src/testUtils'
-import { callWasm, initCasperClientAndService, loadWasm } from '../src/utils'
+import { callWasm, initCasperClient, loadWasm } from '../src/utils'
 
 let wasm: typeof import('invariant-cspr-wasm')
 let chai: typeof import('chai')
 
-const { client, service } = initCasperClientAndService(LOCAL_NODE_URL)
+const client = initCasperClient(LOCAL_NODE_URL)
 let erc20: Erc20
 let invariant: Invariant
 let invariantContractPackage: string
@@ -35,7 +35,6 @@ describe('protocol fee', () => {
   beforeEach(async () => {
     const [token0ContractPackageHash, token0ContractHash] = await Erc20.deploy(
       client,
-      service,
       Network.Local,
       ALICE,
       'erc20-1',
@@ -47,7 +46,6 @@ describe('protocol fee', () => {
     )
     const [token1ContractPackageHash, token1ContractHash] = await Erc20.deploy(
       client,
-      service,
       Network.Local,
       ALICE,
       'erc20-2',
@@ -59,7 +57,6 @@ describe('protocol fee', () => {
     )
     const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
       client,
-      service,
       Network.Local,
       ALICE,
       fee,
@@ -72,12 +69,12 @@ describe('protocol fee', () => {
     token1ContractPackage = token1ContractPackageHash
     invariantContractPackage = invariantContractPackageHash
 
-    erc20 = await Erc20.load(client, service, Network.Local, token0ContractHash)
+    erc20 = await Erc20.load(client, Network.Local, token0ContractHash)
     await erc20.approve(ALICE, Key.Hash, invariantContractPackage, fee)
-    erc20 = await Erc20.load(client, service, Network.Local, token1ContractHash)
+    erc20 = await Erc20.load(client, Network.Local, token1ContractHash)
     await erc20.approve(ALICE, Key.Hash, invariantContractPackage, fee)
 
-    invariant = await Invariant.load(client, service, Network.Local, invariantContractHash)
+    invariant = await Invariant.load(client, Network.Local, invariantContractHash)
 
     feeTier = await callWasm(wasm.newFeeTier, { v: fee }, tickSpacing)
     poolKey = await callWasm(wasm.newPoolKey, token0ContractPackage, token1ContractPackage, feeTier)
@@ -114,14 +111,14 @@ describe('protocol fee', () => {
     const token1Before = await erc20.balanceOf(Key.Account, aliceAddress)
 
     const poolBefore = await invariant.getPool(poolKey)
-    chai.assert.equal(poolBefore.feeProtocolTokenX, { v: 1n })
-    chai.assert.equal(poolBefore.feeProtocolTokenY, { v: 0n })
+    chai.assert.deepEqual(poolBefore.feeProtocolTokenX, { v: 1n })
+    chai.assert.deepEqual(poolBefore.feeProtocolTokenY, { v: 0n })
 
     await invariant.withdrawProtocolFee(ALICE, poolKey)
 
     const poolAfter = await invariant.getPool(poolKey)
-    chai.assert.equal(poolAfter.feeProtocolTokenX, { v: 0n })
-    chai.assert.equal(poolAfter.feeProtocolTokenY, { v: 0n })
+    chai.assert.deepEqual(poolAfter.feeProtocolTokenX, { v: 0n })
+    chai.assert.deepEqual(poolAfter.feeProtocolTokenY, { v: 0n })
 
     erc20.setContractHash(token0Address)
     const token0After = await erc20.balanceOf(Key.Account, aliceAddress)
@@ -146,8 +143,8 @@ describe('protocol fee', () => {
     const token1Before = await erc20.balanceOf(Key.Account, bobAddress)
 
     const poolBefore = await invariant.getPool(poolKey)
-    chai.assert.equal(poolBefore.feeProtocolTokenX, { v: 1n })
-    chai.assert.equal(poolBefore.feeProtocolTokenY, { v: 0n })
+    chai.assert.deepEqual(poolBefore.feeProtocolTokenX, { v: 1n })
+    chai.assert.deepEqual(poolBefore.feeProtocolTokenY, { v: 0n })
 
     const withdrawProtocolFeeResult = await invariant.withdrawProtocolFee(ALICE, poolKey)
     chai.assert.notEqual(withdrawProtocolFeeResult.execution_results[0].result.Failure, undefined)
@@ -155,8 +152,8 @@ describe('protocol fee', () => {
     await invariant.withdrawProtocolFee(BOB, poolKey)
 
     const poolAfter = await invariant.getPool(poolKey)
-    chai.assert.equal(poolAfter.feeProtocolTokenX, { v: 0n })
-    chai.assert.equal(poolAfter.feeProtocolTokenY, { v: 0n })
+    chai.assert.deepEqual(poolAfter.feeProtocolTokenX, { v: 0n })
+    chai.assert.deepEqual(poolAfter.feeProtocolTokenY, { v: 0n })
 
     erc20.setContractHash(token0Address)
     const token0After = await erc20.balanceOf(Key.Account, bobAddress)
