@@ -48,6 +48,7 @@ const main = async () => {
   )
   invariantContractPackage = invariantContractPackageHash
   invariantContract = await Invariant.load(client, service, invariantContractHash)
+
   invariantAddress = invariantContract.contract.contractHash?.replace('hash-', '') ?? ''
 
   if (isLocal) {
@@ -178,6 +179,7 @@ const main = async () => {
     await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
   )
 
+  console.log(await invariantContract.getInvariantConfig())
   console.log(await invariantContract.getPosition(account, 0n))
   console.log(await invariantContract.getFeeTiers())
   console.log(await invariantContract.getPool(poolKey))

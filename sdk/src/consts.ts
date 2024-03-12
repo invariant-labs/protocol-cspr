@@ -1,7 +1,8 @@
 import { Keys } from 'casper-js-sdk'
 import { FUNDED_KEYS } from 'casper-node-launcher-js'
+import { stringToUint8Array } from './parser'
 import { Algo } from './schema'
-import { parseAccountKeys, stringToUint8Array } from './utils'
+import { parseAccountKeys } from './utils'
 
 export const LOCAL_NODE_URL = 'http://127.0.0.1:7777/rpc'
 export const TESTNET_NODE_URL = 'http://195.201.174.222:7777'

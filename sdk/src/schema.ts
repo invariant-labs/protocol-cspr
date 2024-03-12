@@ -14,6 +14,15 @@ export enum Algo {
   secp256K1 = 'secp256K1'
 }
 
+export type Decimals =
+  | Liquidity
+  | SqrtPrice
+  | TokenAmount
+  | FixedPoint
+  | Percentage
+  | SecondsPerLiquidity
+  | FeeGrowth
+
 export type WasmCallParams =
   | bigint
   | boolean
