@@ -2,12 +2,12 @@ import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { loadChai } from '../src/testUtils'
-import { initCasperClient } from '../src/utils'
+import { getAccountHashFromKey, initCasperClient } from '../src/utils'
 
 const client = initCasperClient(LOCAL_NODE_URL)
 let erc20: Erc20
-const aliceAddress = ALICE.publicKey.toAccountHashStr().replace('account-hash-', '')
-const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
+const aliceAddress = getAccountHashFromKey(ALICE)
+const bobAddress = getAccountHashFromKey(BOB)
 
 describe('erc20', () => {
   beforeEach(async () => {

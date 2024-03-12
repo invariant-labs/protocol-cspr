@@ -4,7 +4,7 @@ import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { loadChai } from '../src/testUtils'
-import { callWasm, initCasperClient, loadWasm } from '../src/utils'
+import { callWasm, getAccountHashFromKey, initCasperClient, loadWasm } from '../src/utils'
 
 let wasm: typeof import('invariant-cspr-wasm')
 let chai: typeof import('chai')
@@ -17,8 +17,8 @@ let token0Address: string
 let token1Address: string
 let token0ContractPackage: string
 let token1ContractPackage: string
-const aliceAddress = ALICE.publicKey.toAccountHashStr().replace('account-hash-', '')
-const bobAddress = BOB.publicKey.toAccountHashStr().replace('account-hash-', '')
+const aliceAddress = getAccountHashFromKey(ALICE)
+const bobAddress = getAccountHashFromKey(BOB)
 
 const fee = 1000000000n
 const tickSpacing = 1n
