@@ -110,7 +110,6 @@ export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
   const poolKeyCount = result[0]
   let remainingBytes = result[1]
   const poolKeys = []
-  console.log(poolKeyCount)
   for (let i = 0; i < poolKeyCount; i++) {
     remainingBytes = decodeString(remainingBytes)[1]
     const [tokenX, tokenXRemainder] = decodeAddress(remainingBytes)
