@@ -13,7 +13,8 @@ import {
 } from 'casper-js-sdk'
 import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
 import { Key, Network } from './enums'
-import { getDeploymentData, hash, hexToBytes, sendTx } from './utils'
+import { hash, hexToBytes } from './parser'
+import { getDeploymentData, sendTx } from './utils'
 
 const CONTRACT_NAME = 'erc20'
 
