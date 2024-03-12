@@ -192,10 +192,10 @@ describe('utils', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, hashes.invariant.loadHash)
-    await invariant.addFeeTier(deployer, network, feeTier)
+    const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
+    await invariant.addFeeTier(deployer, feeTier)
     const initSqrtPrice = { v: 1000000000000000000000000n }
-    await invariant.createPool(deployer, network, poolKey, initSqrtPrice)
+    await invariant.createPool(deployer, poolKey, initSqrtPrice)
 
     const erc20 = await Erc20.load(client, network, hashes.tokenX.loadHash)
     await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
@@ -205,7 +205,6 @@ describe('utils', () => {
     const pool = await invariant.getPool(poolKey)
     await invariant.createPosition(
       deployer,
-      Network.Local,
       poolKey,
       lowerTickIndex,
       upperTickIndex,
@@ -220,15 +219,7 @@ describe('utils', () => {
       await erc20.setContractHash(hashes.tokenY.loadHash)
       await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
 
-      await invariant.swap(
-        deployer,
-        Network.Local,
-        poolKey,
-        true,
-        swapAmount,
-        true,
-        targetSqrtPrice
-      )
+      await invariant.swap(deployer, poolKey, true, swapAmount, true, targetSqrtPrice)
       const pool = await invariant.getPool(poolKey)
       const position = await invariant.getPosition(deployer, 0n)
       const lowerTick = await invariant.getTick(poolKey, lowerTickIndex)
@@ -243,7 +234,7 @@ describe('utils', () => {
       await erc20.setContractHash(hashes.tokenY.loadHash)
       const balanceYBeforeClaim = await erc20.balanceOf(Key.Account, deployerAddress)
 
-      await invariant.claimFee(deployer, Network.Local, 0n)
+      await invariant.claimFee(deployer, 0n)
 
       await erc20.setContractHash(hashes.tokenX.loadHash)
       const balanceXAfterClaim = await erc20.balanceOf(Key.Account, deployerAddress)

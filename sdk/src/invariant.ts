@@ -35,6 +35,8 @@ import { Network } from './enums'
 import { bigintToByteArray, encodePoolKey, hash } from './parser'
 import {
   callWasm,
+  extractContractHash,
+  extractContractPackageHash,
   getBitAtIndex,
   getDeploymentData,
   integerSafeCast,
@@ -47,16 +49,19 @@ const CONTRACT_NAME = 'invariant'
 export class Invariant {
   client: CasperClient
   contract: Contracts.Contract
+  network: Network
   paymentAmount: bigint
 
   private constructor(
     client: CasperClient,
     contractHash: string,
+    network: Network,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
   ) {
     this.client = client
     this.contract = new Contracts.Contract(this.client)
     this.contract.setContractHash(contractHash)
+    this.network = network
     this.paymentAmount = paymentAmount
   }
 
@@ -132,27 +137,24 @@ export class Invariant {
       throw new Error('Contract package not found in block state')
     }
 
-    return [
-      contractPackageHash.replace('hash-', ''),
-      ContractPackage.versions[0].contractHash.replace('contract-', '')
-    ]
+    return [extractContractHash(contractPackageHash), extractContractPackageHash(ContractPackage)]
   }
 
-  static async load(client: CasperClient, contractHash: string) {
-    return new Invariant(client, 'hash-' + contractHash)
+  static async load(client: CasperClient, contractHash: string, network: Network) {
+    return new Invariant(client, 'hash-' + contractHash, network)
   }
 
   async setContractHash(contractHash: string) {
     this.contract.setContractHash('hash-' + contractHash)
   }
 
-  async addFeeTier(signer: Keys.AsymmetricKey, network: Network, feeTier: FeeTier) {
+  async addFeeTier(signer: Keys.AsymmetricKey, feeTier: FeeTier) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'add_fee_tier',
       {
         fee: CLValueBuilder.u128(BigNumber.from(feeTier.fee.v)),
@@ -161,13 +163,13 @@ export class Invariant {
     )
   }
 
-  async removeFeeTier(signer: Keys.AsymmetricKey, network: Network, feeTier: FeeTier) {
+  async removeFeeTier(signer: Keys.AsymmetricKey, feeTier: FeeTier) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'remove_fee_tier',
       {
         fee: CLValueBuilder.u128(BigNumber.from(feeTier.fee.v)),
@@ -176,12 +178,7 @@ export class Invariant {
     )
   }
 
-  async createPool(
-    signer: Keys.AsymmetricKey,
-    network: Network,
-    poolKey: PoolKey,
-    initSqrtPrice: SqrtPrice
-  ) {
+  async createPool(signer: Keys.AsymmetricKey, poolKey: PoolKey, initSqrtPrice: SqrtPrice) {
     const wasm = await loadWasm()
     const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
     const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
@@ -192,7 +189,7 @@ export class Invariant {
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'create_pool',
       {
         token_0: CLValueBuilder.key(token0Key),
@@ -205,12 +202,7 @@ export class Invariant {
     )
   }
 
-  async changeFeeReceiver(
-    signer: Keys.AsymmetricKey,
-    network: Network,
-    poolKey: PoolKey,
-    newFeeReceiver: string
-  ) {
+  async changeFeeReceiver(signer: Keys.AsymmetricKey, poolKey: PoolKey, newFeeReceiver: string) {
     const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
     const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
     const feeReceiverKey = new CLByteArray(decodeBase16(newFeeReceiver))
@@ -220,7 +212,7 @@ export class Invariant {
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'change_fee_receiver',
       {
         token_0: CLValueBuilder.key(token0Key),
@@ -232,13 +224,13 @@ export class Invariant {
     )
   }
 
-  async changeProtocolFee(signer: Keys.AsymmetricKey, network: Network, protocolFee: Percentage) {
+  async changeProtocolFee(signer: Keys.AsymmetricKey, protocolFee: Percentage) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'change_protocol_fee',
       {
         protocol_fee: CLValueBuilder.u128(BigNumber.from(protocolFee.v))
@@ -314,7 +306,6 @@ export class Invariant {
 
   async createPosition(
     signer: Keys.AsymmetricKey,
-    network: Network,
     poolKey: PoolKey,
     lowerTick: bigint,
     upperTick: bigint,
@@ -330,7 +321,7 @@ export class Invariant {
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'create_position',
       {
         token_0: CLValueBuilder.key(token0Key),
@@ -346,13 +337,13 @@ export class Invariant {
     )
   }
 
-  async removePosition(signer: Keys.AsymmetricKey, network: Network, index: bigint) {
+  async removePosition(signer: Keys.AsymmetricKey, index: bigint) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'remove_position',
       {
         index: CLValueBuilder.u32(integerSafeCast(index))
@@ -360,13 +351,13 @@ export class Invariant {
     )
   }
 
-  async transferPosition(signer: Keys.AsymmetricKey, network: Network, index: bigint) {
+  async transferPosition(signer: Keys.AsymmetricKey, index: bigint) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'transfer_position',
       {
         index: CLValueBuilder.u32(integerSafeCast(index))
@@ -374,13 +365,13 @@ export class Invariant {
     )
   }
 
-  async claimFee(signer: Keys.AsymmetricKey, network: Network, index: bigint) {
+  async claimFee(signer: Keys.AsymmetricKey, index: bigint) {
     return await sendTx(
       this.contract,
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'claim_fee',
       {
         index: CLValueBuilder.u32(integerSafeCast(index))
@@ -504,18 +495,19 @@ export class Invariant {
     return decodePositionLength(rawBytes)
   }
 
-  async getPositions(signer: Keys.AsymmetricKey): Promise<Position[]> {
-    const positionsCount = await this.getPositionsCount(signer)
-    const positions = []
-    for (let i = 0n; i < positionsCount; i++) {
-      positions.push(await this.getPosition(signer, i))
-    }
+  async getPositions(account: Keys.AsymmetricKey): Promise<Position[]> {
+    const positionsCount = await this.getPositionsCount(account)
+    const positions = await Promise.all(
+      Array.from(
+        { length: integerSafeCast(positionsCount) },
+        async (_, i) => await this.getPosition(account, BigInt(i))
+      )
+    )
     return positions
   }
 
   async swap(
     signer: Keys.AsymmetricKey,
-    network: Network,
     poolKey: PoolKey,
     xToY: boolean,
     amount: TokenAmount,
@@ -530,7 +522,7 @@ export class Invariant {
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'swap',
       {
         token_0: CLValueBuilder.key(token0Key),
@@ -545,7 +537,7 @@ export class Invariant {
     )
   }
 
-  async withdrawProtocolFee(signer: Keys.AsymmetricKey, network: Network, poolKey: PoolKey) {
+  async withdrawProtocolFee(signer: Keys.AsymmetricKey, poolKey: PoolKey) {
     const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
     const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
 
@@ -554,7 +546,7 @@ export class Invariant {
       this.client.nodeClient,
       this.paymentAmount,
       signer,
-      network,
+      this.network,
       'withdraw_protocol_fee',
       {
         token_0: CLValueBuilder.key(token0Key),

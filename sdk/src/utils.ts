@@ -2,6 +2,7 @@ import {
   CLValue,
   CasperClient,
   CasperServiceByJsonRPC,
+  ContractPackageJson,
   Contracts,
   GetDeployResult,
   Keys,
@@ -285,4 +286,11 @@ export const calculateFee = async (
     position.feeGrowthInsideY,
     position.liquidity
   )
+}
+
+export const extractContractHash = (contractPackageHash: string): string => {
+  return contractPackageHash.replace('hash-', '')
+}
+export const extractContractPackageHash = (contractPackage: ContractPackageJson): string => {
+  return contractPackage.versions[0].contractHash.replace('contract-', '')
 }
