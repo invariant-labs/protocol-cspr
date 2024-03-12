@@ -113,11 +113,15 @@ describe('protocol fee', () => {
     erc20.setContractHash(token1Address)
     const token1Before = await erc20.balanceOf(Key.Account, aliceAddress)
 
-    // TODO: get pool before and assert protocol protocol fee
+    const poolBefore = await invariant.getPool(poolKey)
+    chai.assert.equal(poolBefore.feeProtocolTokenX, { v: 1n })
+    chai.assert.equal(poolBefore.feeProtocolTokenY, { v: 0n })
 
     await invariant.withdrawProtocolFee(ALICE, poolKey)
 
-    // TODO: get pool after and assert protocol protocol fee
+    const poolAfter = await invariant.getPool(poolKey)
+    chai.assert.equal(poolAfter.feeProtocolTokenX, { v: 0n })
+    chai.assert.equal(poolAfter.feeProtocolTokenY, { v: 0n })
 
     erc20.setContractHash(token0Address)
     const token0After = await erc20.balanceOf(Key.Account, aliceAddress)
@@ -141,10 +145,18 @@ describe('protocol fee', () => {
     erc20.setContractHash(token1Address)
     const token1Before = await erc20.balanceOf(Key.Account, bobAddress)
 
+    const poolBefore = await invariant.getPool(poolKey)
+    chai.assert.equal(poolBefore.feeProtocolTokenX, { v: 1n })
+    chai.assert.equal(poolBefore.feeProtocolTokenY, { v: 0n })
+
     const withdrawProtocolFeeResult = await invariant.withdrawProtocolFee(ALICE, poolKey)
     chai.assert.notEqual(withdrawProtocolFeeResult.execution_results[0].result.Failure, undefined)
 
     await invariant.withdrawProtocolFee(BOB, poolKey)
+
+    const poolAfter = await invariant.getPool(poolKey)
+    chai.assert.equal(poolAfter.feeProtocolTokenX, { v: 0n })
+    chai.assert.equal(poolAfter.feeProtocolTokenY, { v: 0n })
 
     erc20.setContractHash(token0Address)
     const token0After = await erc20.balanceOf(Key.Account, bobAddress)
