@@ -40,16 +40,16 @@ describe('test get liquidity by x', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
-    await invariant.addFeeTier(deployer, network, feeTier)
+    const invariant = await Invariant.load(client, service, network, hashes.invariant.loadHash)
+    await invariant.addFeeTier(deployer, feeTier)
     const initSqrtPrice = { v: 1005012269622000000000000n }
-    await invariant.createPool(deployer, network, poolKey, initSqrtPrice)
+    await invariant.createPool(deployer, poolKey, initSqrtPrice)
   })
 
   it('test get liquidity by x', async () => {
     const wasm = await loadWasm()
     const chai = await loadChai()
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, service, network, hashes.invariant.loadHash)
 
     // Below range
     {
@@ -93,7 +93,6 @@ describe('test get liquidity by x', () => {
 
       await invariant.createPosition(
         positionOwner,
-        network,
         poolKey,
         lowerTickIndex,
         upperTickIndex,
@@ -140,7 +139,6 @@ describe('test get liquidity by x', () => {
 
       await invariant.createPosition(
         positionOwner,
-        network,
         poolKey,
         lowerTickIndex,
         upperTickIndex,
@@ -188,18 +186,18 @@ describe('test get liquidity by y', () => {
       feeTier
     )
 
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, service, network, hashes.invariant.loadHash)
 
-    await invariant.addFeeTier(deployer, network, feeTier)
+    await invariant.addFeeTier(deployer, feeTier)
     const initSqrtPrice = { v: 367897834491000000000000n }
-    await invariant.createPool(deployer, network, poolKey, initSqrtPrice)
+    await invariant.createPool(deployer, poolKey, initSqrtPrice)
   })
 
   it('test get liquidity by y', async () => {
     const wasm = await loadWasm()
     const chai = await loadChai()
 
-    const invariant = await Invariant.load(client, service, hashes.invariant.loadHash)
+    const invariant = await Invariant.load(client, service, network, hashes.invariant.loadHash)
     // Below range
     {
       const lowerTickIndex = -22000n
@@ -224,7 +222,6 @@ describe('test get liquidity by y', () => {
 
       await invariant.createPosition(
         positionOwner,
-        network,
         poolKey,
         lowerTickIndex,
         upperTickIndex,
@@ -272,7 +269,6 @@ describe('test get liquidity by y', () => {
 
       await invariant.createPosition(
         positionOwner,
-        network,
         poolKey,
         lowerTickIndex,
         upperTickIndex,

@@ -14,7 +14,7 @@ import {
 import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
 import { Key, Network } from './enums'
 import { hash, hexToBytes } from './parser'
-import { getDeploymentData, sendTx } from './utils'
+import { extractContractHash, extractContractPackageHash, getDeploymentData, sendTx } from './utils'
 
 const CONTRACT_NAME = 'erc20'
 
@@ -49,7 +49,7 @@ export class Erc20 {
     initial_supply: bigint = 0n,
     name: string = '',
     symbol: string = '',
-    decimals: bigint = 0n,
+    decimals: bigint = 9n,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
   ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
@@ -109,10 +109,7 @@ export class Erc20 {
       throw new Error('Contract package not found in block state')
     }
 
-    return [
-      contractPackageHash.replace('hash-', ''),
-      ContractPackage.versions[0].contractHash.replace('contract-', '')
-    ]
+    return [extractContractHash(contractPackageHash), extractContractPackageHash(ContractPackage)]
   }
 
   static async load(
@@ -128,25 +125,25 @@ export class Erc20 {
     this.contract.setContractHash('hash-' + contractHash)
   }
 
-  async name() {
+  async name(): Promise<string> {
     const response = await this.contract.queryContractDictionary('state', hash('name'))
 
     return response.data
   }
 
-  async symbol() {
+  async symbol(): Promise<string> {
     const response = await this.contract.queryContractDictionary('state', hash('symbol'))
 
     return response.data
   }
 
-  async decimals() {
+  async decimals(): Promise<bigint> {
     const response = await this.contract.queryContractDictionary('state', hash('decimals'))
 
     return BigInt(response.data)
   }
 
-  async balanceOf(addressHash: Key, address: string) {
+  async balanceOf(addressHash: Key, address: string): Promise<bigint> {
     const balanceKey = new Uint8Array([...BALANCES, addressHash, ...hexToBytes(address)])
 
     const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
@@ -154,7 +151,12 @@ export class Erc20 {
     return BigInt(response.data._hex)
   }
 
-  async allowance(ownerHash: Key, owner: string, spenderHash: Key, spender: string) {
+  async allowance(
+    ownerHash: Key,
+    owner: string,
+    spenderHash: Key,
+    spender: string
+  ): Promise<bigint> {
     const balanceKey = new Uint8Array([
       ...ALLOWANCES,
       ownerHash,
@@ -204,7 +206,7 @@ export class Erc20 {
       'transfer',
       {
         recipient: recipientKey,
-        amount: CLValueBuilder.u256(Number(amount))
+        amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )
   }
