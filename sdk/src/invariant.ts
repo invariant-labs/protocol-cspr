@@ -4,7 +4,6 @@ import {
   CLByteArray,
   CLValueBuilder,
   CasperClient,
-  CasperServiceByJsonRPC,
   Contracts,
   Keys,
   RuntimeArgs,
@@ -49,20 +48,17 @@ const CONTRACT_NAME = 'invariant'
 
 export class Invariant {
   client: CasperClient
-  service: CasperServiceByJsonRPC
   contract: Contracts.Contract
   network: Network
   paymentAmount: bigint
 
   private constructor(
     client: CasperClient,
-    service: CasperServiceByJsonRPC,
     contractHash: string,
     network: Network,
     paymentAmount: bigint = DEFAULT_PAYMENT_AMOUNT
   ) {
     this.client = client
-    this.service = service
     this.contract = new Contracts.Contract(this.client)
     this.contract.setContractHash(contractHash)
     this.network = network
@@ -71,7 +67,6 @@ export class Invariant {
 
   static async deploy(
     client: CasperClient,
-    service: CasperServiceByJsonRPC,
     network: Network,
     deployer: Keys.AsymmetricKey,
     fee: bigint = 0n,
@@ -98,9 +93,9 @@ export class Invariant {
       [deployer]
     )
 
-    await service.deploy(signedDeploy)
+    await client.nodeClient.deploy(signedDeploy)
 
-    const deploymentResult = await service.waitForDeploy(signedDeploy, 100000)
+    const deploymentResult = await client.nodeClient.waitForDeploy(signedDeploy, 100000)
 
     if (deploymentResult.execution_results[0].result.Failure) {
       // Shows the required deploy fee in case of failure
@@ -115,8 +110,8 @@ export class Invariant {
       )
     }
 
-    const stateRootHash = await service.getStateRootHash()
-    const { Account } = await service.getBlockState(
+    const stateRootHash = await client.nodeClient.getStateRootHash()
+    const { Account } = await client.nodeClient.getBlockState(
       stateRootHash,
       deployer.publicKey.toAccountHashStr(),
       []
@@ -132,7 +127,11 @@ export class Invariant {
       throw new Error('Contract package not found in account named keys')
     }
 
-    const { ContractPackage } = await service.getBlockState(stateRootHash, contractPackageHash, [])
+    const { ContractPackage } = await client.nodeClient.getBlockState(
+      stateRootHash,
+      contractPackageHash,
+      []
+    )
 
     if (!ContractPackage) {
       throw new Error('Contract package not found in block state')
@@ -141,25 +140,20 @@ export class Invariant {
     return [extractContractHash(contractPackageHash), extractContractPackageHash(ContractPackage)]
   }
 
-  static async load(
-    client: CasperClient,
-    service: CasperServiceByJsonRPC,
-    network: Network,
-    contractHash: string
-  ) {
-    return new Invariant(client, service, 'hash-' + contractHash, network)
+  static async load(client: CasperClient, contractHash: string, network: Network) {
+    return new Invariant(client, 'hash-' + contractHash, network)
   }
 
   async setContractHash(contractHash: string) {
     this.contract.setContractHash('hash-' + contractHash)
   }
 
-  async addFeeTier(account: Keys.AsymmetricKey, feeTier: FeeTier) {
+  async addFeeTier(signer: Keys.AsymmetricKey, feeTier: FeeTier) {
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'add_fee_tier',
       {
@@ -169,12 +163,12 @@ export class Invariant {
     )
   }
 
-  async removeFeeTier(account: Keys.AsymmetricKey, feeTier: FeeTier) {
+  async removeFeeTier(signer: Keys.AsymmetricKey, feeTier: FeeTier) {
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'remove_fee_tier',
       {
@@ -184,7 +178,7 @@ export class Invariant {
     )
   }
 
-  async createPool(account: Keys.AsymmetricKey, poolKey: PoolKey, initSqrtPrice: SqrtPrice) {
+  async createPool(signer: Keys.AsymmetricKey, poolKey: PoolKey, initSqrtPrice: SqrtPrice) {
     const wasm = await loadWasm()
     const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
     const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
@@ -192,9 +186,9 @@ export class Invariant {
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'create_pool',
       {
@@ -208,16 +202,16 @@ export class Invariant {
     )
   }
 
-  async changeFeeReceiver(account: Keys.AsymmetricKey, poolKey: PoolKey, newFeeReceiver: string) {
+  async changeFeeReceiver(signer: Keys.AsymmetricKey, poolKey: PoolKey, newFeeReceiver: string) {
     const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
     const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
     const feeReceiverKey = new CLByteArray(decodeBase16(newFeeReceiver))
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'change_fee_receiver',
       {
@@ -230,12 +224,12 @@ export class Invariant {
     )
   }
 
-  async changeProtocolFee(account: Keys.AsymmetricKey, protocolFee: Percentage) {
+  async changeProtocolFee(signer: Keys.AsymmetricKey, protocolFee: Percentage) {
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'change_protocol_fee',
       {
@@ -246,9 +240,9 @@ export class Invariant {
 
   async getInvariantConfig() {
     const key = hash('config')
-    const stateRootHash = await this.service.getStateRootHash()
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
 
-    const response = await this.service.getDictionaryItemByName(
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
@@ -263,8 +257,8 @@ export class Invariant {
 
   async getFeeTiers(): Promise<FeeTier[]> {
     const key = hash('fee_tiers')
-    const stateRootHash = await this.service.getStateRootHash()
-    const response = await this.service.getDictionaryItemByName(
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
@@ -295,9 +289,9 @@ export class Invariant {
 
     const key = hash(new Uint8Array(buffor))
 
-    const stateRootHash = await this.service.getStateRootHash()
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
 
-    const response = await this.service.getDictionaryItemByName(
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
@@ -311,7 +305,7 @@ export class Invariant {
   }
 
   async createPosition(
-    account: Keys.AsymmetricKey,
+    signer: Keys.AsymmetricKey,
     poolKey: PoolKey,
     lowerTick: bigint,
     upperTick: bigint,
@@ -324,9 +318,9 @@ export class Invariant {
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'create_position',
       {
@@ -343,12 +337,12 @@ export class Invariant {
     )
   }
 
-  async removePosition(account: Keys.AsymmetricKey, index: bigint) {
+  async removePosition(signer: Keys.AsymmetricKey, index: bigint) {
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'remove_position',
       {
@@ -357,12 +351,12 @@ export class Invariant {
     )
   }
 
-  async transferPosition(account: Keys.AsymmetricKey, index: bigint) {
+  async transferPosition(signer: Keys.AsymmetricKey, index: bigint) {
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'transfer_position',
       {
@@ -371,12 +365,12 @@ export class Invariant {
     )
   }
 
-  async claimFee(account: Keys.AsymmetricKey, index: bigint) {
+  async claimFee(signer: Keys.AsymmetricKey, index: bigint) {
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'claim_fee',
       {
@@ -385,8 +379,8 @@ export class Invariant {
     )
   }
 
-  async getPosition(account: Keys.AsymmetricKey, index: bigint): Promise<Position> {
-    const stateRootHash = await this.service.getStateRootHash()
+  async getPosition(signer: Keys.AsymmetricKey, index: bigint): Promise<Position> {
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
     const buffor: number[] = []
     const indexBytes = bigintToByteArray(index)
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
@@ -394,12 +388,12 @@ export class Invariant {
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
     // Value indicating that bytes are related to `AccountHash` not `ContractPackageHash`
     buffor.push(0)
-    buffor.push(...account.accountHash())
+    buffor.push(...signer.accountHash())
     buffor.push(...indexBytes.concat(Array(4 - indexBytes.length).fill(0)))
 
     const key = hash(new Uint8Array(buffor))
 
-    const response = await this.service.getDictionaryItemByName(
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
@@ -412,7 +406,7 @@ export class Invariant {
   }
 
   async getTick(poolKey: PoolKey, index: bigint): Promise<Tick> {
-    const stateRootHash = await this.service.getStateRootHash()
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
     const buffor: number[] = []
     const indexBytes = bigintToByteArray(index)
     const preparedIndexBytes = indexBytes.concat(Array(4 - indexBytes.length).fill(0))
@@ -426,7 +420,7 @@ export class Invariant {
 
     const key = hash(new Uint8Array(buffor))
 
-    const response = await this.service.getDictionaryItemByName(
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
@@ -439,7 +433,7 @@ export class Invariant {
   }
 
   private async getTickmapChunk(poolKey: PoolKey, chunkIndex: bigint): Promise<bigint> {
-    const stateRootHash = await this.service.getStateRootHash()
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
     const indexBytes = bigintToByteArray(chunkIndex)
     const preparedIndexBytes = indexBytes.concat(Array(2 - indexBytes.length).fill(0))
     const poolKeyBytes = encodePoolKey(poolKey)
@@ -453,7 +447,7 @@ export class Invariant {
 
     const key = hash(new Uint8Array(buffor))
 
-    const response = await this.service.getDictionaryItemByName(
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
@@ -465,19 +459,19 @@ export class Invariant {
     return decodeChunk(rawBytes)
   }
 
-  async getPositionsCount(account: Keys.AsymmetricKey): Promise<bigint> {
-    const stateRootHash = await this.service.getStateRootHash()
+  async getPositionsCount(signer: Keys.AsymmetricKey): Promise<bigint> {
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
     const buffor: number[] = []
     buffor.push(...'positions'.split('').map(c => c.charCodeAt(0)))
     buffor.push('#'.charCodeAt(0))
     buffor.push(...'positions_length'.split('').map(c => c.charCodeAt(0)))
     // Value indicating that bytes are related to `AccountHash` not `ContractPackageHash`
     buffor.push(0)
-    buffor.push(...account.accountHash())
+    buffor.push(...signer.accountHash())
 
     const key = hash(new Uint8Array(buffor))
 
-    const response = await this.service.getDictionaryItemByName(
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
@@ -501,7 +495,7 @@ export class Invariant {
   }
 
   async swap(
-    account: Keys.AsymmetricKey,
+    signer: Keys.AsymmetricKey,
     poolKey: PoolKey,
     xToY: boolean,
     amount: TokenAmount,
@@ -513,9 +507,9 @@ export class Invariant {
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'swap',
       {
@@ -531,15 +525,15 @@ export class Invariant {
     )
   }
 
-  async withdrawProtocolFee(account: Keys.AsymmetricKey, poolKey: PoolKey) {
+  async withdrawProtocolFee(signer: Keys.AsymmetricKey, poolKey: PoolKey) {
     const token0Key = new CLByteArray(decodeBase16(poolKey.tokenX))
     const token1Key = new CLByteArray(decodeBase16(poolKey.tokenY))
 
     return await sendTx(
       this.contract,
-      this.service,
+      this.client.nodeClient,
       this.paymentAmount,
-      account,
+      signer,
       this.network,
       'withdraw_protocol_fee',
       {
@@ -553,8 +547,8 @@ export class Invariant {
 
   private async getPoolKeys(): Promise<PoolKey[]> {
     const key = hash('pool_keys')
-    const stateRootHash = await this.service.getStateRootHash()
-    const response = await this.service.getDictionaryItemByName(
+    const stateRootHash = await this.client.nodeClient.getStateRootHash()
+    const response = await this.client.nodeClient.getDictionaryItemByName(
       stateRootHash,
       this.contract.contractHash!,
       'state',
