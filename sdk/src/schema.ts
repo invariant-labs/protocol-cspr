@@ -1,5 +1,6 @@
 import type {
   FeeGrowth,
+  FeeTier,
   FixedPoint,
   Liquidity,
   Percentage,
@@ -24,3 +25,4 @@ export type WasmCallParams =
   | Percentage
   | SecondsPerLiquidity
   | FeeGrowth
+  | FeeTier

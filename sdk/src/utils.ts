@@ -23,6 +23,7 @@ import {
 } from 'casper-js-sdk'
 import fs from 'fs'
 import { readFile } from 'fs/promises'
+import { FeeTier, Pool, PoolKey, Position, Tick } from 'invariant-cspr-wasm'
 import path from 'path'
 import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
@@ -187,7 +188,7 @@ export const decodeBool = (bytes: Uint8Array): [boolean, Uint8Array] => {
   return [value, remainder!]
 }
 
-export const decodeInvariantConfig = (rawBytes: any) => {
+export const decodeInvariantConfig = (rawBytes: string) => {
   const bytes = parseBytes(rawBytes)
   const structNameRemainder = decodeString(bytes)[1]
   const [admin, adminRemainder] = decodeAddress(structNameRemainder)
@@ -204,7 +205,7 @@ export const decodeInvariantConfig = (rawBytes: any) => {
   }
 }
 
-export const decodePoolKeys = (rawBytes: any) => {
+export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
   const bytes = parseBytes(rawBytes)
   const stringRemainder = decodeString(bytes)[1]
 
@@ -228,7 +229,7 @@ export const decodePoolKeys = (rawBytes: any) => {
     poolKeys.push({
       tokenX,
       tokenY,
-      feeTier: { fee, tickSpacing }
+      feeTier: { fee: { v: fee }, tickSpacing }
     })
   }
 
@@ -238,25 +239,25 @@ export const decodePoolKeys = (rawBytes: any) => {
 
   return poolKeys
 }
-export const decodeFeeTiers = (rawBytes: any) => {
+export const decodeFeeTiers = (rawBytes: string): FeeTier[] => {
   const bytes = parseBytes(rawBytes)
   const stringRemainder = decodeString(bytes)[1]
 
   const result = decodeU32(stringRemainder)
   const feeTierCount = result[0]
   let remainingBytes = result[1]
-  const feeTiers = []
+  const feeTiers: FeeTier[] = []
 
   for (let i = 0; i < feeTierCount; i++) {
     remainingBytes = decodeString(remainingBytes)[1]
-    const [feeType, feeTypeRemainder] = decodeString(remainingBytes)
+    const feeTypeRemainder = decodeString(remainingBytes)[1]
     remainingBytes = feeTypeRemainder
     const [fee, feeRemainder] = decodeU128(remainingBytes)
     remainingBytes = feeRemainder
     const [tickSpacing, remainder] = decodeU32(remainingBytes)
     remainingBytes = remainder
 
-    const feeTier = { [feeType]: fee, tickSpacing }
+    const feeTier = { fee: { v: fee }, tickSpacing }
     feeTiers.push(feeTier)
   }
 
@@ -266,7 +267,7 @@ export const decodeFeeTiers = (rawBytes: any) => {
 
   return feeTiers
 }
-export const decodePool = (rawBytes: any) => {
+export const decodePool = (rawBytes: string): Pool => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const liquidityTypeRemainder = decodeString(remainingBytes)[1]
@@ -285,28 +286,28 @@ export const decodePool = (rawBytes: any) => {
   const [startTimestamp, startTimestampRemainder] = decodeU64(feeProtocolTokenYRemainder)
   const [lastTimestamp, lastTimestampRemainder] = decodeU64(startTimestampRemainder)
   const [feeReceiver, feeReceiverRemainder] = decodeAddress(lastTimestampRemainder)
-  const [oracle, remainder] = decodeBool(feeReceiverRemainder)
+  const [oracleInitialized, remainder] = decodeBool(feeReceiverRemainder)
 
   if (remainder!.length != 0) {
     throw new Error('There are remaining bytes left')
   }
 
   return {
-    liquidity,
-    sqrtPrice,
+    liquidity: { v: liquidity },
+    sqrtPrice: { v: sqrtPrice },
     currentTickIndex,
-    feeGrowthGlobalX,
-    feeGrowthGlobalY,
-    feeProtocolTokenX,
-    feeProtocolTokenY,
+    feeGrowthGlobalX: { v: feeGrowthGlobalX },
+    feeGrowthGlobalY: { v: feeGrowthGlobalY },
+    feeProtocolTokenX: { v: feeProtocolTokenX },
+    feeProtocolTokenY: { v: feeProtocolTokenY },
     startTimestamp,
     lastTimestamp,
     feeReceiver,
-    oracle
+    oracleInitialized
   }
 }
 
-export const decodePosition = (rawBytes: any) => {
+export const decodePosition = (rawBytes: string): Position => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const poolKeyRemainder = decodeString(remainingBytes)[1]
@@ -326,9 +327,9 @@ export const decodePosition = (rawBytes: any) => {
   const [feeGrowthInsideY, feeGrowthInsideYRemainder] = decodeU256(feeGrowthYTypeRemainder)
   const [lastBlockNumber, lastBlockNumberRemainder] = decodeU64(feeGrowthInsideYRemainder)
   const tokensOwedXTypeRemainder = decodeString(lastBlockNumberRemainder)[1]
-  const [tokenOwedX, tokenOwedXRemainder] = decodeU256(tokensOwedXTypeRemainder)
+  const [tokensOwedX, tokenOwedXRemainder] = decodeU256(tokensOwedXTypeRemainder)
   const tokensOwedYTypeRemainder = decodeString(tokenOwedXRemainder)[1]
-  const [tokenOwedY, remainder] = decodeU256(tokensOwedYTypeRemainder)
+  const [tokensOwedY, remainder] = decodeU256(tokensOwedYTypeRemainder)
 
   if (remainder!.length != 0) {
     throw new Error('There are remaining bytes left')
@@ -339,22 +340,22 @@ export const decodePosition = (rawBytes: any) => {
       tokenX,
       tokenY,
       feeTier: {
-        fee,
+        fee: { v: fee },
         tickSpacing
       }
     },
-    liquidity,
+    liquidity: { v: liquidity },
     lowerTickIndex,
     upperTickIndex,
-    feeGrowthInsideX,
-    feeGrowthInsideY,
+    feeGrowthInsideX: { v: feeGrowthInsideX },
+    feeGrowthInsideY: { v: feeGrowthInsideY },
     lastBlockNumber,
-    tokenOwedX,
-    tokenOwedY
+    tokensOwedX: { v: tokensOwedX },
+    tokensOwedY: { v: tokensOwedY }
   }
 }
 
-export const decodeTick = (rawBytes: any) => {
+export const decodeTick = (rawBytes: string): Tick => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const [index, indexRemainder] = decodeI32(remainingBytes)
@@ -378,16 +379,16 @@ export const decodeTick = (rawBytes: any) => {
   return {
     index,
     sign,
-    liquidityChange,
-    liquidityGross,
-    sqrtPrice,
-    feeGrowthOutsideX,
-    feeGrowthOutsideY,
+    liquidityChange: { v: liquidityChange },
+    liquidityGross: { v: liquidityGross },
+    sqrtPrice: { v: sqrtPrice },
+    feeGrowthOutsideX: { v: feeGrowthOutsideX },
+    feeGrowthOutsideY: { v: feeGrowthOutsideY },
     secondsOutside
   }
 }
 
-export const decodeChunk = (rawBytes: any) => {
+export const decodeChunk = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
   const [chunk, remainder] = decodeU64(bytes)
 
@@ -398,7 +399,7 @@ export const decodeChunk = (rawBytes: any) => {
   return chunk
 }
 
-export const decodePositionLength = (rawBytes: any) => {
+export const decodePositionLength = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
   const [length, remainder] = decodeU32(bytes)
 
@@ -408,7 +409,7 @@ export const decodePositionLength = (rawBytes: any) => {
 
   return length
 }
-export const parseBytes = (rawBytes: any): Uint8Array => {
+export const parseBytes = (rawBytes: string): Uint8Array => {
   return new Uint8Array(
     String(rawBytes)
       .match(/.{1,2}/g)!
@@ -416,14 +417,14 @@ export const parseBytes = (rawBytes: any): Uint8Array => {
   )
 }
 
-export const encodePoolKey = (poolKey: any): number[] => {
+export const encodePoolKey = (poolKey: PoolKey): number[] => {
   const buffor: number[] = []
   const poolKeyStructBytes = 'PoolKey'.split('').map(c => c.charCodeAt(0))
   const tokenXBytes = hexToBytes(poolKey.tokenX)
   const tokenYBytes = hexToBytes(poolKey.tokenY)
   const feeTierStructBytes = 'FeeTier'.split('').map(c => c.charCodeAt(0))
   const percentageSturctBytes = 'Percentage'.split('').map(c => c.charCodeAt(0))
-  const feeBytes = bigintToByteArray(poolKey.feeTier.fee)
+  const feeBytes = bigintToByteArray(poolKey.feeTier.fee.v)
 
   buffor.push(7, 0, 0, 0)
   buffor.push(...poolKeyStructBytes)
@@ -435,7 +436,7 @@ export const encodePoolKey = (poolKey: any): number[] => {
   buffor.push(...feeTierStructBytes)
   buffor.push(10, 0, 0, 0)
   buffor.push(...percentageSturctBytes)
-  if (poolKey.feeTier.fee > 0) {
+  if (poolKey.feeTier.fee.v > 0) {
     buffor.push(feeBytes.length)
   }
   buffor.push(...feeBytes)
@@ -470,20 +471,87 @@ export const callWasm = async (
   fn: Promise<any> | any,
   ...params: WasmCallParams[]
 ): Promise<any> => {
-  const preparedParams = params.map(param => {
-    if (typeof param === 'object') {
-      return { v: param.v.toString() }
-    }
-    return param
-  })
-
+  const preparedParams = params.map(param => prepareWasmParms(param))
   const callResult = await fn(...preparedParams)
+  return parse(callResult)
+}
 
-  if (typeof callResult === 'object') {
-    return { v: BigInt(callResult.v) }
+export const prepareWasmParms = (
+  value: any,
+  stringify: boolean = false,
+  numberize: boolean = false
+) => {
+  if (isArray(value)) {
+    return value.map((element: any) => prepareWasmParms(element))
   }
 
-  return callResult
+  if (isObject(value)) {
+    const newValue: { [key: string]: any } = {}
+
+    Object.entries(value as { [key: string]: any }).forEach(([key, value]) => {
+      if (key === 'v') {
+        newValue[key] = prepareWasmParms(value, true)
+      } else {
+        newValue[key] = prepareWasmParms(value, false, true)
+      }
+    })
+
+    return newValue
+  }
+
+  if (isBoolean(value)) {
+    return value
+  }
+
+  try {
+    if (stringify) {
+      return value.toString()
+    } else if (numberize) {
+      return integerSafeCast(value)
+    } else {
+      return value
+    }
+  } catch (e) {
+    return value
+  }
+}
+
+export const parse = (value: any) => {
+  if (isArray(value)) {
+    return value.map((element: any) => parse(element))
+  }
+
+  if (isObject(value)) {
+    const newValue: { [key: string]: any } = {}
+
+    Object.entries(value as { [key: string]: any }).forEach(([key, value]) => {
+      newValue[key] = parse(value)
+    })
+
+    return newValue
+  }
+
+  if (isBoolean(value)) {
+    return value
+  }
+
+  try {
+    return BigInt(value)
+  } catch (e) {
+    return value
+  }
+}
+
+const isBoolean = (value: any): boolean => {
+  return typeof value === 'boolean'
+}
+
+const isArray = (value: any): boolean => {
+  return Array.isArray(value)
+}
+
+const isObject = (value: any): boolean => {
+  return typeof value === 'object' && value !== null
 }
 
 export const integerSafeCast = (value: bigint): number => {
