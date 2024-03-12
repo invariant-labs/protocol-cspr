@@ -419,15 +419,7 @@ export class Invariant {
     const stateRootHash = await this.client.nodeClient.getStateRootHash()
     const buffor: number[] = []
 
-    const indexBytes =
-      index < 0n
-        ? (() => {
-            const bytes = bigintToByteArray(-index)
-            const flipped = bytes.map(byte => 256 - byte)
-            return flipped
-          })()
-        : bigintToByteArray(index)
-
+    const indexBytes = bigintToByteArray(index)
     const filler = index < 0n ? 255 : 0
     const preparedIndexBytes = indexBytes.concat(Array(4 - indexBytes.length).fill(filler))
 
