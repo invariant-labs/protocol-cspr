@@ -20,7 +20,7 @@ import type {
   Tick,
   TokenAmount
 } from 'invariant-cspr-wasm'
-import { DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { DEFAULT_PAYMENT_AMOUNT, INVARIANT_CONTRACT_NAME } from './consts'
 import {
   decodeChunk,
   decodeFeeTiers,
@@ -43,8 +43,6 @@ import {
   loadWasm,
   sendTx
 } from './utils'
-
-const CONTRACT_NAME = 'invariant'
 
 export class Invariant {
   client: CasperClient
@@ -74,10 +72,10 @@ export class Invariant {
   ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
 
-    const wasm = await getDeploymentData(CONTRACT_NAME)
+    const wasm = await getDeploymentData(INVARIANT_CONTRACT_NAME)
 
     const args = RuntimeArgs.fromMap({
-      odra_cfg_package_hash_key_name: CLValueBuilder.string(CONTRACT_NAME),
+      odra_cfg_package_hash_key_name: CLValueBuilder.string(INVARIANT_CONTRACT_NAME),
       odra_cfg_allow_key_override: CLValueBuilder.bool(true),
       odra_cfg_is_upgradable: CLValueBuilder.bool(true),
       odra_cfg_constructor: CLValueBuilder.string('init'),
@@ -121,7 +119,9 @@ export class Invariant {
       throw new Error('Account not found in block state')
     }
 
-    const contractPackageHash = Account.namedKeys.find((i: any) => i.name === CONTRACT_NAME)?.key
+    const contractPackageHash = Account.namedKeys.find(
+      (i: any) => i.name === INVARIANT_CONTRACT_NAME
+    )?.key
 
     if (!contractPackageHash) {
       throw new Error('Contract package not found in account named keys')

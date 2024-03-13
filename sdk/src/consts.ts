@@ -47,3 +47,6 @@ export const poolKeyPrefixBytes = [7, 0, 0, 0]
 export const contractAddressPrefixBytes = [1]
 export const feeTierPrefixBytes = [7, 0, 0, 0]
 export const percentagePrefixBytes = [10, 0, 0, 0]
+
+export const ERC20_CONTRACT_NAME = 'erc20'
+export const INVARIANT_CONTRACT_NAME = 'invariant'

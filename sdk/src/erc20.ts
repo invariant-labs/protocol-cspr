@@ -10,12 +10,10 @@ import {
   RuntimeArgs,
   decodeBase16
 } from 'casper-js-sdk'
-import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
+import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT, ERC20_CONTRACT_NAME } from './consts'
 import { hash, hexToBytes } from './parser'
 import { Key, Network } from './schema'
 import { extractContractHash, extractContractPackageHash, getDeploymentData, sendTx } from './utils'
-
-const CONTRACT_NAME = 'erc20'
 
 export class Erc20 {
   client: CasperClient
@@ -49,7 +47,7 @@ export class Erc20 {
   ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
 
-    const wasm = await getDeploymentData(CONTRACT_NAME)
+    const wasm = await getDeploymentData(ERC20_CONTRACT_NAME)
 
     const args = RuntimeArgs.fromMap({
       odra_cfg_package_hash_key_name: CLValueBuilder.string(namedKeysName),
