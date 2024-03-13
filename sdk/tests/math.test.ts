@@ -9,14 +9,8 @@ import {
   loadChai,
   positionEquals
 } from '../src/testUtils'
-import {
-  callWasm,
-  createFeeTier,
-  createPoolKey,
-  getAccountHashFromKey,
-  initCasperClient,
-  loadWasm
-} from '../src/utils'
+import { createFeeTier, createPoolKey, getAccountHashFromKey, initCasperClient } from '../src/utils'
+import { getLiquidityByX, getLiquidityByY } from '../src/wasm'
 
 let hashes: {
   invariant: { loadHash: string; packageHash: string }
@@ -47,7 +41,6 @@ describe('test get liquidity by x', () => {
   })
 
   it('test get liquidity by x', async () => {
-    const wasm = await loadWasm()
     const chai = await loadChai()
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
 
@@ -59,14 +52,7 @@ describe('test get liquidity by x', () => {
       const pool = await invariant.getPool(poolKey)
 
       await assertThrowsAsync(
-        callWasm(
-          wasm.getLiquidityByX,
-          providedAmount,
-          lowerTickIndex,
-          upperTickIndex,
-          pool.sqrtPrice,
-          true
-        )
+        getLiquidityByX(providedAmount, lowerTickIndex, upperTickIndex, pool.sqrtPrice, true)
       )
     }
     // In range
@@ -75,8 +61,7 @@ describe('test get liquidity by x', () => {
       const upperTickIndex = 120n
       const pool = await invariant.getPool(poolKey)
 
-      const { l, amount } = await callWasm(
-        wasm.getLiquidityByX,
+      const { l, amount } = await getLiquidityByX(
         providedAmount,
         lowerTickIndex,
         upperTickIndex,
@@ -122,8 +107,7 @@ describe('test get liquidity by x', () => {
       const upperTickIndex = 800n
       const pool = await invariant.getPool(poolKey)
 
-      const { l, amount } = await callWasm(
-        wasm.getLiquidityByX,
+      const { l, amount } = await getLiquidityByX(
         providedAmount,
         lowerTickIndex,
         upperTickIndex,
@@ -188,7 +172,6 @@ describe('test get liquidity by y', () => {
   })
 
   it('test get liquidity by y', async () => {
-    const wasm = await loadWasm()
     const chai = await loadChai()
 
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
@@ -199,8 +182,7 @@ describe('test get liquidity by y', () => {
 
       const pool = await invariant.getPool(poolKey)
 
-      const { l, amount } = await callWasm(
-        wasm.getLiquidityByY,
+      const { l, amount } = await getLiquidityByY(
         providedAmount,
         lowerTickIndex,
         upperTickIndex,
@@ -245,8 +227,7 @@ describe('test get liquidity by y', () => {
       const upperTickIndex = -19000n
       const pool = await invariant.getPool(poolKey)
 
-      const { l, amount } = await callWasm(
-        wasm.getLiquidityByY,
+      const { l, amount } = await getLiquidityByY(
         providedAmount,
         lowerTickIndex,
         upperTickIndex,
@@ -293,14 +274,7 @@ describe('test get liquidity by y', () => {
       const pool = await invariant.getPool(poolKey)
 
       await assertThrowsAsync(
-        callWasm(
-          wasm.getLiquidityByY,
-          providedAmount,
-          lowerTickIndex,
-          upperTickIndex,
-          pool.sqrtPrice,
-          true
-        )
+        getLiquidityByY(providedAmount, lowerTickIndex, upperTickIndex, pool.sqrtPrice, true)
       )
     }
   })

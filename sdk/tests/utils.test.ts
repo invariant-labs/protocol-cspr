@@ -3,27 +3,25 @@ import { ALICE, LOCAL_NODE_URL } from '../src/consts'
 import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
+import { Decimal } from '../src/schema'
 import { deployInvariantAndTokens, loadChai } from '../src/testUtils'
 import {
   calculateFee,
   calculatePriceImpact,
   calculateSqrtPriceAfterSlippage,
-  callWasm,
   createFeeTier,
   createPoolKey,
   initCasperClient,
-  loadWasm,
   priceToSqrtPrice,
   sqrtPriceToPrice
 } from '../src/utils'
+import { toDecimal } from '../src/wasm'
 
 describe('utils', () => {
   let chai: typeof import('chai')
-  let wasm: typeof import('invariant-cspr-wasm')
 
   before(async () => {
     chai = await loadChai()
-    wasm = await loadWasm()
   })
 
   it('calculatePriceImpact', async () => {
@@ -49,22 +47,23 @@ describe('utils', () => {
   it('test calculateSqrtPriceAfterSlippage', async () => {
     // no slippage up
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 0n, 0n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 0n, 0n)
+      console.log(sqrtPrice, slippage)
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, true)
       chai.assert.deepEqual(limitSqrt, sqrtPrice)
     }
     // no slippage down
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 0n, 0n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 0n, 0n)
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, false)
       chai.assert.deepEqual(limitSqrt, sqrtPrice)
     }
     // slippage 1% up
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 1n, 2n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 1n, 2n)
       // sqrt(1) * sqrt(1 + 0.01) = 1.0049876
       const expected: SqrtPrice = { v: 1004987562112089027021926n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, true)
@@ -72,8 +71,8 @@ describe('utils', () => {
     }
     // slippage 1% down
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 1n, 2n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 1n, 2n)
       // sqrt(1) * sqrt(1 - 0.01) = 0.99498744
       const expected: SqrtPrice = { v: 994987437106619954734479n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, false)
@@ -81,8 +80,8 @@ describe('utils', () => {
     }
     // slippage 0.5% up
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 5n, 3n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 5n, 3n)
       // sqrt(1) * sqrt(1 - 0.005) = 1.00249688
       const expected: SqrtPrice = { v: 1002496882788171067537936n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, true)
@@ -90,8 +89,8 @@ describe('utils', () => {
     }
     // slippage 0.5% down
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 5n, 3n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 5n, 3n)
       // sqrt(1) * sqrt(1 - 0.005) = 0.997496867
       const expected: SqrtPrice = { v: 997496867163000166582694n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, false)
@@ -99,8 +98,8 @@ describe('utils', () => {
     }
     // slippage 0.00003% up
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 3n, 7n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 3n, 7n)
       // sqrt(1) * sqrt(1 + 0.0000003) = 1.00000015
       const expected: SqrtPrice = { v: 1000000149999988750001687n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, true)
@@ -108,8 +107,8 @@ describe('utils', () => {
     }
     // slippage 0.00003% down
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 3n, 7n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 3n, 7n)
       // sqrt(1) * sqrt(1 - 0.0000003) = 0.99999985
       const expected: SqrtPrice = { v: 999999849999988749998312n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, false)
@@ -117,8 +116,8 @@ describe('utils', () => {
     }
     // slippage 100% up
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 1n, 0n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 1n, 0n)
       // sqrt(1) * sqrt(1 + 1) = 1.414213562373095048801688...
       const expected: SqrtPrice = { v: 1414213562373095048801688n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, true)
@@ -126,8 +125,8 @@ describe('utils', () => {
     }
     // slippage 100% down
     {
-      const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
-      const slippage: Percentage = { v: await callWasm(wasm.toPercentage, 1n, 0n) }
+      const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
+      const slippage: Percentage = await toDecimal(Decimal.Percentage, 1n, 0n)
       // sqrt(1) * sqrt(1 - 1) = 0
       const expected: SqrtPrice = { v: 0n }
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, false)
