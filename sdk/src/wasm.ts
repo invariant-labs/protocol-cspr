@@ -1,11 +1,15 @@
 import {
+  FeeGrowth,
   FeeTier,
+  FixedPoint,
   Liquidity,
   Percentage,
   PoolKey,
+  SecondsPerLiquidity,
   SqrtPrice,
   TokenAmount
 } from 'invariant-cspr-wasm'
+import { Decimal, Decimals } from './schema'
 import { callWasm, loadWasm } from './utils'
 
 let wasmLoaded = false
@@ -73,4 +77,30 @@ export const getLiquidityByY = async (
     currentSqrtPrice,
     roundingUp
   )
+}
+
+export const toDecimal = async (
+  decimal: Decimal,
+  value: bigint,
+  scale: bigint
+): Promise<Decimals> => {
+  const wasm = await loadWasm()
+  switch (decimal) {
+    case Decimal.Liquidity:
+      return { v: await callWasm(wasm.toLiquidity, value, scale) } as Liquidity
+    case Decimal.SqrtPrice:
+      return { v: await callWasm(wasm.toSqrtPrice, value, scale) } as SqrtPrice
+    case Decimal.TokenAmount:
+      return { v: await callWasm(wasm.toTokenAmount, value, scale) } as TokenAmount
+    case Decimal.FixedPoint:
+      return { v: await callWasm(wasm.toFixedPoint, value, scale) } as FixedPoint
+    case Decimal.Percentage:
+      return { v: await callWasm(wasm.toPercentage, value, scale) } as Percentage
+    case Decimal.SecondsPerLiquidity:
+      return { v: await callWasm(wasm.toSecondsPerLiquidity, value, scale) } as SecondsPerLiquidity
+    case Decimal.FeeGrowth:
+      return { v: await callWasm(wasm.toFeeGrowth, value, scale) } as FeeGrowth
+    default:
+      throw new Error('Invalid decimal')
+  }
 }
