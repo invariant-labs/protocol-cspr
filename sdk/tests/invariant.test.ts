@@ -12,7 +12,9 @@ let hashes: {
   tokenY: { loadHash: string; packageHash: string }
 }
 
-describe('invariant test', () => {
+describe('invariant test', async () => {
+  const chai = await loadChai()
+  const wasm = await loadWasm()
   const client = initCasperClient(LOCAL_NODE_URL)
   const deployer = ALICE
   const network = Network.Local
@@ -22,8 +24,6 @@ describe('invariant test', () => {
   })
 
   it('should change protocol fee', async () => {
-    const chai = await loadChai()
-
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     const newFee: Percentage = { v: 20000000000n }
 
@@ -37,8 +37,6 @@ describe('invariant test', () => {
   })
 
   it('should add fee tier', async () => {
-    const chai = await loadChai()
-    const wasm = await loadWasm()
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
 
@@ -51,9 +49,6 @@ describe('invariant test', () => {
     chai.assert.exists(feeTierExist)
   })
   it('should remove fee tier', async () => {
-    const chai = await loadChai()
-    const wasm = await loadWasm()
-
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
 
@@ -69,8 +64,6 @@ describe('invariant test', () => {
     }
   })
   it('should get tick and check if it is initialized', async () => {
-    const chai = await loadChai()
-
     const lowerTickIndex = -10n
     const initTickIndex = 0n
     const upperTickIndex = 10n
@@ -141,9 +134,6 @@ describe('invariant test', () => {
     })
   })
   it('create pool', async () => {
-    const chai = await loadChai()
-    const wasm = await loadWasm()
-
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
     const poolKey = await callWasm(
@@ -180,9 +170,6 @@ describe('invariant test', () => {
     chai.assert.deepEqual(pool, expectedPool)
   })
   it('attempt to create pool with wrong tick & sqrtPrice relationship', async () => {
-    const chai = await loadChai()
-    const wasm = await loadWasm()
-
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
     const poolKey = await callWasm(
@@ -203,9 +190,6 @@ describe('invariant test', () => {
     )
   })
   it('create pool x/y and y/x', async () => {
-    const chai = await loadChai()
-    const wasm = await loadWasm()
-
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
     const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
     const poolKey = await callWasm(
