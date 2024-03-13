@@ -360,7 +360,15 @@ export class Invariant {
     )
   }
 
-  async transferPosition(signer: Keys.AsymmetricKey, index: bigint) {
+  async transferPosition(
+    signer: Keys.AsymmetricKey,
+    index: bigint,
+    receiverHash: Key,
+    receiver: string
+  ) {
+    const receiverBytes = new Uint8Array([receiverHash, ...decodeBase16(receiver)])
+    const receiverKey = new CLByteArray(receiverBytes)
+
     return await sendTx(
       this.contract,
       this.client.nodeClient,
@@ -369,7 +377,8 @@ export class Invariant {
       this.network,
       'transfer_position',
       {
-        index: CLValueBuilder.u32(integerSafeCast(index))
+        index: CLValueBuilder.u32(integerSafeCast(index)),
+        receiver: receiverKey
       }
     )
   }

@@ -4,16 +4,9 @@ import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { loadChai } from '../src/testUtils'
-import {
-  callWasm,
-  createFeeTier,
-  createPoolKey,
-  getAccountHashFromKey,
-  initCasperClient,
-  loadWasm
-} from '../src/utils'
+import { getAccountHashFromKey, initCasperClient } from '../src/utils'
+import { isTokenX, newFeeTier, newPoolKey } from '../src/wasm'
 
-let wasm: typeof import('invariant-cspr-wasm')
 let chai: typeof import('chai')
 
 const client = initCasperClient(LOCAL_NODE_URL)
@@ -35,7 +28,6 @@ let poolKey: PoolKey
 
 describe('protocol fee', () => {
   before(async () => {
-    wasm = await loadWasm()
     chai = await loadChai()
   })
 
@@ -83,8 +75,8 @@ describe('protocol fee', () => {
 
     invariant = await Invariant.load(client, invariantContractHash, Network.Local)
 
-    feeTier = await createFeeTier({ v: fee }, tickSpacing)
-    poolKey = await createPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
+    feeTier = await newFeeTier({ v: fee }, tickSpacing)
+    poolKey = await newPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
 
     await invariant.addFeeTier(ALICE, feeTier)
 
@@ -104,8 +96,8 @@ describe('protocol fee', () => {
   })
 
   it('should withdraw protocol fee', async () => {
-    const feeTier = await createFeeTier({ v: fee }, tickSpacing)
-    const poolKey = await createPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
+    feeTier = await newFeeTier({ v: fee }, tickSpacing)
+    poolKey = await newPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
 
     erc20.setContractHash(token0Address)
     const token0Before = await erc20.balanceOf(Key.Account, aliceAddress)
@@ -127,7 +119,7 @@ describe('protocol fee', () => {
     erc20.setContractHash(token1Address)
     const token1After = await erc20.balanceOf(Key.Account, aliceAddress)
 
-    if (await callWasm(wasm.isTokenX, token0ContractPackage, token1ContractPackage)) {
+    if (await isTokenX(token0ContractPackage, token1ContractPackage)) {
       chai.assert.equal(token0After, token0Before + 1n)
       chai.assert.equal(token1After, token1Before)
     } else {
@@ -162,7 +154,7 @@ describe('protocol fee', () => {
     erc20.setContractHash(token1Address)
     const token1After = await erc20.balanceOf(Key.Account, bobAddress)
 
-    if (await callWasm(wasm.isTokenX, token0ContractPackage, token1ContractPackage)) {
+    if (await isTokenX(token0ContractPackage, token1ContractPackage)) {
       chai.assert.equal(token0After, token0Before + 1n)
       chai.assert.equal(token1After, token1Before)
     } else {
