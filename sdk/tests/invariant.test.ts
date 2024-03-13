@@ -4,7 +4,7 @@ import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { assertThrowsAsync, deployInvariantAndTokens, loadChai } from '../src/testUtils'
-import { callWasm, createFeeTier, createPoolKey, initCasperClient, loadWasm } from '../src/utils'
+import { createFeeTier, createPoolKey, initCasperClient, loadWasm } from '../src/utils'
 
 let hashes: {
   invariant: { loadHash: string; packageHash: string }
@@ -13,11 +13,16 @@ let hashes: {
 }
 
 describe('invariant test', async () => {
-  const chai = await loadChai()
-  const wasm = await loadWasm()
   const client = initCasperClient(LOCAL_NODE_URL)
   const deployer = ALICE
   const network = Network.Local
+  let chai: typeof import('chai')
+  let wasm: typeof import('invariant-cspr-wasm')
+
+  before(async () => {
+    chai = await loadChai()
+    wasm = await loadWasm()
+  })
 
   beforeEach(async () => {
     hashes = await deployInvariantAndTokens(client, deployer)
@@ -38,7 +43,7 @@ describe('invariant test', async () => {
 
   it('should add fee tier', async () => {
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
-    const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
+    const feeTier = await createFeeTier({ v: 6000000000n }, 10n)
 
     const feeTierShouldNotExist = await invariant.feeTierExist(feeTier)
     chai.assert.exists(!feeTierShouldNotExist)
@@ -50,7 +55,7 @@ describe('invariant test', async () => {
   })
   it('should remove fee tier', async () => {
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
-    const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
+    const feeTier = await createFeeTier({ v: 6000000000n }, 10n)
 
     {
       await invariant.addFeeTier(deployer, feeTier)
@@ -135,9 +140,8 @@ describe('invariant test', async () => {
   })
   it('create pool', async () => {
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
-    const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
-    const poolKey = await callWasm(
-      wasm.newPoolKey,
+    const feeTier = await createFeeTier({ v: 6000000000n }, 10n)
+    const poolKey = await createPoolKey(
       hashes.tokenX.packageHash,
       hashes.tokenY.packageHash,
       feeTier
@@ -171,9 +175,8 @@ describe('invariant test', async () => {
   })
   it('attempt to create pool with wrong tick & sqrtPrice relationship', async () => {
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
-    const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
-    const poolKey = await callWasm(
-      wasm.newPoolKey,
+    const feeTier = await createFeeTier({ v: 6000000000n }, 10n)
+    const poolKey = await createPoolKey(
       hashes.tokenX.packageHash,
       hashes.tokenY.packageHash,
       feeTier
@@ -191,9 +194,8 @@ describe('invariant test', async () => {
   })
   it('create pool x/y and y/x', async () => {
     const invariant = await Invariant.load(client, hashes.invariant.loadHash, network)
-    const feeTier = await callWasm(wasm.newFeeTier, { v: 6000000000n }, 10n)
-    const poolKey = await callWasm(
-      wasm.newPoolKey,
+    const feeTier = await createFeeTier({ v: 6000000000n }, 10n)
+    const poolKey = await createPoolKey(
       hashes.tokenX.packageHash,
       hashes.tokenY.packageHash,
       feeTier

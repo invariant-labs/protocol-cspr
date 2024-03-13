@@ -18,8 +18,15 @@ import {
 } from '../src/utils'
 
 describe('utils', () => {
+  let chai: typeof import('chai')
+  let wasm: typeof import('invariant-cspr-wasm')
+
+  before(async () => {
+    chai = await loadChai()
+    wasm = await loadWasm()
+  })
+
   it('calculatePriceImpact', async () => {
-    const chai = await loadChai()
     // Incrasing price
     {
       // price change       120 -> 599
@@ -40,8 +47,6 @@ describe('utils', () => {
     }
   })
   it('test calculateSqrtPriceAfterSlippage', async () => {
-    const wasm = await loadWasm()
-    const chai = await loadChai()
     // no slippage up
     {
       const sqrtPrice: SqrtPrice = { v: await callWasm(wasm.toSqrtPrice, 1n, 0n) }
@@ -130,7 +135,6 @@ describe('utils', () => {
     }
   })
   it('sqrt price and price conversion', async () => {
-    const chai = await loadChai()
     // 1.00 = sqrt(1.00)
     {
       const sqrtPrice: SqrtPrice = await priceToSqrtPrice({ v: 1000000000000000000000000n })
@@ -169,8 +173,6 @@ describe('utils', () => {
     }
   })
   it('test calculate fee', async () => {
-    const chai = await loadChai()
-
     const liquidityDelta = { v: 10000000000000n }
     const lowerTickIndex = -10n
     const upperTickIndex = 10n
