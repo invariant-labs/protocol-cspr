@@ -1,4 +1,4 @@
-import { FeeTier, Percentage, PoolKey } from 'invariant-cspr-wasm'
+import { FeeTier, Percentage, PoolKey, SqrtPrice, TokenAmount } from 'invariant-cspr-wasm'
 import { callWasm, loadWasm } from './utils'
 
 let wasmLoaded = false
@@ -30,4 +30,15 @@ export const newPoolKey = async (
 ): Promise<PoolKey> => {
   const wasm = await loadWasmIfNotLoaded()
   return callWasm(wasm.newPoolKey, token0, token1, feeTier)
+}
+
+export const getLiquidityByY = async (
+  y: TokenAmount,
+  lowerTick: bigint,
+  upperTick: bigint,
+  sqrtPrice: SqrtPrice,
+  up: boolean
+): Promise<any> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return callWasm(wasm.getLiquidityByY, y, lowerTick, upperTick, sqrtPrice, up)
 }
