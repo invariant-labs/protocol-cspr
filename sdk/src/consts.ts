@@ -44,7 +44,6 @@ export const optionParser = new CLOptionBytesParser()
 export const expectedOptionType = new CLOptionType(CLTypeBuilder.string())
 
 export const poolKeyPrefixBytes = [7, 0, 0, 0]
-export const contractAddressPrefixBytes = [1]
 export const feeTierPrefixBytes = [7, 0, 0, 0]
 export const percentagePrefixBytes = [10, 0, 0, 0]
 

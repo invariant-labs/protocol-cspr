@@ -1,28 +1,29 @@
-import { FeeTier, PoolKey } from 'invariant-cspr-wasm'
+import { FeeTier, PoolKey, Position } from 'invariant-cspr-wasm'
 import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { Key, Network } from '../src/schema'
-import { assertThrowsAsync, loadChai } from '../src/testUtils'
-import { getAccountHashFromKey, initCasperClient, loadWasm } from '../src/utils'
-import { isTokenX, newFeeTier, newPoolKey } from '../src/wasm'
+import {
+  DeployedContractsHashes,
+  assertThrowsAsync,
+  deployInvariantAndTokens,
+  loadChai,
+  positionEquals
+} from '../src/testUtils'
+import { getAccountHashFromKey, initCasperClient } from '../src/utils'
+import { newFeeTier, newPoolKey } from '../src/wasm'
 
-let wasm: typeof import('invariant-cspr-wasm')
 let chai: typeof import('chai')
+
+let hashes: DeployedContractsHashes
 
 const client = initCasperClient(LOCAL_NODE_URL)
 let erc20: Erc20
 let invariant: Invariant
-let invariantAddress: string
-let invariantContractPackage: string
-let token0Address: string
-let token1Address: string
-let token0ContractPackage: string
-let token1ContractPackage: string
-const aliceAddress = getAccountHashFromKey(ALICE)
-const bobAddress = getAccountHashFromKey(BOB)
+const deployer = ALICE
+const deployerAddress = getAccountHashFromKey(deployer)
 
-const fee = 6000000000n
+const fee = { v: 6000000000n }
 const tickSpacing = 1n
 const lowerTickIndex = -20n
 const upperTickIndex = 10n
@@ -32,64 +33,28 @@ let poolKey: PoolKey
 
 describe('position', () => {
   before(async () => {
-    wasm = await loadWasm()
     chai = await loadChai()
   })
 
   beforeEach(async () => {
-    const [token0ContractPackageHash, token0ContractHash] = await Erc20.deploy(
-      client,
-      Network.Local,
-      ALICE,
-      'erc20-1',
-      1000000000n,
-      'Coin',
-      'COIN',
-      12n,
-      150000000000n
-    )
-    const [token1ContractPackageHash, token1ContractHash] = await Erc20.deploy(
-      client,
-      Network.Local,
-      ALICE,
-      'erc20-2',
-      1000000000n,
-      'Coin',
-      'COIN',
-      12n,
-      150000000000n
-    )
-    const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
-      client,
-      Network.Local,
-      ALICE,
-      fee,
-      600000000000n
-    )
+    hashes = await deployInvariantAndTokens(client, deployer, fee)
 
-    token0Address = token0ContractHash
-    token1Address = token1ContractHash
-    invariantAddress = invariantContractPackageHash
-    token0ContractPackage = token0ContractPackageHash
-    token1ContractPackage = token1ContractPackageHash
-    invariantContractPackage = invariantContractPackageHash
+    erc20 = await Erc20.load(client, Network.Local, hashes.tokenX.loadHash)
+    await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, 6000000000n)
+    erc20.setContractHash(hashes.tokenY.loadHash)
+    await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, 6000000000n)
 
-    erc20 = await Erc20.load(client, Network.Local, token0ContractHash)
-    await erc20.approve(ALICE, Key.Hash, invariantContractPackage, fee)
-    erc20 = await Erc20.load(client, Network.Local, token1ContractHash)
-    await erc20.approve(ALICE, Key.Hash, invariantContractPackage, fee)
+    invariant = await Invariant.load(client, hashes.invariant.loadHash, Network.Local)
 
-    invariant = await Invariant.load(client, invariantContractHash, Network.Local)
+    feeTier = await newFeeTier(fee, tickSpacing)
+    poolKey = await newPoolKey(hashes.tokenX.packageHash, hashes.tokenY.packageHash, feeTier)
 
-    feeTier = await newFeeTier({ v: fee }, tickSpacing)
-    poolKey = await newPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
+    await invariant.addFeeTier(deployer, feeTier)
 
-    await invariant.addFeeTier(ALICE, feeTier)
-
-    await invariant.createPool(ALICE, poolKey, { v: 1000000000000000000000000n })
+    await invariant.createPool(deployer, poolKey, { v: 1000000000000000000000000n })
 
     await invariant.createPosition(
-      ALICE,
+      deployer,
       poolKey,
       lowerTickIndex,
       upperTickIndex,
@@ -100,7 +65,7 @@ describe('position', () => {
   })
 
   it('create position', async () => {
-    const position = await invariant.getPosition(ALICE, 0n)
+    const position = await invariant.getPosition(deployer, 0n)
 
     chai.assert.deepEqual(position.liquidity, { v: 100000000000n })
     chai.assert.deepEqual(position.lowerTickIndex, lowerTickIndex)
@@ -112,14 +77,14 @@ describe('position', () => {
   })
 
   it('remove position', async () => {
-    await invariant.removePosition(ALICE, 0n)
+    await invariant.removePosition(deployer, 0n)
 
-    assertThrowsAsync(invariant.getPosition(ALICE, 0n), wasm.InvariantError.PositionNotFound)
-    const positions = await invariant.getPositions(ALICE)
+    assertThrowsAsync(invariant.getPosition(deployer, 0n))
+    const positions = await invariant.getPositions(deployer)
     chai.expect(positions.length).to.equal(0)
 
-    assertThrowsAsync(invariant.getTick(poolKey, lowerTickIndex), wasm.InvariantError.TickNotFound)
-    assertThrowsAsync(invariant.getTick(poolKey, upperTickIndex), wasm.InvariantError.TickNotFound)
+    assertThrowsAsync(invariant.getTick(poolKey, lowerTickIndex))
+    assertThrowsAsync(invariant.getTick(poolKey, upperTickIndex))
 
     const isLowerTickInitialized = await invariant.isTickInitialized(poolKey, lowerTickIndex)
     chai.expect(isLowerTickInitialized).to.equal(false)
@@ -129,48 +94,58 @@ describe('position', () => {
   })
 
   it('transfer position', async () => {
-    await invariant.transferPosition(ALICE, 0n, Key.Account, bobAddress)
+    const recipient = BOB
+    const recipientAddress = getAccountHashFromKey(recipient)
 
-    assertThrowsAsync(invariant.getPosition(ALICE, 0n), wasm.InvariantError.PositionNotFound)
-    const position = await invariant.getPosition(BOB, 0n)
+    await invariant.transferPosition(deployer, 0n, Key.Account, recipientAddress)
 
-    chai.assert.deepEqual(position.liquidity, { v: 100000000000n })
-    chai.assert.deepEqual(position.lowerTickIndex, lowerTickIndex)
-    chai.assert.deepEqual(position.upperTickIndex, upperTickIndex)
-    chai.assert.deepEqual(position.feeGrowthInsideX, { v: 0n })
-    chai.assert.deepEqual(position.feeGrowthInsideY, { v: 0n })
-    chai.assert.deepEqual(position.tokensOwedX, { v: 0n })
-    chai.assert.deepEqual(position.tokensOwedY, { v: 0n })
+    assertThrowsAsync(invariant.getPosition(deployer, 0n))
+    const position = await invariant.getPosition(recipient, 0n)
+
+    const expectedPosition: Position = {
+      poolKey,
+      liquidity: { v: 100000000000n },
+      lowerTickIndex,
+      upperTickIndex,
+      feeGrowthInsideX: { v: 0n },
+      feeGrowthInsideY: { v: 0n },
+      tokensOwedX: { v: 0n },
+      tokensOwedY: { v: 0n },
+      lastBlockNumber: position.lastBlockNumber
+    }
+
+    await positionEquals(position, expectedPosition)
   })
 
   it('claim fee', async () => {
-    const [tokenX, tokenY] = (await isTokenX(token0ContractPackage, token1ContractPackage))
-      ? [token0Address, token1Address]
-      : [token1Address, token0Address]
-    const amount = 1000n
+    const swapper = BOB
+    const swapperAddress = getAccountHashFromKey(swapper)
+    const positionOwnerAddress = deployerAddress
 
-    erc20.setContractHash(tokenX)
-    await erc20.mint(ALICE, Key.Account, bobAddress, amount)
-    await erc20.approve(BOB, Key.Hash, invariantContractPackage, amount)
+    const amount = { v: 1000n }
+
+    erc20.setContractHash(hashes.tokenX.loadHash)
+    await erc20.mint(deployer, Key.Account, swapperAddress, amount.v)
+    await erc20.approve(swapper, Key.Hash, hashes.invariant.packageHash, amount.v)
 
     const poolBefore = await invariant.getPool(poolKey)
 
     const targetSqrtPrice = { v: 15258932000000000000n }
-    await invariant.swap(BOB, poolKey, true, { v: amount }, true, targetSqrtPrice)
+    await invariant.swap(swapper, poolKey, true, amount, true, targetSqrtPrice)
 
     const poolAfter = await invariant.getPool(poolKey)
-    erc20.setContractHash(tokenX)
-    const bobTokenXAfter = await erc20.balanceOf(Key.Account, bobAddress)
-    erc20.setContractHash(tokenY)
-    const bobTokenYAfter = await erc20.balanceOf(Key.Account, bobAddress)
+    erc20.setContractHash(hashes.tokenX.loadHash)
+    const swapperTokenXAfter = await erc20.getBalanceOf(Key.Account, swapperAddress)
+    erc20.setContractHash(hashes.tokenY.loadHash)
+    const swapperTokenYAfter = await erc20.getBalanceOf(Key.Account, swapperAddress)
 
-    chai.assert.equal(bobTokenXAfter, 0n)
-    chai.assert.equal(bobTokenYAfter, 993n)
+    chai.assert.equal(swapperTokenXAfter, 0n)
+    chai.assert.equal(swapperTokenYAfter, 993n)
 
-    await erc20.setContractHash(tokenX)
-    const invariantTokenX = await erc20.balanceOf(Key.Hash, invariantAddress)
-    await erc20.setContractHash(tokenY)
-    const invariantTokenY = await erc20.balanceOf(Key.Hash, invariantAddress)
+    erc20.setContractHash(hashes.tokenX.loadHash)
+    const invariantTokenX = await erc20.getBalanceOf(Key.Hash, hashes.invariant.packageHash)
+    erc20.setContractHash(hashes.tokenY.loadHash)
+    const invariantTokenY = await erc20.getBalanceOf(Key.Hash, hashes.invariant.packageHash)
 
     chai.assert.equal(invariantTokenX, 1500n)
     chai.assert.equal(invariantTokenY, 7n)
@@ -183,17 +158,17 @@ describe('position', () => {
     chai.assert.deepEqual(poolAfter.feeProtocolTokenX, { v: 1n })
     chai.assert.deepEqual(poolAfter.feeProtocolTokenY, { v: 0n })
 
-    await erc20.setContractHash(tokenX)
-    const positionOwnerBeforeX = await erc20.balanceOf(Key.Account, aliceAddress)
-    const invariantBeforeX = await erc20.balanceOf(Key.Hash, invariantAddress)
+    erc20.setContractHash(hashes.tokenX.loadHash)
+    const positionOwnerBeforeX = await erc20.getBalanceOf(Key.Account, positionOwnerAddress)
+    const invariantBeforeX = await erc20.getBalanceOf(Key.Hash, hashes.invariant.packageHash)
 
-    await invariant.claimFee(ALICE, 0n)
+    await invariant.claimFee(deployer, 0n)
 
-    await erc20.setContractHash(tokenX)
-    const positionOwnerAfterX = await erc20.balanceOf(Key.Account, aliceAddress)
-    const invariantAfterX = await erc20.balanceOf(Key.Hash, invariantAddress)
+    erc20.setContractHash(hashes.tokenX.loadHash)
+    const positionOwnerAfterX = await erc20.getBalanceOf(Key.Account, positionOwnerAddress)
+    const invariantAfterX = await erc20.getBalanceOf(Key.Hash, hashes.invariant.packageHash)
 
-    const position = await invariant.getPosition(ALICE, 0n)
+    const position = await invariant.getPosition(deployer, 0n)
     const pool = await invariant.getPool(poolKey)
     const expectedTokensClaimed = 5n
 

@@ -81,7 +81,7 @@ export const decodeBool = (bytes: Uint8Array): [boolean, Uint8Array] => {
 export const decodeInvariantConfig = (rawBytes: string) => {
   const bytes = parseBytes(rawBytes)
   const structNameRemainder = decodeString(bytes)[1]
-  const [admin, adminRemainder] = decodeAddress(structNameRemainder)
+  const [admin, adminRemainder]: [string, Uint8Array] = decodeAddress(structNameRemainder)
   const [protocolFee, remainder]: [Percentage, Uint8Array] = decodeDecimal(
     u128Parser,
     adminRemainder,
@@ -106,9 +106,9 @@ export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
   const poolKeys = []
   for (let i = 0; i < poolKeyCount; i++) {
     remainingBytes = decodeString(remainingBytes)[1]
-    const [tokenX, tokenXRemainder] = decodeAddress(remainingBytes)
+    const [tokenX, tokenXRemainder]: [string, Uint8Array] = decodeAddress(remainingBytes)
     remainingBytes = tokenXRemainder
-    const [tokenY, tokenYRemainder] = decodeAddress(remainingBytes)
+    const [tokenY, tokenYRemainder]: [string, Uint8Array] = decodeAddress(remainingBytes)
     remainingBytes = tokenYRemainder
     remainingBytes = decodeString(remainingBytes)[1]
     const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
@@ -117,7 +117,7 @@ export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
       DecodeError.DecodingDecimalFailed
     )
     remainingBytes = feeRemainder
-    const [tickSpacing, remainder] = decodeBigint(
+    const [tickSpacing, remainder]: [bigint, Uint8Array] = decodeBigint(
       u32Parser,
       remainingBytes,
       DecodeError.DecodingU32Failed
@@ -151,7 +151,7 @@ export const decodeFeeTiers = (rawBytes: string): FeeTier[] => {
       DecodeError.DecodingDecimalFailed
     )
     remainingBytes = feeRemainder
-    const [tickSpacing, remainder] = decodeBigint(
+    const [tickSpacing, remainder]: [bigint, Uint8Array] = decodeBigint(
       u32Parser,
       remainingBytes,
       DecodeError.DecodingU32Failed
@@ -178,7 +178,7 @@ export const decodePool = (rawBytes: string): Pool => {
     liquidityRemainder,
     DecodeError.DecodingDecimalFailed
   )
-  const [currentTickIndex, currentTickRemainder] = decodeBigint(
+  const [currentTickIndex, currentTickRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     sqrtPriceRemainder,
     DecodeError.DecodingDecimalFailed
@@ -203,18 +203,19 @@ export const decodePool = (rawBytes: string): Pool => {
     feeProtocolTokenXRemainder,
     DecodeError.DecodingDecimalFailed
   )
-  const [startTimestamp, startTimestampRemainder] = decodeBigint(
+  const [startTimestamp, startTimestampRemainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     feeProtocolTokenYRemainder,
     DecodeError.DecodingU64Failed
   )
-  const [lastTimestamp, lastTimestampRemainder] = decodeBigint(
+  const [lastTimestamp, lastTimestampRemainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     startTimestampRemainder,
     DecodeError.DecodingU64Failed
   )
-  const [feeReceiver, feeReceiverRemainder] = decodeAddress(lastTimestampRemainder)
-  const [oracleInitialized, remainder] = decodeBool(feeReceiverRemainder)
+  const [feeReceiver, feeReceiverRemainder]: [string, Uint8Array] =
+    decodeAddress(lastTimestampRemainder)
+  const [oracleInitialized, remainder]: [boolean, Uint8Array] = decodeBool(feeReceiverRemainder)
 
   assertBytes(remainder)
 
@@ -237,15 +238,15 @@ export const decodePosition = (rawBytes: string): Position => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const poolKeyRemainder = decodeString(remainingBytes)[1]
-  const [tokenX, tokenXRemainder] = decodeAddress(poolKeyRemainder)
-  const [tokenY, tokenYRemainder] = decodeAddress(tokenXRemainder)
+  const [tokenX, tokenXRemainder]: [string, Uint8Array] = decodeAddress(poolKeyRemainder)
+  const [tokenY, tokenYRemainder]: [string, Uint8Array] = decodeAddress(tokenXRemainder)
   const feeTierRemainder = decodeString(tokenYRemainder)[1]
   const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
     u128Parser,
     feeTierRemainder,
     DecodeError.DecodingDecimalFailed
   )
-  const [tickSpacing, tickSpacingRemainder] = decodeBigint(
+  const [tickSpacing, tickSpacingRemainder]: [bigint, Uint8Array] = decodeBigint(
     u32Parser,
     feeRemainder,
     DecodeError.DecodingU64Failed
@@ -255,12 +256,12 @@ export const decodePosition = (rawBytes: string): Position => {
     tickSpacingRemainder,
     DecodeError.DecodingDecimalFailed
   )
-  const [lowerTickIndex, lowerTickIndexRemainder] = decodeBigint(
+  const [lowerTickIndex, lowerTickIndexRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     liquidityRemainder,
     DecodeError.DecodingI32Failed
   )
-  const [upperTickIndex, upperTickIndexRemainder] = decodeBigint(
+  const [upperTickIndex, upperTickIndexRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     lowerTickIndexRemainder,
     DecodeError.DecodingI32Failed
@@ -275,7 +276,7 @@ export const decodePosition = (rawBytes: string): Position => {
     feeGrowthInsideXRemainder,
     DecodeError.DecodingDecimalFailed
   )
-  const [lastBlockNumber, lastBlockNumberRemainder] = decodeBigint(
+  const [lastBlockNumber, lastBlockNumberRemainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     feeGrowthInsideYRemainder,
     DecodeError.DecodingU64Failed
@@ -317,12 +318,12 @@ export const decodePosition = (rawBytes: string): Position => {
 export const decodeTick = (rawBytes: string): Tick => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
-  const [index, indexRemainder] = decodeBigint(
+  const [index, indexRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     remainingBytes,
     DecodeError.DecodingI32Failed
   )
-  const [sign, signRemainder] = decodeBool(indexRemainder)
+  const [sign, signRemainder]: [boolean, Uint8Array] = decodeBool(indexRemainder)
   const [liquidityChange, liquidtyChangeRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     signRemainder,
@@ -348,7 +349,7 @@ export const decodeTick = (rawBytes: string): Tick => {
     feeGrowthOutsideXRemainder,
     DecodeError.DecodingDecimalFailed
   )
-  const [secondsOutside, remainder] = decodeBigint(
+  const [secondsOutside, remainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     feeGrowthOutsideYRemainder,
     DecodeError.DecodingU64Failed
@@ -370,7 +371,11 @@ export const decodeTick = (rawBytes: string): Tick => {
 
 export const decodeChunk = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
-  const [chunk, remainder] = decodeBigint(u64Parser, bytes, DecodeError.DecodingU64Failed)
+  const [chunk, remainder]: [bigint, Uint8Array] = decodeBigint(
+    u64Parser,
+    bytes,
+    DecodeError.DecodingU64Failed
+  )
 
   assertBytes(remainder)
 
@@ -379,7 +384,11 @@ export const decodeChunk = (rawBytes: string): bigint => {
 
 export const decodePositionLength = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
-  const [length, remainder] = decodeBigint(u32Parser, bytes, DecodeError.DecodingU32Failed)
+  const [length, remainder]: [bigint, Uint8Array] = decodeBigint(
+    u32Parser,
+    bytes,
+    DecodeError.DecodingU32Failed
+  )
 
   assertBytes(remainder)
 

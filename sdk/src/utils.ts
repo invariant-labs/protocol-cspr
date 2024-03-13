@@ -289,6 +289,10 @@ export const calculateFee = async (
   )
 }
 
+export const findContractPackageHash = (account: any, name: string) => {
+  const contractPackageHash = account.namedKeys.find((i: any) => i.name === name)?.key
+  return contractPackageHash
+}
 export const extractContractHash = (contractPackageHash: string): string => {
   return contractPackageHash.replace('hash-', '')
 }

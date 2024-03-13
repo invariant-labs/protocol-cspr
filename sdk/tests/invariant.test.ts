@@ -3,14 +3,15 @@ import { ALICE, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { Key, Network } from '../src/schema'
-import { assertThrowsAsync, deployInvariantAndTokens, loadChai } from '../src/testUtils'
+import {
+  DeployedContractsHashes,
+  assertThrowsAsync,
+  deployInvariantAndTokens,
+  loadChai
+} from '../src/testUtils'
 import { createFeeTier, createPoolKey, initCasperClient, loadWasm } from '../src/utils'
 
-let hashes: {
-  invariant: { loadHash: string; packageHash: string }
-  tokenX: { loadHash: string; packageHash: string }
-  tokenY: { loadHash: string; packageHash: string }
-}
+let hashes: DeployedContractsHashes
 
 describe('invariant test', async () => {
   const client = initCasperClient(LOCAL_NODE_URL)
