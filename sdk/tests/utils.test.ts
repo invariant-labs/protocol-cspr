@@ -44,7 +44,7 @@ describe('utils', () => {
       chai.assert.equal(priceImpact.v, 999999999365n)
     }
   })
-  it.only('test calculateSqrtPriceAfterSlippage', async () => {
+  it('test calculateSqrtPriceAfterSlippage', async () => {
     // no slippage up
     {
       const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
