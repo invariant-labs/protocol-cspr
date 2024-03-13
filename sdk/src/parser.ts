@@ -38,6 +38,12 @@ export const encodePoolKey = (poolKey: PoolKey): number[] => {
 export const bigintToByteArray = (bigintValue: bigint): number[] => {
   const byteArray: number[] = []
 
+  const isNegative = bigintValue < 0n
+
+  if (isNegative) {
+    bigintValue = -bigintValue
+  }
+
   while (bigintValue > 0n) {
     byteArray.unshift(Number(bigintValue & 0xffn))
     bigintValue >>= 8n
@@ -47,7 +53,13 @@ export const bigintToByteArray = (bigintValue: bigint): number[] => {
     byteArray.push(0)
   }
 
-  return byteArray.reverse()
+  if (isNegative) {
+    const reversed = byteArray.reverse()
+    const flipped = reversed.map(byte => 256 - byte)
+    return flipped
+  } else {
+    return byteArray.reverse()
+  }
 }
 
 export const stringToUint8Array = (str: string) => {
