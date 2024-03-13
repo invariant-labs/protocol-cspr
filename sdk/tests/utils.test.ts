@@ -1,9 +1,8 @@
 import type { Percentage, Price, SqrtPrice } from 'invariant-cspr-wasm'
 import { ALICE, LOCAL_NODE_URL } from '../src/consts'
-import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
-import { Decimal } from '../src/schema'
+import { Decimal, Key, Network } from '../src/schema'
 import { deployInvariantAndTokens, loadChai } from '../src/testUtils'
 import {
   calculateFee,

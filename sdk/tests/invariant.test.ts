@@ -1,8 +1,8 @@
 import type { Liquidity, Percentage } from 'invariant-cspr-wasm'
 import { ALICE, LOCAL_NODE_URL } from '../src/consts'
-import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
+import { Key, Network } from '../src/schema'
 import { assertThrowsAsync, deployInvariantAndTokens, loadChai } from '../src/testUtils'
 import { createFeeTier, createPoolKey, initCasperClient, loadWasm } from '../src/utils'
 

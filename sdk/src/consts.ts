@@ -1,4 +1,17 @@
-import { Keys } from 'casper-js-sdk'
+import {
+  CLAccountHashBytesParser,
+  CLBoolBytesParser,
+  CLI32BytesParser,
+  CLOptionBytesParser,
+  CLOptionType,
+  CLStringBytesParser,
+  CLTypeBuilder,
+  CLU128BytesParser,
+  CLU256BytesParser,
+  CLU32BytesParser,
+  CLU64BytesParser,
+  Keys
+} from 'casper-js-sdk'
 import { FUNDED_KEYS } from 'casper-node-launcher-js'
 import { stringToUint8Array } from './parser'
 import { Algo } from './schema'
@@ -15,8 +28,22 @@ export const TEST = parseAccountKeys(KEYS_PATH, Algo.ed25519)
 
 export const DEFAULT_PAYMENT_AMOUNT = 100000000000n
 export const TESTNET_DEPLOY_AMOUNT = 947800000000n
-export const TESTNET_INVARIANT_HASH =
-  '17da891dccd576ddaf93b942b4cf06855fcbb70e95cbf8276adb815f9e1cf0d9'
-// fb0a6c4c0d6b5a45b52fe7a05bbc3ffe87bfa4ea57f2b9722e179b4660a8b810
+
 export const BALANCES = stringToUint8Array('balances')
 export const ALLOWANCES = stringToUint8Array('allowances')
+
+export const i32Parser = new CLI32BytesParser()
+export const u32Parser = new CLU32BytesParser()
+export const u64Parser = new CLU64BytesParser()
+export const u128Parser = new CLU128BytesParser()
+export const u256Parser = new CLU256BytesParser()
+export const accountHashParser = new CLAccountHashBytesParser()
+export const stringParser = new CLStringBytesParser()
+export const boolParser = new CLBoolBytesParser()
+export const optionParser = new CLOptionBytesParser()
+export const expectedOptionType = new CLOptionType(CLTypeBuilder.string())
+
+export const poolKeyPrefixBytes = [7, 0, 0, 0]
+export const contractAddressPrefixBytes = [1]
+export const feeTierPrefixBytes = [7, 0, 0, 0]
+export const percentagePrefixBytes = [10, 0, 0, 0]

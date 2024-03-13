@@ -1,20 +1,4 @@
-import {
-  CLAccountHashBytesParser,
-  CLBoolBytesParser,
-  CLErrorCodes,
-  CLI32BytesParser,
-  CLOptionBytesParser,
-  CLOptionType,
-  CLStringBytesParser,
-  CLTypeBuilder,
-  CLU128BytesParser,
-  CLU256BytesParser,
-  CLU32BytesParser,
-  CLU64BytesParser,
-  CLValue,
-  CLValueBytesParsers,
-  Result
-} from 'casper-js-sdk'
+import { CLErrorCodes, CLValue, CLValueBytesParsers, Result } from 'casper-js-sdk'
 import {
   FeeGrowth,
   FeeTier,
@@ -27,18 +11,19 @@ import {
   Tick,
   TokenAmount
 } from 'invariant-cspr-wasm'
+import {
+  accountHashParser,
+  boolParser,
+  expectedOptionType,
+  i32Parser,
+  optionParser,
+  stringParser,
+  u128Parser,
+  u256Parser,
+  u32Parser,
+  u64Parser
+} from './consts'
 import { Decimals } from './schema'
-
-const i32Parser = new CLI32BytesParser()
-const u32Parser = new CLU32BytesParser()
-const u64Parser = new CLU64BytesParser()
-const u128Parser = new CLU128BytesParser()
-const u256Parser = new CLU256BytesParser()
-const accountHashParser = new CLAccountHashBytesParser()
-const stringParser = new CLStringBytesParser()
-const boolParser = new CLBoolBytesParser()
-const optionParser = new CLOptionBytesParser()
-const expectedOptionType = new CLOptionType(CLTypeBuilder.string())
 
 export const unwrap = (value: Result<CLValue, CLErrorCodes>, err?: string) => {
   if (value.err) {

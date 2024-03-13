@@ -1,7 +1,7 @@
 import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
-import { Key, Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
+import { Key, Network } from './schema'
 import {
   callWasm,
   createAccountKeys,

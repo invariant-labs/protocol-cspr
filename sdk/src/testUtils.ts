@@ -1,9 +1,9 @@
 import { CasperClient, Keys } from 'casper-js-sdk'
 import type { InvariantError, Position } from 'invariant-cspr-wasm'
 import { dynamicImport } from 'tsimportlib'
-import { Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
+import { Network } from './schema'
 import { callWasm, loadWasm } from './utils'
 
 export const deployInvariantAndTokens = async (

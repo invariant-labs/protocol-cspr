@@ -11,8 +11,8 @@ import {
   decodeBase16
 } from 'casper-js-sdk'
 import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
-import { Key, Network } from './enums'
 import { hash, hexToBytes } from './parser'
+import { Key, Network } from './schema'
 import { extractContractHash, extractContractPackageHash, getDeploymentData, sendTx } from './utils'
 
 const CONTRACT_NAME = 'erc20'

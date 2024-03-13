@@ -31,8 +31,8 @@ import {
   decodePositionLength,
   decodeTick
 } from './decoder'
-import { Key, Network } from './enums'
 import { bigintToByteArray, encodePoolKey, hash } from './parser'
+import { Key, Network } from './schema'
 import {
   callWasm,
   extractContractHash,
