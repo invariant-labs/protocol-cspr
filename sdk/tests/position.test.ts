@@ -4,7 +4,8 @@ import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { assertThrowsAsync, loadChai } from '../src/testUtils'
-import { callWasm, getAccountHashFromKey, initCasperClient, loadWasm } from '../src/utils'
+import { getAccountHashFromKey, initCasperClient, loadWasm } from '../src/utils'
+import { isTokenX, newFeeTier, newPoolKey } from '../src/wasm'
 
 let wasm: typeof import('invariant-cspr-wasm')
 let chai: typeof import('chai')
@@ -80,8 +81,8 @@ describe('position', () => {
 
     invariant = await Invariant.load(client, invariantContractHash, Network.Local)
 
-    feeTier = await callWasm(wasm.newFeeTier, { v: fee }, tickSpacing)
-    poolKey = await callWasm(wasm.newPoolKey, token0ContractPackage, token1ContractPackage, feeTier)
+    feeTier = await newFeeTier({ v: fee }, tickSpacing)
+    poolKey = await newPoolKey(token0ContractPackage, token1ContractPackage, feeTier)
 
     await invariant.addFeeTier(ALICE, feeTier)
 
@@ -143,11 +144,7 @@ describe('position', () => {
   })
 
   it('claim fee', async () => {
-    const [tokenX, tokenY] = (await callWasm(
-      wasm.isTokenX,
-      token0ContractPackage,
-      token1ContractPackage
-    ))
+    const [tokenX, tokenY] = (await isTokenX(token0ContractPackage, token1ContractPackage))
       ? [token0Address, token1Address]
       : [token1Address, token0Address]
     const amount = 1000n
