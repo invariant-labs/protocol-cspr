@@ -227,7 +227,7 @@ describe('sdk guide snippets', () => {
     const slippageLimit = await calculateSqrtPriceAfterSlippage(
       TARGET_SQRT_PRICE,
       allowedSlippage,
-      true
+      false
     )
 
     const swapResult = await invariant.swap(account, poolKey, true, amount, true, slippageLimit)
