@@ -1,8 +1,11 @@
 import { blake2bHex } from 'blakejs'
 import { PoolKey } from 'invariant-cspr-wasm'
-import { feeTierPrefixBytes, percentagePrefixBytes, poolKeyPrefixBytes } from './consts'
 import { Key } from './schema'
 import { integerSafeCast } from './utils'
+
+export const poolKeyPrefixBytes = [7, 0, 0, 0]
+export const feeTierPrefixBytes = [7, 0, 0, 0]
+export const percentagePrefixBytes = [10, 0, 0, 0]
 
 export const encodePoolKey = (poolKey: PoolKey): number[] => {
   const buffor: number[] = []
