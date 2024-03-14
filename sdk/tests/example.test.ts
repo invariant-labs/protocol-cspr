@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { Pool, Position, Tick, TokenAmount } from 'invariant-cspr-wasm'
-import { Algo, Decimal } from 'src/schema'
 import { ALICE, BOB, KEYS_PATH, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
-import { Key, Network } from '../src/schema'
+import { Algo, Decimal, Key, Network } from '../src/schema'
 import {
   calculateFee,
   calculateSqrtPriceAfterSlippage,
