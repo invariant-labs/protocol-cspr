@@ -25,6 +25,7 @@ import path from 'path'
 import { dynamicImport } from 'tsimportlib'
 import { Network } from './enums'
 import { Algo, WasmCallParams } from './schema'
+import { isTokenX } from './wasm'
 
 export const initCasperClient = (nodeUrl: string) => {
   return new CasperClient(nodeUrl)
@@ -102,6 +103,17 @@ export const loadWasm = async () => {
     'invariant-cspr-wasm',
     module
   )) as typeof import('invariant-cspr-wasm')
+}
+
+export const orderTokens = async (
+  token0ContractPackage: string,
+  token1ContractPackage: string,
+  token0ContractHash: string,
+  token1Contracthash: string
+): Promise<[string, string]> => {
+  return (await isTokenX(token0ContractPackage, token1ContractPackage))
+    ? [token0ContractHash, token1Contracthash]
+    : [token1Contracthash, token0ContractHash]
 }
 
 export const callWasm = async (
