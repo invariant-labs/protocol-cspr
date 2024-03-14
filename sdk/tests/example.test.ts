@@ -178,7 +178,7 @@ describe('sdk guide snippets', () => {
     console.log(tokenXAmount, tokenYAmount)
 
     const [tokenXContractHash, tokenYContractHash] = await orderTokens(
-      token0ContractHash,
+      token0ContractPackage,
       token1ContractPackage,
       token0ContractHash,
       token1ContractHash
@@ -212,7 +212,7 @@ describe('sdk guide snippets', () => {
 
     // approve token x transfer
     erc20.setContractHash(tokenXContractHash)
-    await erc20.approve(account, Key.Hash, invariantContractHash, amount.v)
+    await erc20.approve(account, Key.Hash, invariantContractPackage, amount.v)
 
     // ###
     const TARGET_SQRT_PRICE = await toDecimal(Decimal.SqrtPrice, 10n, 0n)
