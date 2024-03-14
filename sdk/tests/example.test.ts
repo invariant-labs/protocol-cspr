@@ -3,9 +3,9 @@
 import { Pool, Position, Tick, TokenAmount } from 'invariant-cspr-wasm'
 import { Algo, Decimal } from 'src/schema'
 import { ALICE, BOB, KEYS_PATH, LOCAL_NODE_URL } from '../src/consts'
-import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
+import { Key, Network } from '../src/schema'
 import {
   calculateFee,
   calculateSqrtPriceAfterSlippage,
@@ -66,7 +66,7 @@ describe('sdk guide snippets', () => {
     const erc20 = await Erc20.load(client, Network.Local, token0ContractHash)
 
     // interact with token 0
-    const account0Balance = await erc20.balanceOf(Key.Account, accountAddress)
+    const account0Balance = await erc20.getBalanceOf(Key.Account, accountAddress)
     console.log(account0Balance)
 
     // if you want to interact with different token,
@@ -74,21 +74,21 @@ describe('sdk guide snippets', () => {
     erc20.setContractHash(token1ContractHash)
 
     // now we can interact with token y
-    const account1Balance = await erc20.balanceOf(Key.Account, accountAddress)
+    const account1Balance = await erc20.getBalanceOf(Key.Account, accountAddress)
     console.log(account1Balance)
 
     // fetch token metadata for previously deployed token0
     erc20.setContractHash(token0ContractHash)
-    const token0Name = await erc20.name()
-    const token0Symbol = await erc20.symbol()
-    const token0Decimals = await erc20.decimals()
+    const token0Name = await erc20.getName()
+    const token0Symbol = await erc20.getSymbol()
+    const token0Decimals = await erc20.getDecimals()
     console.log(token0Name, token0Symbol, token0Decimals)
 
     // load diffrent token and load its metadata
     erc20.setContractHash(token1ContractHash)
-    const token1Name = await erc20.name()
-    const token1Symbol = await erc20.symbol()
-    const token1Decimals = await erc20.decimals()
+    const token1Name = await erc20.getName()
+    const token1Symbol = await erc20.getSymbol()
+    const token1Decimals = await erc20.getDecimals()
     console.log(token1Name, token1Symbol, token1Decimals)
   })
 
@@ -106,7 +106,7 @@ describe('sdk guide snippets', () => {
       client,
       Network.Local,
       account,
-      0n,
+      { v: 0n },
       600000000000n
     )
     const [token0ContractPackage, token0ContractHash] = await Erc20.deploy(
@@ -224,13 +224,13 @@ describe('sdk guide snippets', () => {
     const allowedSlippage = await toDecimal(Decimal.Percentage, 1n, 3n) // 0.001 = 0.1%
 
     // calculate sqrt price limit based on slippage
-    const sqrtPriceLimit = await calculateSqrtPriceAfterSlippage(
+    const slippageLimit = await calculateSqrtPriceAfterSlippage(
       TARGET_SQRT_PRICE,
       allowedSlippage,
       true
     )
 
-    const swapResult = await invariant.swap(account, poolKey, true, amount, true, sqrtPriceLimit)
+    const swapResult = await invariant.swap(account, poolKey, true, amount, true, slippageLimit)
     console.log(swapResult.execution_results[0].result) // print transaction result
 
     // query state
@@ -246,7 +246,7 @@ describe('sdk guide snippets', () => {
     console.log(fees)
 
     // get balance of a specific token before claiming position fees and print it
-    const accountBalanceBeforeClaim = await erc20.balanceOf(Key.Account, accountAddress)
+    const accountBalanceBeforeClaim = await erc20.getBalanceOf(Key.Account, accountAddress)
     console.log(accountBalanceBeforeClaim)
 
     // specify position id
@@ -257,7 +257,7 @@ describe('sdk guide snippets', () => {
     console.log(claimFeeResult.execution_results[0].result)
 
     // get balance of a specific token after claiming position fees and print it
-    const accountBalanceAfterClaim = await erc20.balanceOf(Key.Account, accountAddress)
+    const accountBalanceAfterClaim = await erc20.getBalanceOf(Key.Account, accountAddress)
     console.log(accountBalanceAfterClaim)
 
     const positionToTransfer = await invariant.getPosition(account, 0n)
@@ -273,9 +273,9 @@ describe('sdk guide snippets', () => {
     // ###
 
     // fetch user balances before removal
-    const accountToken0BalanceBeforeRemove = await erc20.balanceOf(Key.Account, accountAddress)
+    const accountToken0BalanceBeforeRemove = await erc20.getBalanceOf(Key.Account, accountAddress)
     erc20.setContractHash(token1ContractHash)
-    const accountToken1BalanceBeforeRemove = await erc20.balanceOf(Key.Account, accountAddress)
+    const accountToken1BalanceBeforeRemove = await erc20.getBalanceOf(Key.Account, accountAddress)
     console.log(accountToken0BalanceBeforeRemove, accountToken1BalanceBeforeRemove)
 
     // remove position
@@ -284,9 +284,9 @@ describe('sdk guide snippets', () => {
 
     // fetch user balances after removal
     erc20.setContractHash(token0ContractHash)
-    const accountToken0BalanceAfterRemove = await erc20.balanceOf(Key.Account, accountAddress)
+    const accountToken0BalanceAfterRemove = await erc20.getBalanceOf(Key.Account, accountAddress)
     erc20.setContractHash(token1ContractHash)
-    const accountToken1BalanceAfterRemove = await erc20.balanceOf(Key.Account, accountAddress)
+    const accountToken1BalanceAfterRemove = await erc20.getBalanceOf(Key.Account, accountAddress)
 
     // print balances
     console.log(accountToken0BalanceAfterRemove, accountToken1BalanceAfterRemove)
