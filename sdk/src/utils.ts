@@ -23,8 +23,7 @@ import type {
 } from 'invariant-cspr-wasm'
 import path from 'path'
 import { dynamicImport } from 'tsimportlib'
-import { Network } from './enums'
-import { Algo, WasmCallParams } from './schema'
+import { Algo, Network, WasmCallParams } from './schema'
 
 export const initCasperClient = (nodeUrl: string) => {
   return new CasperClient(nodeUrl)
@@ -290,6 +289,10 @@ export const calculateFee = async (
   )
 }
 
+export const findContractPackageHash = (account: any, name: string) => {
+  const contractPackageHash = account.namedKeys.find((i: any) => i.name === name)?.key
+  return contractPackageHash
+}
 export const extractContractHash = (contractPackageHash: string): string => {
   return contractPackageHash.replace('hash-', '')
 }

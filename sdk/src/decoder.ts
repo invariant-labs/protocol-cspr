@@ -27,22 +27,22 @@ import {
   Tick,
   TokenAmount
 } from 'invariant-cspr-wasm'
-import { Decimals } from './schema'
+import { Decimals, DecodeError } from './schema'
 
-const i32Parser = new CLI32BytesParser()
-const u32Parser = new CLU32BytesParser()
-const u64Parser = new CLU64BytesParser()
-const u128Parser = new CLU128BytesParser()
-const u256Parser = new CLU256BytesParser()
-const accountHashParser = new CLAccountHashBytesParser()
-const stringParser = new CLStringBytesParser()
-const boolParser = new CLBoolBytesParser()
-const optionParser = new CLOptionBytesParser()
-const expectedOptionType = new CLOptionType(CLTypeBuilder.string())
+export const i32Parser = new CLI32BytesParser()
+export const u32Parser = new CLU32BytesParser()
+export const u64Parser = new CLU64BytesParser()
+export const u128Parser = new CLU128BytesParser()
+export const u256Parser = new CLU256BytesParser()
+export const accountHashParser = new CLAccountHashBytesParser()
+export const stringParser = new CLStringBytesParser()
+export const boolParser = new CLBoolBytesParser()
+export const optionParser = new CLOptionBytesParser()
+export const expectedOptionType = new CLOptionType(CLTypeBuilder.string())
 
-export const unwrap = (value: Result<CLValue, CLErrorCodes>, err?: string) => {
+export const unwrap = (value: Result<CLValue, CLErrorCodes>, err?: DecodeError) => {
   if (value.err) {
-    throw new Error(err || 'Couldnt unwrap result')
+    throw new Error((err || DecodeError.UnwrapFailed).toString())
   }
   return (value.val as any).data
 }
@@ -52,7 +52,7 @@ export const lowerCaseFirstLetter = (v: string): string => v.charAt(0).toLowerCa
 const decodeDecimal = (
   parser: CLValueBytesParsers,
   bytes: Uint8Array,
-  errorMessage?: string
+  errorMessage?: DecodeError
 ): [Decimals, Uint8Array] => {
   const { remainder: valueRemainder } = stringParser.fromBytesWithRemainder(bytes)
   const { result, remainder } = parser.fromBytesWithRemainder(valueRemainder!)
@@ -63,7 +63,7 @@ const decodeDecimal = (
 const decodeBigint = (
   parser: CLValueBytesParsers,
   bytes: Uint8Array,
-  errorMessage?: string
+  errorMessage?: DecodeError
 ): [bigint, Uint8Array] => {
   const { result, remainder } = parser.fromBytesWithRemainder(bytes)
   const value = BigInt(unwrap(result, errorMessage))
@@ -71,15 +71,15 @@ const decodeBigint = (
 }
 
 export const decodeAddress = (bytes: Uint8Array): [string, Uint8Array] => {
-  // One additional byte is left on the beggining of the bytes remainder
+  // One additional byte is indicating if it is an Account or Contract
   const slicedBytes = bytes.slice(1, bytes.length)
   const { result, remainder } = accountHashParser.fromBytesWithRemainder(slicedBytes)
-  const address = bytesToHex(unwrap(result, 'Couldnt parse address'))
+  const address = bytesToHex(unwrap(result, DecodeError.DecodingAddressFailed))
   return [address, remainder!]
 }
 export const decodeString = (bytes: Uint8Array): [string, Uint8Array] => {
   const { result, remainder } = stringParser.fromBytesWithRemainder(bytes)
-  const value = lowerCaseFirstLetter(unwrap(result, 'Couldnt parse string'))
+  const value = lowerCaseFirstLetter(unwrap(result, DecodeError.DecodingStringFailed))
   return [value, remainder!]
 }
 
@@ -89,23 +89,21 @@ export const decodeOption = (bytes: Uint8Array): Uint8Array => {
 }
 export const decodeBool = (bytes: Uint8Array): [boolean, Uint8Array] => {
   const { result, remainder } = boolParser.fromBytesWithRemainder(bytes)
-  const value = unwrap(result, 'Couldnt parse bool')
+  const value = unwrap(result, DecodeError.DecodingBoolFailed)
   return [value, remainder!]
 }
 
 export const decodeInvariantConfig = (rawBytes: string) => {
   const bytes = parseBytes(rawBytes)
   const structNameRemainder = decodeString(bytes)[1]
-  const [admin, adminRemainder] = decodeAddress(structNameRemainder)
+  const [admin, adminRemainder]: [string, Uint8Array] = decodeAddress(structNameRemainder)
   const [protocolFee, remainder]: [Percentage, Uint8Array] = decodeDecimal(
     u128Parser,
     adminRemainder,
-    'Couldnt parse protocol fee'
+    DecodeError.DecodingDecimalFailed
   )
 
-  if (remainder!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainder)
 
   return {
     admin,
@@ -123,21 +121,21 @@ export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
   const poolKeys = []
   for (let i = 0; i < poolKeyCount; i++) {
     remainingBytes = decodeString(remainingBytes)[1]
-    const [tokenX, tokenXRemainder] = decodeAddress(remainingBytes)
+    const [tokenX, tokenXRemainder]: [string, Uint8Array] = decodeAddress(remainingBytes)
     remainingBytes = tokenXRemainder
-    const [tokenY, tokenYRemainder] = decodeAddress(remainingBytes)
+    const [tokenY, tokenYRemainder]: [string, Uint8Array] = decodeAddress(remainingBytes)
     remainingBytes = tokenYRemainder
     remainingBytes = decodeString(remainingBytes)[1]
     const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
       u128Parser,
       remainingBytes,
-      'Couldnt parse pool key fee'
+      DecodeError.DecodingDecimalFailed
     )
     remainingBytes = feeRemainder
-    const [tickSpacing, remainder] = decodeBigint(
+    const [tickSpacing, remainder]: [bigint, Uint8Array] = decodeBigint(
       u32Parser,
       remainingBytes,
-      'Couldnt parse pool key tickspacing'
+      DecodeError.DecodingU32Failed
     )
     remainingBytes = remainder
     poolKeys.push({
@@ -147,9 +145,7 @@ export const decodePoolKeys = (rawBytes: string): PoolKey[] => {
     })
   }
 
-  if (remainingBytes!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainingBytes)
 
   return poolKeys
 }
@@ -167,22 +163,20 @@ export const decodeFeeTiers = (rawBytes: string): FeeTier[] => {
     const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
       u128Parser,
       remainingBytes,
-      'Couldnt parse fee tier fee'
+      DecodeError.DecodingDecimalFailed
     )
     remainingBytes = feeRemainder
-    const [tickSpacing, remainder] = decodeBigint(
+    const [tickSpacing, remainder]: [bigint, Uint8Array] = decodeBigint(
       u32Parser,
       remainingBytes,
-      'Couldnt parse fee tier tickspacing'
+      DecodeError.DecodingU32Failed
     )
     remainingBytes = remainder
     const feeTier = { fee, tickSpacing }
     feeTiers.push(feeTier)
   }
 
-  if (remainingBytes!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainingBytes)
 
   return feeTiers
 }
@@ -192,54 +186,53 @@ export const decodePool = (rawBytes: string): Pool => {
   const [liquidity, liquidityRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     remainingBytes,
-    'Couldnt parse liquidity'
+    DecodeError.DecodingDecimalFailed
   )
   const [sqrtPrice, sqrtPriceRemainder]: [SqrtPrice, Uint8Array] = decodeDecimal(
     u128Parser,
     liquidityRemainder,
-    'Couldnt parse sqrt price'
+    DecodeError.DecodingDecimalFailed
   )
-  const [currentTickIndex, currentTickRemainder] = decodeBigint(
+  const [currentTickIndex, currentTickRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     sqrtPriceRemainder,
-    'Couldnt parse current tick index'
+    DecodeError.DecodingDecimalFailed
   )
   const [feeGrowthGlobalX, feeGrowthGlobalXRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     currentTickRemainder,
-    'Couldnt parse fee growth global x'
+    DecodeError.DecodingDecimalFailed
   )
   const [feeGrowthGlobalY, feeGrowthGlobalYRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthGlobalXRemainder,
-    'Couldnt parse fee growth global y'
+    DecodeError.DecodingDecimalFailed
   )
   const [feeProtocolTokenX, feeProtocolTokenXRemainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthGlobalYRemainder,
-    'Couldnt parse fee protocol token x'
+    DecodeError.DecodingDecimalFailed
   )
   const [feeProtocolTokenY, feeProtocolTokenYRemainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     feeProtocolTokenXRemainder,
-    'Couldnt parse fee protocol token y'
+    DecodeError.DecodingDecimalFailed
   )
-  const [startTimestamp, startTimestampRemainder] = decodeBigint(
+  const [startTimestamp, startTimestampRemainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     feeProtocolTokenYRemainder,
-    'Couldnt parse start timestamp'
+    DecodeError.DecodingU64Failed
   )
-  const [lastTimestamp, lastTimestampRemainder] = decodeBigint(
+  const [lastTimestamp, lastTimestampRemainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     startTimestampRemainder,
-    'Couldnt parse last timestamp'
+    DecodeError.DecodingU64Failed
   )
-  const [feeReceiver, feeReceiverRemainder] = decodeAddress(lastTimestampRemainder)
-  const [oracleInitialized, remainder] = decodeBool(feeReceiverRemainder)
+  const [feeReceiver, feeReceiverRemainder]: [string, Uint8Array] =
+    decodeAddress(lastTimestampRemainder)
+  const [oracleInitialized, remainder]: [boolean, Uint8Array] = decodeBool(feeReceiverRemainder)
 
-  if (remainder!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainder)
 
   return {
     liquidity,
@@ -260,64 +253,62 @@ export const decodePosition = (rawBytes: string): Position => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
   const poolKeyRemainder = decodeString(remainingBytes)[1]
-  const [tokenX, tokenXRemainder] = decodeAddress(poolKeyRemainder)
-  const [tokenY, tokenYRemainder] = decodeAddress(tokenXRemainder)
+  const [tokenX, tokenXRemainder]: [string, Uint8Array] = decodeAddress(poolKeyRemainder)
+  const [tokenY, tokenYRemainder]: [string, Uint8Array] = decodeAddress(tokenXRemainder)
   const feeTierRemainder = decodeString(tokenYRemainder)[1]
   const [fee, feeRemainder]: [Percentage, Uint8Array] = decodeDecimal(
     u128Parser,
     feeTierRemainder,
-    'Couldnt parse position fee'
+    DecodeError.DecodingDecimalFailed
   )
-  const [tickSpacing, tickSpacingRemainder] = decodeBigint(
+  const [tickSpacing, tickSpacingRemainder]: [bigint, Uint8Array] = decodeBigint(
     u32Parser,
     feeRemainder,
-    'Couldnt parse position  tickspacing'
+    DecodeError.DecodingU64Failed
   )
   const [liquidity, liquidityRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     tickSpacingRemainder,
-    'Couldnt parse position liquidity'
+    DecodeError.DecodingDecimalFailed
   )
-  const [lowerTickIndex, lowerTickIndexRemainder] = decodeBigint(
+  const [lowerTickIndex, lowerTickIndexRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     liquidityRemainder,
-    'Couldnt parse position lower tick index'
+    DecodeError.DecodingI32Failed
   )
-  const [upperTickIndex, upperTickIndexRemainder] = decodeBigint(
+  const [upperTickIndex, upperTickIndexRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     lowerTickIndexRemainder,
-    'Couldnt parse position upper tick index'
+    DecodeError.DecodingI32Failed
   )
   const [feeGrowthInsideX, feeGrowthInsideXRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     upperTickIndexRemainder,
-    'Couldnt parse position fee growth inside x'
+    DecodeError.DecodingDecimalFailed
   )
   const [feeGrowthInsideY, feeGrowthInsideYRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthInsideXRemainder,
-    'Couldnt parse position fee growth inside y'
+    DecodeError.DecodingDecimalFailed
   )
-  const [lastBlockNumber, lastBlockNumberRemainder] = decodeBigint(
+  const [lastBlockNumber, lastBlockNumberRemainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     feeGrowthInsideYRemainder,
-    'Couldnt parse position last block number'
+    DecodeError.DecodingU64Failed
   )
 
   const [tokensOwedX, tokenOwedXRemainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     lastBlockNumberRemainder,
-    'Couldnt parse position tokens owed x'
+    DecodeError.DecodingDecimalFailed
   )
   const [tokensOwedY, remainder]: [TokenAmount, Uint8Array] = decodeDecimal(
     u256Parser,
     tokenOwedXRemainder,
-    'Couldnt parse position tokens owed y'
+    DecodeError.DecodingDecimalFailed
   )
 
-  if (remainder!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainder)
 
   return {
     poolKey: {
@@ -342,46 +333,44 @@ export const decodePosition = (rawBytes: string): Position => {
 export const decodeTick = (rawBytes: string): Tick => {
   const bytes = parseBytes(rawBytes)
   const remainingBytes = decodeOption(bytes)
-  const [index, indexRemainder] = decodeBigint(
+  const [index, indexRemainder]: [bigint, Uint8Array] = decodeBigint(
     i32Parser,
     remainingBytes,
-    'Couldnt parse tick index'
+    DecodeError.DecodingI32Failed
   )
-  const [sign, signRemainder] = decodeBool(indexRemainder)
+  const [sign, signRemainder]: [boolean, Uint8Array] = decodeBool(indexRemainder)
   const [liquidityChange, liquidtyChangeRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     signRemainder,
-    'Couldnt parse tick liquidity change'
+    DecodeError.DecodingDecimalFailed
   )
   const [liquidityGross, liquidityGrossRemainder]: [Liquidity, Uint8Array] = decodeDecimal(
     u256Parser,
     liquidtyChangeRemainder,
-    'Couldnt parse tick liquidity gross'
+    DecodeError.DecodingDecimalFailed
   )
   const [sqrtPrice, sqrtPriceRemainder]: [SqrtPrice, Uint8Array] = decodeDecimal(
     u128Parser,
     liquidityGrossRemainder,
-    'Couldnt parse tick sqrt price'
+    DecodeError.DecodingDecimalFailed
   )
   const [feeGrowthOutsideX, feeGrowthOutsideXRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     sqrtPriceRemainder,
-    'Couldnt parse tick sqrt fee growth outside x'
+    DecodeError.DecodingDecimalFailed
   )
   const [feeGrowthOutsideY, feeGrowthOutsideYRemainder]: [FeeGrowth, Uint8Array] = decodeDecimal(
     u256Parser,
     feeGrowthOutsideXRemainder,
-    'Couldnt parse tick fee growth outside y'
+    DecodeError.DecodingDecimalFailed
   )
-  const [secondsOutside, remainder] = decodeBigint(
+  const [secondsOutside, remainder]: [bigint, Uint8Array] = decodeBigint(
     u64Parser,
     feeGrowthOutsideYRemainder,
-    'Couldnt parse tick seconds outside'
+    DecodeError.DecodingU64Failed
   )
 
-  if (remainder!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainder)
 
   return {
     index,
@@ -397,22 +386,26 @@ export const decodeTick = (rawBytes: string): Tick => {
 
 export const decodeChunk = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
-  const [chunk, remainder] = decodeBigint(u64Parser, bytes, 'Couldnt parse chunk')
+  const [chunk, remainder]: [bigint, Uint8Array] = decodeBigint(
+    u64Parser,
+    bytes,
+    DecodeError.DecodingU64Failed
+  )
 
-  if (remainder!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainder)
 
   return chunk
 }
 
 export const decodePositionLength = (rawBytes: string): bigint => {
   const bytes = parseBytes(rawBytes)
-  const [length, remainder] = decodeBigint(u32Parser, bytes, 'Couldnt parse position length')
+  const [length, remainder]: [bigint, Uint8Array] = decodeBigint(
+    u32Parser,
+    bytes,
+    DecodeError.DecodingU32Failed
+  )
 
-  if (remainder!.length != 0) {
-    throw new Error('There are remaining bytes left')
-  }
+  assertBytes(remainder)
 
   return length
 }
@@ -429,4 +422,10 @@ export const bytesToHex = (bytes: Uint8Array) => {
 }
 export const uint8ArrayToString = (uintArray: Uint8Array) => {
   return new TextDecoder().decode(uintArray)
+}
+
+const assertBytes = (bytes: Uint8Array) => {
+  if (bytes.length !== 0) {
+    throw new Error('There are remaing bytes left')
+  }
 }

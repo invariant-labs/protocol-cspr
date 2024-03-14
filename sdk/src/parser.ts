@@ -1,26 +1,26 @@
 import { blake2bHex } from 'blakejs'
 import { PoolKey } from 'invariant-cspr-wasm'
+import { Key } from './schema'
 import { integerSafeCast } from './utils'
 
-const poolKeyPrefixBytes = [7, 0, 0, 0]
-const contractAddressPrefixBytes = [1]
-const feeTierPrefixBytes = [7, 0, 0, 0]
-const percentagePrefixBytes = [10, 0, 0, 0]
+export const poolKeyPrefixBytes = [7, 0, 0, 0]
+export const feeTierPrefixBytes = [7, 0, 0, 0]
+export const percentagePrefixBytes = [10, 0, 0, 0]
 
 export const encodePoolKey = (poolKey: PoolKey): number[] => {
   const buffor: number[] = []
-  const poolKeyStructBytes = 'PoolKey'.split('').map(c => c.charCodeAt(0))
+  const poolKeyStructBytes = encodeString('PoolKey')
   const tokenXBytes = hexToBytes(poolKey.tokenX)
   const tokenYBytes = hexToBytes(poolKey.tokenY)
-  const feeTierStructBytes = 'FeeTier'.split('').map(c => c.charCodeAt(0))
-  const percentageSturctBytes = 'Percentage'.split('').map(c => c.charCodeAt(0))
+  const feeTierStructBytes = encodeString('FeeTier')
+  const percentageSturctBytes = encodeString('Percentage')
   const feeBytes = bigintToByteArray(poolKey.feeTier.fee.v)
 
   buffor.push(...poolKeyPrefixBytes)
   buffor.push(...poolKeyStructBytes)
-  buffor.push(...contractAddressPrefixBytes)
+  buffor.push(...[Key.Hash])
   buffor.push(...tokenXBytes)
-  buffor.push(...contractAddressPrefixBytes)
+  buffor.push(...[Key.Hash])
   buffor.push(...tokenYBytes)
   buffor.push(...feeTierPrefixBytes)
   buffor.push(...feeTierStructBytes)
@@ -45,7 +45,7 @@ export const bigintToByteArray = (bigintValue: bigint): number[] => {
   }
 
   while (bigintValue > 0n) {
-    byteArray.unshift(Number(bigintValue & 0xffn))
+    byteArray.unshift(integerSafeCast(bigintValue & 0xffn))
     bigintValue >>= 8n
   }
 
@@ -60,6 +60,10 @@ export const bigintToByteArray = (bigintValue: bigint): number[] => {
   } else {
     return byteArray.reverse()
   }
+}
+export const encodeString = (str: string): number[] => {
+  const bytes = str.split('').map(c => c.charCodeAt(0))
+  return bytes
 }
 
 export const stringToUint8Array = (str: string) => {
