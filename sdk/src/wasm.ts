@@ -44,6 +44,16 @@ export const getGlobalMinSqrtPrice = async (): Promise<SqrtPrice> => {
   return { v: await callWasm(wasm.getGlobalMinSqrtPrice) }
 }
 
+export const getMaxSqrtPrice = async (tickSpacing: bigint): Promise<SqrtPrice> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return { v: await callWasm(wasm.getMaxSqrtPrice, tickSpacing) }
+}
+
+export const getMinSqrtPrice = async (tickSpacing: bigint): Promise<SqrtPrice> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return { v: await callWasm(wasm.getMinSqrtPrice, tickSpacing) }
+}
+
 export const isTokenX = async (token0: string, token1: string): Promise<boolean> => {
   const wasm = await loadWasmIfNotLoaded()
   return callWasm(wasm.isTokenX, token0, token1)
