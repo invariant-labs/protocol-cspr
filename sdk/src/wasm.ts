@@ -24,6 +24,11 @@ const loadWasmIfNotLoaded = async () => {
   return wasm
 }
 
+export const getMaxChunk = async (): Promise<bigint> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return callWasm(wasm.getMaxChunk)
+}
+
 export const getMaxTick = async (tickSpacing: bigint): Promise<bigint> => {
   const wasm = await loadWasmIfNotLoaded()
   return callWasm(wasm.getMaxTick, tickSpacing)
