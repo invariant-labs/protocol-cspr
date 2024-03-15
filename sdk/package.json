@@ -15,8 +15,8 @@
   "scripts": {
     "start": "npx tsc && node --experimental-wasm-modules target/src/index.js",
     "start:ts": "ts-node ./src/index.ts",
-    "wasm:build": "cd ../clamm-wasm && wasm-pack build --out-dir ../sdk/invariant-cspr-wasm --out-name index && cd ../sdk && npm run wasm:package",
-    "wasm:package": "cd ./invariant-cspr-wasm && npm pkg set type='module'",
+    "wasm:build": "cd ../clamm-wasm && wasm-pack build --out-dir ../sdk/wasm --out-name index && cd ../sdk && npm run wasm:package",
+    "wasm:package": "cd ./wasm && npm pkg set type='module'",
     "lint": "eslint . --ext .ts",
     "build": "npx tsc",
     "test": "ts-mocha",

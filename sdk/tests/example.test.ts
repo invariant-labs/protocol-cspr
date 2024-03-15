@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { Pool, Position, Tick, TokenAmount } from 'invariant-cspr-wasm'
-import { ALICE, BOB, KEYS_PATH, LOCAL_NODE_URL } from '../src/consts'
+import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
 import { Algo, Decimal, Key, Network } from '../src/schema'
@@ -14,11 +13,13 @@ import {
   parseAccountKeys
 } from '../src/utils'
 import { getLiquidityByY, newFeeTier, newPoolKey, toDecimal } from '../src/wasm'
+import type { Pool, Position, Tick, TokenAmount } from '../wasm'
 
 describe('sdk guide snippets', () => {
   it('initialization', async () => {
     // ###
     const NODE_URL = LOCAL_NODE_URL
+    const KEYS_PATH = './casper_keys'
     // ###
 
     // initialize client, use first parameter to specify the node

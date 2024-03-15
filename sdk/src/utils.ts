@@ -98,7 +98,7 @@ export const createAccountKeys = () => {
 }
 
 export const loadWasm = async () => {
-  return (await dynamicImport('invariant-cspr-wasm', module)) as typeof import('../wasm')
+  return (await dynamicImport('../wasm', module)) as typeof import('../wasm')
 }
 
 export const orderTokens = async (

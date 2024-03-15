@@ -1,4 +1,3 @@
-import type { Percentage, Price, SqrtPrice } from 'invariant-cspr-wasm'
 import { ALICE, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
@@ -15,6 +14,7 @@ import {
   sqrtPriceToPrice
 } from '../src/utils'
 import { toDecimal } from '../src/wasm'
+import type { Percentage, Price, SqrtPrice } from '../wasm'
 
 describe('utils', () => {
   let chai: typeof import('chai')
