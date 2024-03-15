@@ -6,5 +6,5 @@ Cargo.lock
 .backend*
 .builder*
 node_modules
-wasm
+/wasm
 gas_report.txt
