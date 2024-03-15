@@ -19,7 +19,7 @@ use traceable_result::*;
 pub struct Pool {
     pub liquidity: Liquidity,
     pub sqrt_price: SqrtPrice,
-    pub current_tick_index: i32, // nearest tick below the current sqrt_price
+    pub current_tick_index: i32,
     pub fee_growth_global_x: FeeGrowth,
     pub fee_growth_global_y: FeeGrowth,
     pub fee_protocol_token_x: TokenAmount,
@@ -27,7 +27,6 @@ pub struct Pool {
     pub start_timestamp: u64,
     pub last_timestamp: u64,
     pub fee_receiver: Address,
-    pub oracle_initialized: bool,
 }
 
 impl Default for Pool {
@@ -43,7 +42,6 @@ impl Default for Pool {
             fee_protocol_token_y: TokenAmount::default(),
             start_timestamp: u64::default(),
             last_timestamp: u64::default(),
-            oracle_initialized: bool::default(),
         }
     }
 }

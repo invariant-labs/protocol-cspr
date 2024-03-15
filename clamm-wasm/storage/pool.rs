@@ -22,5 +22,4 @@ pub struct Pool {
     #[tsify(type = "bigint")]
     pub last_timestamp: u64,
     pub fee_receiver: String,
-    pub oracle_initialized: bool,
 }

@@ -445,10 +445,6 @@ fn main() {
         let (value, bytes) = Address::from_bytes(&bytes).unwrap();
         println!("Value = {:?}", value);
 
-        // Oracle initliazed
-        let (value, bytes) = bool::from_bytes(&bytes).unwrap();
-        println!("Value = {:?}", value);
-
         assert!(bytes.is_empty());
     }
     // Mapping

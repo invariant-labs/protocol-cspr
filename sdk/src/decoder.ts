@@ -234,8 +234,7 @@ export const decodePool = (rawBytes: string): Pool => {
     startTimestampRemainder,
     'Couldnt parse last timestamp'
   )
-  const [feeReceiver, feeReceiverRemainder] = decodeAddress(lastTimestampRemainder)
-  const [oracleInitialized, remainder] = decodeBool(feeReceiverRemainder)
+  const [feeReceiver, remainder] = decodeAddress(lastTimestampRemainder)
 
   if (remainder!.length != 0) {
     throw new Error('There are remaining bytes left')
@@ -251,8 +250,7 @@ export const decodePool = (rawBytes: string): Pool => {
     feeProtocolTokenY,
     startTimestamp,
     lastTimestamp,
-    feeReceiver,
-    oracleInitialized
+    feeReceiver
   }
 }
 

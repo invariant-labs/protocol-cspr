@@ -166,8 +166,7 @@ describe('invariant test', async () => {
       feeProtocolTokenY: { v: 0n },
       startTimestamp: pool.startTimestamp,
       lastTimestamp: pool.lastTimestamp,
-      feeReceiver: pool.feeReceiver,
-      oracleInitialized: false
+      feeReceiver: pool.feeReceiver
     }
 
     chai.assert.exists(pools.length === 1)
@@ -220,8 +219,7 @@ describe('invariant test', async () => {
       feeProtocolTokenY: { v: 0n },
       startTimestamp: pool.startTimestamp,
       lastTimestamp: pool.lastTimestamp,
-      feeReceiver: pool.feeReceiver,
-      oracleInitialized: false
+      feeReceiver: pool.feeReceiver
     }
 
     chai.assert.exists(pools.length === 1)
