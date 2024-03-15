@@ -3,8 +3,23 @@ import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
 import { Key, Network } from './schema'
 import { callWasm, getAccountHashFromKey, initCasperClient, loadWasm } from './utils'
+import {
+  getGlobalMaxSqrtPrice,
+  getGlobalMinSqrtPrice,
+  getMaxSqrtPrice,
+  getMaxTick,
+  getMinSqrtPrice,
+  getMinTick
+} from './wasm'
 const main = async () => {
   const wasm = await loadWasm()
+
+  console.log(await getMaxTick(1n))
+  console.log(await getMinTick(1n))
+  console.log(await getGlobalMaxSqrtPrice())
+  console.log(await getGlobalMinSqrtPrice())
+  console.log(await getMaxSqrtPrice(1n))
+  console.log(await getMinSqrtPrice(1n))
 
   const isLocal = true
 

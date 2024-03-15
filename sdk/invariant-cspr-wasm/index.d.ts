@@ -179,6 +179,26 @@ export function getSqrtPriceDenominator(): bigint;
 */
 export function toSqrtPrice(js_val: any, js_scale: any): bigint;
 /**
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function getMaxTick(js_tick_spacing: any): bigint;
+/**
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function getMinTick(js_tick_spacing: any): bigint;
+/**
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function getMaxSqrtPrice(js_tick_spacing: any): bigint;
+/**
+* @param {any} js_tick_spacing
+* @returns {bigint}
+*/
+export function getMinSqrtPrice(js_tick_spacing: any): bigint;
+/**
 * @returns {bigint}
 */
 export function getFixedPointScale(): bigint;
