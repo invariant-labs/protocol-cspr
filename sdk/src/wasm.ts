@@ -80,7 +80,7 @@ export const getLiquidityByX = async (
   currentSqrtPrice: SqrtPrice,
   roundingUp: boolean
 ): Promise<{ l: Liquidity; amount: TokenAmount }> => {
-  const wasm = await loadWasm()
+  const wasm = await loadWasmIfNotLoaded()
   return await callWasm(
     wasm.getLiquidityByX,
     x,
@@ -98,7 +98,7 @@ export const getLiquidityByY = async (
   currentSqrtPrice: SqrtPrice,
   roundingUp: boolean
 ): Promise<{ l: Liquidity; amount: TokenAmount }> => {
-  const wasm = await loadWasm()
+  const wasm = await loadWasmIfNotLoaded()
   return await callWasm(
     wasm.getLiquidityByY,
     y,
@@ -114,7 +114,7 @@ export const toDecimal = async (
   value: bigint,
   scale: bigint
 ): Promise<Decimals> => {
-  const wasm = await loadWasm()
+  const wasm = await loadWasmIfNotLoaded()
   switch (decimal) {
     case Decimal.Liquidity:
       return { v: await callWasm(wasm.toLiquidity, value, scale) } as Liquidity
