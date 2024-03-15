@@ -20,7 +20,7 @@ export type {
   SwapResult,
   Tick,
   TokenAmount
-} from '../wasm'
+} from 'wasm'
 export { DEFAULT_PAYMENT_AMOUNT, LOCAL_NODE_URL } from './consts'
 export { Erc20 } from './erc20'
 export { Invariant } from './invariant'

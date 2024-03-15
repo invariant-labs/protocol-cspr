@@ -26,7 +26,7 @@ import type {
   SqrtPrice,
   Tick,
   TokenAmount
-} from '../wasm'
+} from 'wasm'
 import { Decimals, DecodeError } from './schema'
 
 export const i32Parser = new CLI32BytesParser()

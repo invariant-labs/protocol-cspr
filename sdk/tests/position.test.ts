@@ -1,3 +1,4 @@
+import type { FeeTier, PoolKey, Position } from 'wasm'
 import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
@@ -11,7 +12,6 @@ import {
 } from '../src/testUtils'
 import { getAccountHashFromKey, initCasperClient } from '../src/utils'
 import { newFeeTier, newPoolKey } from '../src/wasm'
-import type { FeeTier, PoolKey, Position } from '../wasm'
 
 let chai: typeof import('chai')
 

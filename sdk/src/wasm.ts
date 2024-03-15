@@ -8,12 +8,12 @@ import type {
   SecondsPerLiquidity,
   SqrtPrice,
   TokenAmount
-} from '../wasm'
+} from 'wasm'
 import { Decimal, Decimals } from './schema'
 import { callWasm, loadWasm } from './utils'
 
 let wasmLoaded = false
-let wasm: typeof import('../wasm')
+let wasm: typeof import('wasm')
 
 const loadWasmIfNotLoaded = async () => {
   if (!wasmLoaded) {

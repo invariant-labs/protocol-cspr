@@ -22,7 +22,7 @@ import type {
   SqrtPrice,
   Tick,
   TokenAmount
-} from '../wasm'
+} from 'wasm'
 import { Algo, Network, WasmCallParams } from './schema'
 import { isTokenX } from './wasm'
 
@@ -98,7 +98,7 @@ export const createAccountKeys = () => {
 }
 
 export const loadWasm = async () => {
-  return (await dynamicImport('../wasm', module)) as typeof import('../wasm')
+  return (await dynamicImport('wasm', module)) as typeof import('wasm')
 }
 
 export const orderTokens = async (

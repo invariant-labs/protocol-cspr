@@ -34,7 +34,8 @@
     "chai": "^5.0.3",
     "ts-node": "^10.9.2",
     "tsimportlib": "^0.0.5",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "wasm": "file:./wasm"
   },
   "author": "",
   "license": "ISC",

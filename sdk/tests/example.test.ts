@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
+import type { Pool, Position, Tick, TokenAmount } from 'wasm'
 import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
@@ -13,7 +14,6 @@ import {
   parseAccountKeys
 } from '../src/utils'
 import { getLiquidityByY, newFeeTier, newPoolKey, toDecimal } from '../src/wasm'
-import type { Pool, Position, Tick, TokenAmount } from '../wasm'
 
 describe('sdk guide snippets', () => {
   it('initialization', async () => {
