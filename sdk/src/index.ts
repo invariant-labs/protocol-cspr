@@ -1,23 +1,10 @@
 import { ALICE, BOB, LOCAL_NODE_URL, TEST, TESTNET_NODE_URL } from './consts'
-import { Key, Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
-import {
-  callWasm,
-  createAccountKeys,
-  getAccountHashFromKey,
-  initCasperClient,
-  loadWasm
-} from './utils'
+import { Key, Network } from './schema'
+import { callWasm, getAccountHashFromKey, initCasperClient, loadWasm } from './utils'
 const main = async () => {
-  const createKeys = false
   const wasm = await loadWasm()
-
-  if (createKeys) {
-    createAccountKeys()
-    console.log('Account keys generated')
-    return
-  }
 
   const isLocal = true
 
@@ -48,7 +35,7 @@ const main = async () => {
     client,
     network,
     account,
-    0n,
+    { v: 0n },
     2446489177947n
   )
   invariantContractPackage = invariantContractPackageHash
@@ -60,7 +47,7 @@ const main = async () => {
       client,
       network,
       account,
-      0n,
+      { v: 0n },
       600000000000n
     )
     invariantContractPackage = invariantContractPackageHash
@@ -152,11 +139,11 @@ const main = async () => {
 
   console.log(
     'token 0 invariant balance',
-    await token0Contract.balanceOf(Key.Hash, invariantContractPackage)
+    await token0Contract.getBalanceOf(Key.Hash, invariantContractPackage)
   )
   console.log(
     'token 1 invariant balance',
-    await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
+    await token1Contract.getBalanceOf(Key.Hash, invariantContractPackage)
   )
 
   const swapResult = await invariantContract.swap(account, poolKey, true, { v: 10n }, true, {
@@ -166,11 +153,11 @@ const main = async () => {
 
   console.log(
     'token 0 invariant balance',
-    await token0Contract.balanceOf(Key.Hash, invariantContractPackage)
+    await token0Contract.getBalanceOf(Key.Hash, invariantContractPackage)
   )
   console.log(
     'token 1 invariant balance',
-    await token1Contract.balanceOf(Key.Hash, invariantContractPackage)
+    await token1Contract.getBalanceOf(Key.Hash, invariantContractPackage)
   )
 
   console.log(await invariantContract.getInvariantConfig())

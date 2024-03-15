@@ -1,9 +1,8 @@
 import type { Percentage, Price, SqrtPrice } from 'invariant-cspr-wasm'
 import { ALICE, LOCAL_NODE_URL } from '../src/consts'
-import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
-import { Decimal } from '../src/schema'
+import { Decimal, Key, Network } from '../src/schema'
 import { deployInvariantAndTokens, loadChai } from '../src/testUtils'
 import {
   calculateFee,
@@ -49,7 +48,6 @@ describe('utils', () => {
     {
       const sqrtPrice: SqrtPrice = await toDecimal(Decimal.SqrtPrice, 1n, 0n)
       const slippage: Percentage = await toDecimal(Decimal.Percentage, 0n, 0n)
-      console.log(sqrtPrice, slippage)
       const limitSqrt: SqrtPrice = await calculateSqrtPriceAfterSlippage(sqrtPrice, slippage, true)
       chai.assert.deepEqual(limitSqrt, sqrtPrice)
     }
@@ -200,7 +198,7 @@ describe('utils', () => {
 
     const erc20 = await Erc20.load(client, network, hashes.tokenX.loadHash)
     await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
-    await erc20.setContractHash(hashes.tokenY.loadHash)
+    erc20.setContractHash(hashes.tokenY.loadHash)
     await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
 
     const pool = await invariant.getPool(poolKey)
@@ -215,9 +213,9 @@ describe('utils', () => {
     )
 
     {
-      await erc20.setContractHash(hashes.tokenX.loadHash)
+      erc20.setContractHash(hashes.tokenX.loadHash)
       await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
-      await erc20.setContractHash(hashes.tokenY.loadHash)
+      erc20.setContractHash(hashes.tokenY.loadHash)
       await erc20.approve(deployer, Key.Hash, hashes.invariant.packageHash, approvalAmount)
 
       await invariant.swap(deployer, poolKey, true, swapAmount, true, targetSqrtPrice)
@@ -230,17 +228,17 @@ describe('utils', () => {
 
       chai.assert.deepEqual(y, { v: 0n })
 
-      await erc20.setContractHash(hashes.tokenX.loadHash)
-      const balanceXBeforeClaim = await erc20.balanceOf(Key.Account, deployerAddress)
-      await erc20.setContractHash(hashes.tokenY.loadHash)
-      const balanceYBeforeClaim = await erc20.balanceOf(Key.Account, deployerAddress)
+      erc20.setContractHash(hashes.tokenX.loadHash)
+      const balanceXBeforeClaim = await erc20.getBalanceOf(Key.Account, deployerAddress)
+      erc20.setContractHash(hashes.tokenY.loadHash)
+      const balanceYBeforeClaim = await erc20.getBalanceOf(Key.Account, deployerAddress)
 
       await invariant.claimFee(deployer, 0n)
 
-      await erc20.setContractHash(hashes.tokenX.loadHash)
-      const balanceXAfterClaim = await erc20.balanceOf(Key.Account, deployerAddress)
-      await erc20.setContractHash(hashes.tokenY.loadHash)
-      const balanceYAfterClaim = await erc20.balanceOf(Key.Account, deployerAddress)
+      erc20.setContractHash(hashes.tokenX.loadHash)
+      const balanceXAfterClaim = await erc20.getBalanceOf(Key.Account, deployerAddress)
+      erc20.setContractHash(hashes.tokenY.loadHash)
+      const balanceYAfterClaim = await erc20.getBalanceOf(Key.Account, deployerAddress)
 
       chai.assert.deepEqual(balanceXAfterClaim, balanceXBeforeClaim + x.v)
       chai.assert.deepEqual(balanceYAfterClaim, balanceYBeforeClaim)

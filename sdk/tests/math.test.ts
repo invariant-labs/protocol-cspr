@@ -1,9 +1,10 @@
 import { FeeTier, PoolKey, Position } from 'invariant-cspr-wasm'
 import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
-import { Key, Network } from '../src/enums'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
+import { Key, Network } from '../src/schema'
 import {
+  DeployedContractsHashes,
   assertThrowsAsync,
   deployInvariantAndTokens,
   loadChai,
@@ -12,11 +13,7 @@ import {
 import { createFeeTier, createPoolKey, getAccountHashFromKey, initCasperClient } from '../src/utils'
 import { getLiquidityByX, getLiquidityByY } from '../src/wasm'
 
-let hashes: {
-  invariant: { loadHash: string; packageHash: string }
-  tokenX: { loadHash: string; packageHash: string }
-  tokenY: { loadHash: string; packageHash: string }
-}
+let hashes: DeployedContractsHashes
 
 describe('test get liquidity by x', () => {
   const client = initCasperClient(LOCAL_NODE_URL)
@@ -72,7 +69,7 @@ describe('test get liquidity by x', () => {
       const erc20 = await Erc20.load(client, network, hashes.tokenX.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
-      await erc20.setContractHash(hashes.tokenY.loadHash)
+      erc20.setContractHash(hashes.tokenY.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, amount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, amount.v)
 
@@ -238,7 +235,7 @@ describe('test get liquidity by y', () => {
       const erc20 = await Erc20.load(client, network, hashes.tokenY.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, providedAmount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, providedAmount.v)
-      await erc20.setContractHash(hashes.tokenX.loadHash)
+      erc20.setContractHash(hashes.tokenX.loadHash)
       await erc20.mint(positionOwner, Key.Account, positionOwnerHash, amount.v)
       await erc20.approve(positionOwner, Key.Hash, hashes.invariant.packageHash, amount.v)
 

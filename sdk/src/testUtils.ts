@@ -1,17 +1,22 @@
 import { CasperClient, Keys } from 'casper-js-sdk'
-import type { InvariantError, Position } from 'invariant-cspr-wasm'
+import type { InvariantError, Percentage, Position } from 'invariant-cspr-wasm'
 import { dynamicImport } from 'tsimportlib'
-import { Network } from './enums'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
+import { Network } from './schema'
 import { callWasm, loadWasm } from './utils'
 
+export interface DeployedContractsHashes {
+  invariant: { loadHash: string; packageHash: string }
+  tokenX: { loadHash: string; packageHash: string }
+  tokenY: { loadHash: string; packageHash: string }
+}
 export const deployInvariantAndTokens = async (
   client: CasperClient,
   account: Keys.AsymmetricKey,
-  initialFee: bigint = 0n,
+  initialFee: Percentage = { v: 0n },
   intialSupply: bigint = 1000000000000000n
-) => {
+): Promise<DeployedContractsHashes> => {
   const wasm = await loadWasm()
   const [invariantContractPackageHash, invariantContractHash] = await Invariant.deploy(
     client,

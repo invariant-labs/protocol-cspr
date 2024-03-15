@@ -10,12 +10,16 @@ import {
   RuntimeArgs,
   decodeBase16
 } from 'casper-js-sdk'
-import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT } from './consts'
-import { Key, Network } from './enums'
+import { ALLOWANCES, BALANCES, DEFAULT_PAYMENT_AMOUNT, ERC20_CONTRACT_NAME } from './consts'
 import { hash, hexToBytes } from './parser'
-import { extractContractHash, extractContractPackageHash, getDeploymentData, sendTx } from './utils'
-
-const CONTRACT_NAME = 'erc20'
+import { Key, Network } from './schema'
+import {
+  extractContractHash,
+  extractContractPackageHash,
+  findContractPackageHash,
+  getDeploymentData,
+  sendTx
+} from './utils'
 
 export class Erc20 {
   client: CasperClient
@@ -49,7 +53,7 @@ export class Erc20 {
   ): Promise<[string, string]> {
     const contract = new Contracts.Contract(client)
 
-    const wasm = await getDeploymentData(CONTRACT_NAME)
+    const wasm = await getDeploymentData(ERC20_CONTRACT_NAME)
 
     const args = RuntimeArgs.fromMap({
       odra_cfg_package_hash_key_name: CLValueBuilder.string(namedKeysName),
@@ -92,7 +96,7 @@ export class Erc20 {
       throw new Error('Account not found in block state')
     }
 
-    const contractPackageHash = Account.namedKeys.find((i: any) => i.name === namedKeysName)?.key
+    const contractPackageHash = findContractPackageHash(Account, namedKeysName)
 
     if (!contractPackageHash) {
       throw new Error('Contract package not found in account named keys')
@@ -119,57 +123,56 @@ export class Erc20 {
     this.contract.setContractHash('hash-' + contractHash)
   }
 
-  async name(): Promise<string> {
+  async getName(): Promise<string> {
     const response = await this.contract.queryContractDictionary('state', hash('name'))
 
     return response.data
   }
 
-  async symbol(): Promise<string> {
+  async getSymbol(): Promise<string> {
     const response = await this.contract.queryContractDictionary('state', hash('symbol'))
 
     return response.data
   }
 
-  async decimals(): Promise<bigint> {
+  async getDecimals(): Promise<bigint> {
     const response = await this.contract.queryContractDictionary('state', hash('decimals'))
 
     return BigInt(response.data)
   }
 
-  async balanceOf(addressHash: Key, address: string): Promise<bigint> {
-    const balanceKey = new Uint8Array([...BALANCES, addressHash, ...hexToBytes(address)])
+  async getBalanceOf(addressHash: Key, address: string): Promise<bigint> {
+    const key = new Uint8Array([...BALANCES, addressHash, ...hexToBytes(address)])
 
     try {
-      const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
+      const response = await this.contract.queryContractDictionary('state', hash(key))
       return BigInt(response.data._hex)
     } catch (e) {
       return 0n
     }
   }
 
-  async allowance(
-    ownerHash: Key,
+  async getAllowance(
+    ownerKey: Key,
     owner: string,
-    spenderHash: Key,
+    spenderKey: Key,
     spender: string
   ): Promise<bigint> {
-    const balanceKey = new Uint8Array([
+    const key = new Uint8Array([
       ...ALLOWANCES,
-      ownerHash,
+      ownerKey,
       ...hexToBytes(owner),
-      spenderHash,
+      spenderKey,
       ...hexToBytes(spender)
     ])
 
-    const response = await this.contract.queryContractDictionary('state', hash(balanceKey))
+    const response = await this.contract.queryContractDictionary('state', hash(key))
 
     return BigInt(response.data._hex)
   }
 
-  async approve(signer: Keys.AsymmetricKey, spenderHash: Key, spender: string, amount: bigint) {
-    const spenderBytes = new Uint8Array([spenderHash, ...decodeBase16(spender)])
-    const spenderKey = new CLByteArray(spenderBytes)
+  async approve(signer: Keys.AsymmetricKey, spenderKey: Key, spender: string, amount: bigint) {
+    const spenderBytes = new CLByteArray(new Uint8Array([spenderKey, ...decodeBase16(spender)]))
 
     return await sendTx(
       this.contract,
@@ -179,20 +182,16 @@ export class Erc20 {
       this.network,
       'approve',
       {
-        spender: spenderKey,
+        spender: spenderBytes,
         amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )
   }
 
-  async transfer(
-    signer: Keys.AsymmetricKey,
-    recipientHash: Key,
-    recipient: string,
-    amount: bigint
-  ) {
-    const recipientBytes = new Uint8Array([recipientHash, ...decodeBase16(recipient)])
-    const recipientKey = new CLByteArray(recipientBytes)
+  async transfer(signer: Keys.AsymmetricKey, recipientKey: Key, recipient: string, amount: bigint) {
+    const recipientBytes = new CLByteArray(
+      new Uint8Array([recipientKey, ...decodeBase16(recipient)])
+    )
 
     return await sendTx(
       this.contract,
@@ -202,15 +201,14 @@ export class Erc20 {
       this.network,
       'transfer',
       {
-        recipient: recipientKey,
+        recipient: recipientBytes,
         amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )
   }
 
-  async mint(signer: Keys.AsymmetricKey, addressHash: Key, address: string, amount: bigint) {
-    const addressBytes = new Uint8Array([addressHash, ...decodeBase16(address)])
-    const addressKey = new CLByteArray(addressBytes)
+  async mint(signer: Keys.AsymmetricKey, addressKey: Key, address: string, amount: bigint) {
+    const addressBytes = new CLByteArray(new Uint8Array([addressKey, ...decodeBase16(address)]))
 
     return await sendTx(
       this.contract,
@@ -220,7 +218,7 @@ export class Erc20 {
       this.network,
       'mint',
       {
-        address: addressKey,
+        address: addressBytes,
         amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )
@@ -234,10 +232,10 @@ export class Erc20 {
     recipient: string,
     amount: bigint
   ) {
-    const ownerBytes = new Uint8Array([ownerHash, ...decodeBase16(owner)])
-    const ownerKey = new CLByteArray(ownerBytes)
-    const recipientBytes = new Uint8Array([recipientHash, ...decodeBase16(recipient)])
-    const recipientKey = new CLByteArray(recipientBytes)
+    const ownerBytes = new CLByteArray(new Uint8Array([ownerHash, ...decodeBase16(owner)]))
+    const recipientBytes = new CLByteArray(
+      new Uint8Array([recipientHash, ...decodeBase16(recipient)])
+    )
 
     return await sendTx(
       this.contract,
@@ -247,8 +245,8 @@ export class Erc20 {
       this.network,
       'transfer_from',
       {
-        owner: ownerKey,
-        recipient: recipientKey,
+        owner: ownerBytes,
+        recipient: recipientBytes,
         amount: CLValueBuilder.u256(BigNumber.from(amount))
       }
     )

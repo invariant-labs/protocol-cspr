@@ -24,6 +24,31 @@ export enum Decimal {
   FeeGrowth = 6
 }
 
+export enum Network {
+  Local = 'casper-net-1',
+  Testnet = 'casper-test',
+  Mainnet = 'casper'
+}
+
+export enum Key {
+  Account = 0,
+  Hash = 1
+}
+
+export enum DecodeError {
+  DecodingI32Failed = 0,
+  DecodingU32Failed = 1,
+  DecodingU64Failed = 2,
+  DecodingU128Failed = 3,
+  DecodingU256Failed = 4,
+  DecodingBoolFailed = 5,
+  DecodingStringFailed = 6,
+  DecodingOptionFailed = 7,
+  DecodingDecimalFailed = 8,
+  DecodingAddressFailed = 9,
+  UnwrapFailed = 10
+}
+
 export type Decimals =
   | Liquidity
   | SqrtPrice
