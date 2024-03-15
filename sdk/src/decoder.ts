@@ -15,7 +15,7 @@ import {
   CLValueBytesParsers,
   Result
 } from 'casper-js-sdk'
-import {
+import type {
   FeeGrowth,
   FeeTier,
   Liquidity,
@@ -26,7 +26,7 @@ import {
   SqrtPrice,
   Tick,
   TokenAmount
-} from 'invariant-cspr-wasm'
+} from '../wasm'
 import { Decimals, DecodeError } from './schema'
 
 export const i32Parser = new CLI32BytesParser()

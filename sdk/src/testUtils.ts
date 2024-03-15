@@ -1,6 +1,6 @@
 import { CasperClient, Keys } from 'casper-js-sdk'
-import type { InvariantError, Percentage, Position } from 'invariant-cspr-wasm'
 import { dynamicImport } from 'tsimportlib'
+import type { InvariantError, Percentage, Position } from '../wasm'
 import { Erc20 } from './erc20'
 import { Invariant } from './invariant'
 import { Network } from './schema'

@@ -19,7 +19,7 @@ import type {
   SqrtPrice,
   Tick,
   TokenAmount
-} from 'invariant-cspr-wasm'
+} from '../wasm'
 import { DEFAULT_PAYMENT_AMOUNT, INVARIANT_CONTRACT_NAME } from './consts'
 import {
   decodeChunk,
