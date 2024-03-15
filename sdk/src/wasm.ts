@@ -24,6 +24,36 @@ const loadWasmIfNotLoaded = async () => {
   return wasm
 }
 
+export const getMaxTick = async (tickSpacing: bigint): Promise<bigint> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return callWasm(wasm.getMaxTick, tickSpacing)
+}
+
+export const getMinTick = async (tickSpacing: bigint): Promise<bigint> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return callWasm(wasm.getMinTick, tickSpacing)
+}
+
+export const getGlobalMaxSqrtPrice = async (): Promise<SqrtPrice> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return { v: await callWasm(wasm.getGlobalMaxSqrtPrice) }
+}
+
+export const getGlobalMinSqrtPrice = async (): Promise<SqrtPrice> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return { v: await callWasm(wasm.getGlobalMinSqrtPrice) }
+}
+
+export const getMaxSqrtPrice = async (tickSpacing: bigint): Promise<SqrtPrice> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return { v: await callWasm(wasm.getMaxSqrtPrice, tickSpacing) }
+}
+
+export const getMinSqrtPrice = async (tickSpacing: bigint): Promise<SqrtPrice> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return { v: await callWasm(wasm.getMinSqrtPrice, tickSpacing) }
+}
+
 export const isTokenX = async (token0: string, token1: string): Promise<boolean> => {
   const wasm = await loadWasmIfNotLoaded()
   return callWasm(wasm.isTokenX, token0, token1)
@@ -50,7 +80,7 @@ export const getLiquidityByX = async (
   currentSqrtPrice: SqrtPrice,
   roundingUp: boolean
 ): Promise<{ l: Liquidity; amount: TokenAmount }> => {
-  const wasm = await loadWasm()
+  const wasm = await loadWasmIfNotLoaded()
   return await callWasm(
     wasm.getLiquidityByX,
     x,
@@ -68,7 +98,7 @@ export const getLiquidityByY = async (
   currentSqrtPrice: SqrtPrice,
   roundingUp: boolean
 ): Promise<{ l: Liquidity; amount: TokenAmount }> => {
-  const wasm = await loadWasm()
+  const wasm = await loadWasmIfNotLoaded()
   return await callWasm(
     wasm.getLiquidityByY,
     y,
@@ -84,7 +114,7 @@ export const toDecimal = async (
   value: bigint,
   scale: bigint
 ): Promise<Decimals> => {
-  const wasm = await loadWasm()
+  const wasm = await loadWasmIfNotLoaded()
   switch (decimal) {
     case Decimal.Liquidity:
       return { v: await callWasm(wasm.toLiquidity, value, scale) } as Liquidity

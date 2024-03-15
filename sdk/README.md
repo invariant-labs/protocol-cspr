@@ -59,3 +59,19 @@ you need to specify the backend passing -b argument to `cargo-odra`.
 ```bash
 cargo odra test -b casper
 ```
+
+### Typescript SDK
+
+Utilize the Invariant SDK from the npm registry by including it as a dependency. Alternatively, for a customized approach, build the SDK on your own using the commands provided below:
+
+To begin, navigate to the directory dedicated to the [SDK](https://github.com/invariant-labs/protocol-cspr/tree/master/sdk)
+
+- Build SDK
+```bash
+./build.sh
+```
+
+- Run e2e tests
+```bash
+./test.sh
+```

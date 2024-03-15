@@ -228,10 +228,7 @@ export const decodePool = (rawBytes: string): Pool => {
     startTimestampRemainder,
     DecodeError.DecodingU64Failed
   )
-  const [feeReceiver, feeReceiverRemainder]: [string, Uint8Array] =
-    decodeAddress(lastTimestampRemainder)
-  const [oracleInitialized, remainder]: [boolean, Uint8Array] = decodeBool(feeReceiverRemainder)
-
+  const [feeReceiver, remainder] = decodeAddress(lastTimestampRemainder)
   assertBytes(remainder)
 
   return {
@@ -244,8 +241,7 @@ export const decodePool = (rawBytes: string): Pool => {
     feeProtocolTokenY,
     startTimestamp,
     lastTimestamp,
-    feeReceiver,
-    oracleInitialized
+    feeReceiver
   }
 }
 
