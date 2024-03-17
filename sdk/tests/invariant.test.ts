@@ -1,4 +1,4 @@
-import type { Liquidity, Percentage } from 'invariant-cspr-wasm'
+import type { Liquidity, Percentage } from 'wasm'
 import { ALICE, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'
@@ -18,7 +18,7 @@ describe('invariant test', async () => {
   const deployer = ALICE
   const network = Network.Local
   let chai: typeof import('chai')
-  let wasm: typeof import('invariant-cspr-wasm')
+  let wasm: typeof import('wasm')
 
   before(async () => {
     chai = await loadChai()

@@ -1,4 +1,4 @@
-import type { Percentage, Price, SqrtPrice } from 'invariant-cspr-wasm'
+import type { Percentage, Price, SqrtPrice } from 'wasm'
 import { ALICE, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'

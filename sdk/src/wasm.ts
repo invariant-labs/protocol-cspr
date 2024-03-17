@@ -1,4 +1,4 @@
-import {
+import type {
   FeeGrowth,
   FeeTier,
   FixedPoint,
@@ -8,12 +8,12 @@ import {
   SecondsPerLiquidity,
   SqrtPrice,
   TokenAmount
-} from 'invariant-cspr-wasm'
+} from 'wasm'
 import { Decimal, Decimals } from './schema'
 import { callWasm, loadWasm } from './utils'
 
 let wasmLoaded = false
-let wasm: typeof import('invariant-cspr-wasm')
+let wasm: typeof import('wasm')
 
 const loadWasmIfNotLoaded = async () => {
   if (!wasmLoaded) {
@@ -22,6 +22,11 @@ const loadWasmIfNotLoaded = async () => {
   }
 
   return wasm
+}
+
+export const getMaxChunk = async (): Promise<bigint> => {
+  const wasm = await loadWasmIfNotLoaded()
+  return callWasm(wasm.getMaxChunk)
 }
 
 export const getMaxTick = async (tickSpacing: bigint): Promise<bigint> => {

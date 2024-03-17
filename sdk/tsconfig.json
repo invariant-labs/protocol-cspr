@@ -6,9 +6,9 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "rootDir": "./",
+    "rootDir": "./src",
     "outDir": "./target",
-    "resolveJsonModule": true,
-    "baseUrl": "./"
-  }
+    "resolveJsonModule": true
+  },
+  "exclude": ["./tests"]
 }

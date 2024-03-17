@@ -1,4 +1,4 @@
-import { FeeTier, PoolKey, Position } from 'invariant-cspr-wasm'
+import type { FeeTier, PoolKey, Position } from 'wasm'
 import { ALICE, BOB, LOCAL_NODE_URL } from '../src/consts'
 import { Erc20 } from '../src/erc20'
 import { Invariant } from '../src/invariant'

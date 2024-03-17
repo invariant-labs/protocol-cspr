@@ -10,6 +10,8 @@ import {
 } from 'casper-js-sdk'
 import fs from 'fs'
 import { readFile } from 'fs/promises'
+import path from 'path'
+import { dynamicImport } from 'tsimportlib'
 import type {
   FeeTier,
   Percentage,
@@ -20,9 +22,7 @@ import type {
   SqrtPrice,
   Tick,
   TokenAmount
-} from 'invariant-cspr-wasm'
-import path from 'path'
-import { dynamicImport } from 'tsimportlib'
+} from 'wasm'
 import { Algo, Network, WasmCallParams } from './schema'
 import { isTokenX } from './wasm'
 
@@ -98,10 +98,7 @@ export const createAccountKeys = () => {
 }
 
 export const loadWasm = async () => {
-  return (await dynamicImport(
-    'invariant-cspr-wasm',
-    module
-  )) as typeof import('invariant-cspr-wasm')
+  return (await dynamicImport('wasm', module)) as typeof import('wasm')
 }
 
 export const orderTokens = async (

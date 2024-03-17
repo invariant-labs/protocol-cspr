@@ -7,7 +7,7 @@ import type {
   SecondsPerLiquidity,
   SqrtPrice,
   TokenAmount
-} from 'invariant-cspr-wasm'
+} from 'wasm'
 
 export enum Algo {
   ed25519 = 'ed25519',

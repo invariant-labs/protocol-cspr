@@ -1,5 +1,5 @@
 import { blake2bHex } from 'blakejs'
-import { PoolKey } from 'invariant-cspr-wasm'
+import type { PoolKey } from 'wasm'
 import { Key } from './schema'
 import { integerSafeCast } from './utils'
 
