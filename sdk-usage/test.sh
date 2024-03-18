@@ -8,7 +8,7 @@ npx tsc
 npm run node:start &
 sleep 5
 cd ..
-cd sdk-test
+cd sdk-usage
 npm run start &
 test_pid=$!
 
