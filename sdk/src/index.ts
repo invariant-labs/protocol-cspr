@@ -21,7 +21,7 @@ export type {
   Tick,
   TokenAmount
 } from 'wasm'
-export { DEFAULT_PAYMENT_AMOUNT, LOCAL_NODE_URL } from './consts'
+export { ALICE, BOB, DEFAULT_PAYMENT_AMOUNT, LOCAL_NODE_URL } from './consts'
 export { Erc20 } from './erc20'
 export { Invariant } from './invariant'
 export { Algo, Decimal, Key, Network } from './schema'
