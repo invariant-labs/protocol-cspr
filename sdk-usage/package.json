@@ -4,7 +4,7 @@
   "description": "",
   "main": "target/index.js",
   "scripts": {
-    "start": "node --experimental-wasm-modules ."
+    "start": "npx tsc && node --experimental-wasm-modules ."
   },
   "keywords": [],
   "author": "",
