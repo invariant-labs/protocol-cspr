@@ -56,7 +56,7 @@ export const sendTx = async (
 
 export const getDeploymentData = async (contractName: string): Promise<Buffer> => {
   try {
-    const wasm = await readFile(path.join(__dirname, `./contracts/${contractName}.wasm`))
+    const wasm = await readFile(path.join(__dirname, `../contracts/${contractName}.wasm`))
 
     return wasm
   } catch (error) {
