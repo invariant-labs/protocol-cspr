@@ -9,6 +9,7 @@ npm run node:start &
 sleep 5
 cd ..
 cd sdk-usage
+npm i
 npm run start &
 test_pid=$!
 
