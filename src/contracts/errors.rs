@@ -28,6 +28,7 @@ pub enum InvariantError {
     NotEmptyTickDeinitialization,
     InvalidInitTick,
     InvalidInitSqrtPrice,
+    InvalidTickIndex,
 }
 
 execution_error! {
@@ -58,6 +59,7 @@ execution_error! {
         NotEmptyTickDeinitialization => 23,
         InvalidInitTick => 24,
         InvalidInitSqrtPrice => 25,
+        InvalidTickIndex => 26,
     }
 }
 
@@ -134,6 +136,9 @@ pub fn unwrap_invariant_result<T>(invariant_error: Result<T, InvariantError>) ->
             }
             InvariantError::InvalidInitSqrtPrice => {
                 contract_env::revert(InvariantErrorReturn::InvalidInitSqrtPrice)
+            }
+            InvariantError::InvalidTickIndex => {
+                contract_env::revert(InvariantErrorReturn::InvalidTickIndex)
             }
         },
     }
