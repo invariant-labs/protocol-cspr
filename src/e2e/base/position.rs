@@ -116,17 +116,19 @@ fn test_position_same_upper_and_lower_tick() {
     let upper_tick = lower_tick;
     let liquidity_delta = Liquidity::new(U256::from(10));
 
-    invariant.create_position(
-        pool_key.token_x,
-        pool_key.token_y,
-        fee_tier.fee.get(),
-        fee_tier.tick_spacing,
-        lower_tick,
-        upper_tick,
-        liquidity_delta.get(),
-        SqrtPrice::new(U128::from(0)).get(),
-        SqrtPrice::max_instance().get(),
-    ).unwrap();
+    invariant
+        .create_position(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            lower_tick,
+            upper_tick,
+            liquidity_delta.get(),
+            SqrtPrice::new(U128::from(0)).get(),
+            SqrtPrice::max_instance().get(),
+        )
+        .unwrap();
 }
 
 #[test]
