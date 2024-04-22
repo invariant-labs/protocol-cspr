@@ -250,8 +250,8 @@ fn test_swap_x_to_y() {
                 pool_key.token_y,
                 fee_tier.fee.get(),
                 fee_tier.tick_spacing,
+                lower_tick - 20,
                 middle_tick,
-                upper_tick - 20,
                 liquidity.get(),
                 slippage_limit_lower.get(),
                 slippage_limit_upper.get(),
@@ -281,7 +281,7 @@ fn test_swap_x_to_y() {
         let amount_x = token_x.balance_of(invariant.address());
         let amount_y = token_y.balance_of(invariant.address());
         assert_eq!(amount_x, U256::from(500));
-        assert_eq!(amount_y, U256::from(1000));
+        assert_eq!(amount_y, U256::from(2499));
 
         let dex_x_before = token_x.balance_of(invariant.address());
         let dex_y_before = token_y.balance_of(invariant.address());

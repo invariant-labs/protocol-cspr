@@ -658,6 +658,10 @@ impl Entrypoints for Invariant {
             contract_env::revert(InvariantErrorReturn::ZeroLiquidity);
         }
 
+        if lower_tick == upper_tick {
+            contract_env::revert(InvariantErrorReturn::InvalidTickIndex);
+        }
+
         let mut pool = unwrap_invariant_result(self.pools.get(pool_key));
 
         let mut lower_tick = self.ticks.get(pool_key, lower_tick).unwrap_or_else(|_| {

@@ -82,6 +82,56 @@ fn test_create_position() {
 }
 
 #[test]
+#[should_panic]
+fn test_position_same_upper_and_lower_tick() {
+    let position_owner = test_env::get_account(0);
+    test_env::set_caller(position_owner);
+
+    let mint_amount = U256::from(500);
+    let fee = Percentage::new(U128::from(0));
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
+
+    let fee_tier = FeeTier::new(Percentage::new(U128::from(0)), 1).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+
+    invariant
+        .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+        .unwrap();
+
+    invariant
+        .create_pool(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            calculate_sqrt_price(10).unwrap().get(),
+            10,
+        )
+        .unwrap();
+
+    token_x.approve(invariant.address(), &U256::from(500));
+    token_y.approve(invariant.address(), &U256::from(500));
+
+    let lower_tick = 10;
+    let upper_tick = lower_tick;
+    let liquidity_delta = Liquidity::new(U256::from(10));
+
+    invariant
+        .create_position(
+            pool_key.token_x,
+            pool_key.token_y,
+            fee_tier.fee.get(),
+            fee_tier.tick_spacing,
+            lower_tick,
+            upper_tick,
+            liquidity_delta.get(),
+            SqrtPrice::new(U128::from(0)).get(),
+            SqrtPrice::max_instance().get(),
+        )
+        .unwrap();
+}
+
+#[test]
 fn test_remove_position() {
     let position_owner = test_env::get_account(0);
     test_env::set_caller(position_owner);
