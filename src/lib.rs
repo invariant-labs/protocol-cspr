@@ -15,6 +15,7 @@ use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{events::*, unwrap_invariant_result, InvariantConfig, InvariantErrorReturn};
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, Tick, Tickmap, Ticks,
+    UpdatePoolTick,
 };
 use decimal::*;
 use math::clamm::{calculate_min_amount_out, compute_swap_step, SwapResult};
@@ -172,18 +173,23 @@ impl Invariant {
                 contract_env::revert(InvariantErrorReturn::PriceLimitReached);
             }
 
-            let mut tick = None;
-
-            if let Some((tick_index, is_initialized)) = limiting_tick {
-                if is_initialized {
-                    tick = self.ticks.get(pool_key, tick_index)?.into()
+            let mut tick_update = {
+                if let Some((tick_index, is_initialized)) = limiting_tick {
+                    if is_initialized {
+                        let tick = self.ticks.get(pool_key, tick_index)?;
+                        UpdatePoolTick::TickInitialized(tick)
+                    } else {
+                        UpdatePoolTick::TickUninitialized(tick_index)
+                    }
+                } else {
+                    UpdatePoolTick::NoTick
                 }
             };
 
             let (amount_to_add, amount_after_tick_update, has_crossed) = pool.update_tick(
                 result,
                 swap_limit,
-                tick.as_mut(),
+                &mut tick_update,
                 remaining_amount,
                 by_amount_in,
                 x_to_y,
@@ -195,7 +201,7 @@ impl Invariant {
             remaining_amount = amount_after_tick_update;
             total_amount_in += amount_to_add;
 
-            if let Some(tick) = tick {
+            if let UpdatePoolTick::TickInitialized(tick) = tick_update {
                 if has_crossed {
                     ticks.push(tick)
                 }
