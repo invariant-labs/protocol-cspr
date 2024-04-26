@@ -15,10 +15,10 @@ use crate::math::{check_tick, percentage::Percentage, sqrt_price::SqrtPrice};
 use contracts::{events::*, unwrap_invariant_result, InvariantConfig, InvariantErrorReturn};
 use contracts::{
     FeeTier, FeeTiers, Pool, PoolKey, PoolKeys, Pools, Position, Positions, Tick, Tickmap, Ticks,
+    UpdatePoolTick,
 };
 use decimal::*;
 use math::clamm::{calculate_min_amount_out, compute_swap_step, SwapResult};
-use math::get_tick_at_sqrt_price;
 use math::liquidity::Liquidity;
 use math::token_amount::TokenAmount;
 use math::{MAX_SQRT_PRICE, MIN_SQRT_PRICE};
@@ -142,7 +142,7 @@ impl Invariant {
                 pool.current_tick_index,
                 pool_key.fee_tier.tick_spacing,
                 pool_key,
-            );
+            )?;
 
             let result = unwrap!(compute_swap_step(
                 pool.sqrt_price,
@@ -173,32 +173,38 @@ impl Invariant {
                 contract_env::revert(InvariantErrorReturn::PriceLimitReached);
             }
 
-            if let Some((tick_index, is_initialized)) = limiting_tick {
-                if is_initialized {
-                    let mut tick = self.ticks.get(pool_key, tick_index)?;
-
-                    let (amount_to_add, has_crossed) = pool.cross_tick(
-                        result,
-                        swap_limit,
-                        &mut tick,
-                        &mut remaining_amount,
-                        by_amount_in,
-                        x_to_y,
-                        current_timestamp,
-                        config.protocol_fee,
-                        pool_key.fee_tier,
-                    );
-
-                    total_amount_in += amount_to_add;
-                    if has_crossed {
-                        ticks.push(tick);
+            let mut tick_update = {
+                if let Some((tick_index, is_initialized)) = limiting_tick {
+                    if is_initialized {
+                        let tick = self.ticks.get(pool_key, tick_index)?;
+                        UpdatePoolTick::TickInitialized(tick)
+                    } else {
+                        UpdatePoolTick::TickUninitialized(tick_index)
                     }
+                } else {
+                    UpdatePoolTick::NoTick
                 }
-            } else {
-                pool.current_tick_index = unwrap!(get_tick_at_sqrt_price(
-                    result.next_sqrt_price,
-                    pool_key.fee_tier.tick_spacing
-                ));
+            };
+
+            let (amount_to_add, amount_after_tick_update, has_crossed) = pool.update_tick(
+                result,
+                swap_limit,
+                &mut tick_update,
+                remaining_amount,
+                by_amount_in,
+                x_to_y,
+                current_timestamp,
+                config.protocol_fee,
+                pool_key.fee_tier,
+            );
+
+            remaining_amount = amount_after_tick_update;
+            total_amount_in += amount_to_add;
+
+            if let UpdatePoolTick::TickInitialized(tick) = tick_update {
+                if has_crossed {
+                    ticks.push(tick)
+                }
             }
         }
 

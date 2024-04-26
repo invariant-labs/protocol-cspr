@@ -439,9 +439,6 @@ fn test_swap_y_to_x() {
     }
     // Init basic position
     {
-        // let mint_amount = U256::from(10u128.pow(10));
-        // token_x.mint(&deployer, &mint_amount);
-        // token_y.mint(&deployer, &mint_amount);
         token_x.approve(invariant.address(), &mint_amount);
         token_y.approve(invariant.address(), &mint_amount);
 
@@ -629,5 +626,253 @@ fn test_swap_y_to_x() {
         assert!(lower_tick_bit);
         assert!(middle_tick_bit);
         assert!(upper_tick_bit);
+    }
+}
+
+#[test]
+#[should_panic]
+fn test_swap_not_enough_liquidity_token_y() {
+    let deployer = test_env::get_account(0);
+    test_env::set_caller(deployer);
+    // Init basic dex and tokens
+    let mint_amount = U256::from(10u128.pow(10));
+    let fee = Percentage::from_scale(6, 3);
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
+
+    let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+    // Init basic pool
+    {
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
+        assert!(exist);
+
+        let init_tick = 0;
+        let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
+        invariant
+            .create_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
+                init_tick,
+            )
+            .unwrap();
+    }
+    // Init basic position
+    {
+        token_x.approve(invariant.address(), &mint_amount);
+        token_y.approve(invariant.address(), &mint_amount);
+
+        let lower_tick = -20;
+        let middle_tick = -10;
+        let upper_tick = 10;
+        let liquidity = Liquidity::from_integer(1000000);
+
+        let pool_before = invariant
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
+            .unwrap();
+
+        let slippage_limit_lower = pool_before.sqrt_price;
+        let slippage_limit_upper = pool_before.sqrt_price;
+
+        invariant
+            .create_position(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                lower_tick,
+                upper_tick,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
+            )
+            .unwrap();
+
+        invariant
+            .create_position(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                lower_tick - 20,
+                middle_tick,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
+            )
+            .unwrap();
+
+        let pool_after = invariant
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
+            .unwrap();
+
+        assert_eq!(pool_after.liquidity, liquidity)
+    }
+    // Init basic swap
+    {
+        let swapper = test_env::get_account(1);
+        let amount = U256::from(1000);
+        token_x.mint(&swapper, &amount);
+
+        test_env::set_caller(swapper);
+        token_x.approve(invariant.address(), &amount);
+
+        let amount_x = token_x.balance_of(invariant.address());
+        let amount_y = token_y.balance_of(invariant.address());
+        assert_eq!(amount_x, U256::from(500));
+        assert_eq!(amount_y, U256::from(2499));
+
+        let slippage = SqrtPrice::new(U128::from(MAX_SQRT_PRICE));
+        let swap_amount = TokenAmount::new(amount);
+        invariant
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                false,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
+            .unwrap();
+    }
+}
+
+#[test]
+#[should_panic]
+fn test_swap_not_enough_liquidity_token_x() {
+    let deployer = test_env::get_account(0);
+    test_env::set_caller(deployer);
+    // Init basic dex and tokens
+    let mint_amount = U256::from(10u128.pow(10));
+    let fee = Percentage::from_scale(6, 3);
+    let (mut invariant, mut token_x, mut token_y) = init(fee, mint_amount);
+
+    let fee_tier = FeeTier::new(Percentage::from_scale(6, 3), 10).unwrap();
+    let pool_key = PoolKey::new(*token_x.address(), *token_y.address(), fee_tier).unwrap();
+    // Init basic pool
+    {
+        invariant
+            .add_fee_tier(fee_tier.fee.get(), fee_tier.tick_spacing)
+            .unwrap();
+
+        let exist = invariant.fee_tier_exist(fee_tier.fee.get(), fee_tier.tick_spacing);
+        assert!(exist);
+
+        let init_tick = 0;
+        let init_sqrt_price = calculate_sqrt_price(init_tick).unwrap();
+        invariant
+            .create_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                init_sqrt_price.get(),
+                init_tick,
+            )
+            .unwrap();
+    }
+    // Init basic position
+    {
+        token_x.approve(invariant.address(), &mint_amount);
+        token_y.approve(invariant.address(), &mint_amount);
+
+        let lower_tick_index = -10;
+        let middle_tick_index = 10;
+        let upper_tick_index = 20;
+
+        let liquidity = Liquidity::from_integer(1000000);
+
+        let pool_before = invariant
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
+            .unwrap();
+
+        let slippage_limit_lower = pool_before.sqrt_price;
+        let slippage_limit_upper = pool_before.sqrt_price;
+
+        invariant
+            .create_position(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                lower_tick_index,
+                upper_tick_index,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
+            )
+            .unwrap();
+
+        invariant
+            .create_position(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                middle_tick_index,
+                upper_tick_index + 20,
+                liquidity.get(),
+                slippage_limit_lower.get(),
+                slippage_limit_upper.get(),
+            )
+            .unwrap();
+
+        let pool_after = invariant
+            .get_pool(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+            )
+            .unwrap();
+
+        assert_eq!(pool_after.liquidity, liquidity)
+    }
+    // Init basic swap
+    {
+        let swapper = test_env::get_account(1);
+        let amount = U256::from(1000);
+        token_x.mint(&swapper, &amount);
+
+        test_env::set_caller(swapper);
+        token_x.approve(invariant.address(), &amount);
+
+        let slippage = SqrtPrice::new(U128::from(MIN_SQRT_PRICE));
+        let swap_amount = TokenAmount::new(amount);
+        invariant
+            .swap(
+                pool_key.token_x,
+                pool_key.token_y,
+                fee_tier.fee.get(),
+                fee_tier.tick_spacing,
+                true,
+                swap_amount.get(),
+                true,
+                slippage.get(),
+            )
+            .unwrap();
     }
 }

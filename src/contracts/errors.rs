@@ -29,6 +29,7 @@ pub enum InvariantError {
     InvalidInitTick,
     InvalidInitSqrtPrice,
     InvalidTickIndex,
+    TickLimitReached,
 }
 
 execution_error! {
@@ -60,6 +61,7 @@ execution_error! {
         InvalidInitTick => 24,
         InvalidInitSqrtPrice => 25,
         InvalidTickIndex => 26,
+        TickLimitReached => 27,
     }
 }
 
@@ -139,6 +141,9 @@ pub fn unwrap_invariant_result<T>(invariant_error: Result<T, InvariantError>) ->
             }
             InvariantError::InvalidTickIndex => {
                 contract_env::revert(InvariantErrorReturn::InvalidTickIndex)
+            }
+            InvariantError::TickLimitReached => {
+                contract_env::revert(InvariantErrorReturn::TickLimitReached)
             }
         },
     }
