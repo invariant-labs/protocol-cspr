@@ -5,6 +5,7 @@ extern crate alloc;
 pub mod contracts;
 pub mod math;
 
+use math::sqrt_price::{get_max_tick, get_min_tick};
 pub use odra_modules::erc20::{Erc20, Erc20Deployer, Erc20Ref};
 
 #[cfg(test)]
@@ -135,6 +136,12 @@ impl Invariant {
         let event_start_sqrt_price = pool.sqrt_price;
         let mut event_fee_amount = TokenAmount::new(U256::from(0));
 
+        let tick_limit = if x_to_y {
+            get_min_tick(pool_key.fee_tier.tick_spacing)
+        } else {
+            get_max_tick(pool_key.fee_tier.tick_spacing)
+        };
+
         while !remaining_amount.is_zero() {
             let (swap_limit, limiting_tick) = self.tickmap.get_closer_limit(
                 sqrt_price_limit,
@@ -205,6 +212,15 @@ impl Invariant {
                 if has_crossed {
                     ticks.push(tick)
                 }
+            }
+
+            let reached_tick_limit = match x_to_y {
+                true => pool.current_tick_index <= tick_limit,
+                false => pool.current_tick_index >= tick_limit,
+            };
+
+            if reached_tick_limit {
+                return Err(InvariantError::TickLimitReached);
             }
         }
 
