@@ -728,10 +728,10 @@ fn test_swap_not_enough_liquidity_token_y() {
     {
         let swapper = test_env::get_account(1);
         let amount = U256::from(1000);
-        token_x.mint(&swapper, &amount);
+        token_y.mint(&swapper, &amount);
 
         test_env::set_caller(swapper);
-        token_x.approve(invariant.address(), &amount);
+        token_y.approve(invariant.address(), &amount);
 
         let amount_x = token_x.balance_of(invariant.address());
         let amount_y = token_y.balance_of(invariant.address());
